@@ -1,0 +1,238 @@
+<main
+  class="p-4 min-h-screen px-container-margin max-w-desktop-max-width mx-auto"
+>
+  <!-- Header Section -->
+  <div class="mb-8">
+    <nav
+      aria-label="Breadcrumb"
+      class="flex text-on-surface-variant font-label-sm text-label-sm mb-2"
+    >
+      <ol class="inline-flex items-center space-x-1 md:space-x-2">
+        <li class="inline-flex items-center">
+          <a class="hover:text-primary transition-colors" href="#">Fleet</a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+            <span class="text-primary font-bold">Ajouter un Bus</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h2
+          class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface"
+        >
+          Ajouter un Nouveau Bus
+        </h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          Saisissez les informations du véhicule pour l'enregistrer dans la flotte.
+        </p>
+      </div>
+      <div class="flex gap-3">
+        <button
+          class="px-4 py-2 border border-primary text-primary bg-transparent rounded-lg font-label-sm text-label-sm hover:bg-surface-container transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm hover:bg-surface-tint transition-colors flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-[18px]">save</span>
+          Enregistrer le Bus
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Form Bento Layout -->
+  <form class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap">
+    <!-- Left Column: Specs -->
+    <div class="xl:col-span-2 space-y-widget-gap">
+      <!-- Info Card -->
+      <div
+        class="bg-card-bg rounded-xl shadow-sm border border-border-subtle p-6 relative overflow-hidden"
+      >
+        <div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">directions_car</span>
+          Informations Générales
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="plate"
+              >Plaque d'immatriculation <span class="text-danger-red">*</span></label
+            >
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">pin</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-mono-data text-mono-data text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="plate"
+                name="plate"
+                placeholder="ex: AB-123-CD"
+                required=""
+                type="text"
+              />
+            </div>
+          </div>
+          <!-- Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="model"
+              >Modèle &amp; Marque <span class="text-danger-red">*</span></label
+            >
+            <input
+              class="w-full px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              id="model"
+              name="model"
+              placeholder="ex: Mercedes-Benz Tourismo"
+              required=""
+              type="text"
+            />
+          </div>
+          <!-- Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="capacity"
+              >Capacité (Sièges) <span class="text-danger-red">*</span></label
+            >
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">event_seat</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="capacity"
+                max="100"
+                min="1"
+                name="capacity"
+                placeholder="50"
+                required=""
+                type="number"
+              />
+            </div>
+          </div>
+          <!-- Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="type"
+              >Type de Bus <span class="text-danger-red">*</span></label
+            >
+            <div class="relative">
+              <select
+                class="w-full appearance-none px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="type"
+                name="type"
+              >
+                <option disabled="" selected="" value="">Sélectionnez un type</option>
+                <option value="vip">VIP (Wi-Fi, Climatisation)</option>
+                <option value="standard">Standard</option>
+                <option value="economy">Économique</option>
+                <option value="minibus">Minibus</option>
+              </select>
+              <span
+                class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline"
+              >
+                <span class="material-symbols-outlined">expand_more</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Status Card (Glassmorphism inspired light structural) -->
+      <div
+        class="bg-gradient-to-br from-surface-container-low to-surface-bg rounded-xl shadow-sm border border-border-subtle p-6"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">verified_user</span>
+          Statut d'Opération
+        </h3>
+        <div class="flex items-center gap-4 p-4 bg-card-bg rounded-lg border border-border-subtle">
+          <div class="flex items-center h-5">
+            <input
+              checked=""
+              class="w-4 h-4 text-primary bg-surface-bg border-outline rounded focus:ring-primary focus:ring-2"
+              id="active_status"
+              type="checkbox"
+              value=""
+            />
+          </div>
+          <div class="ml-2 text-sm">
+            <label class="font-label-sm text-label-sm text-on-surface" for="active_status"
+              >Activer immédiatement</label
+            >
+            <p class="text-xs font-normal text-on-surface-variant" id="helper-checkbox-text">
+              Le bus sera disponible pour l'assignation des trajets dès l'enregistrement.
+            </p>
+          </div>
+          <div class="ml-auto">
+            <span
+              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E5F9ED] text-success-green border border-success-green"
+            >
+              Prêt à l'emploi
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Right Column: Media & Extras -->
+    <div class="space-y-widget-gap">
+      <!-- Image Upload Card -->
+      <div
+        class="bg-card-bg rounded-xl shadow-sm border border-border-subtle p-6 flex flex-col h-full"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">photo_camera</span>
+          Image du Véhicule
+        </h3>
+        <div
+          class="flex-1 w-full relative border-2 border-dashed border-outline-variant rounded-xl bg-surface-container-lowest hover:bg-surface-variant transition-colors group flex flex-col items-center justify-center p-6 text-center cursor-pointer min-h-[250px]"
+        >
+          <input
+            accept="image/*"
+            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+            type="file"
+          />
+          <div class="space-y-3 z-0">
+            <div
+              class="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center group-hover:scale-110 transition-transform"
+            >
+              <span class="material-symbols-outlined text-[32px] text-primary">cloud_upload</span>
+            </div>
+            <div>
+              <p class="font-label-sm text-label-sm text-primary">Cliquez pour uploader</p>
+              <p class="font-body-md text-body-md text-on-surface-variant text-xs mt-1">
+                ou glissez-déposez l'image ici
+              </p>
+            </div>
+            <p class="text-[10px] text-outline font-mono-data">PNG, JPG, WEBP (Max. 5MB)</p>
+          </div>
+          <!-- Visual representation of an uploaded state (hidden by default, shown for design completeness) -->
+          <div class="hidden absolute inset-0 rounded-xl overflow-hidden z-20 bg-surface-bg">
+            <img
+              alt="Preview"
+              class="w-full h-full object-cover opacity-90 mix-blend-multiply"
+              data-alt="A highly detailed, professional UI design placeholder image showing a modern, luxury commercial passenger bus driving on a clean highway under bright daylight. The lighting is crisp and corporate, emphasizing operational efficiency and reliable transportation. The color palette incorporates sleek metallics and subtle blue tones, perfectly matching a modern fleet management dashboard aesthetic. The image conveys a sense of motion, stability, and high-end logistics."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuArT12nB8YdpDAWf8W4WGeOQj-VxWHEWxz0kaiIPkU88wflbzUaj_31IHIFMvoSVOI9bQgX9HIjYm6fxlTwMVt8vbVWIPLLa9Rdv2mTaCkGZlihNIljHXPI7Bp7Uo1o77v6lGaVR20UNVLpz8prGL_TykQWYTtHnmEbuL5EZeczBcNjQ2vZrn5Z94P9kfBIcjnR_1yXWhreDdke-0qXFeUA1UDnSZ5DETUUmfJ1ampggrmaQSgPti61LBaK3wOfZvmuDKGAV81vyx0"
+            />
+            <button
+              class="absolute top-2 right-2 p-1 bg-surface-container-lowest text-danger-red rounded-full hover:bg-error-container shadow-sm"
+              type="button"
+            >
+              <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+          </div>
+        </div>
+        <div
+          class="mt-4 bg-surface-container-low p-3 rounded-lg flex items-start gap-2 border border-surface-container"
+        >
+          <span class="material-symbols-outlined text-secondary text-[18px] mt-0.5">info</span>
+          <p class="text-xs font-body-md text-on-surface-variant">
+            Une photo claire de l'avant du bus aide les chauffeurs à identifier leur véhicule
+            assigné rapidement sur le parc.
+          </p>
+        </div>
+      </div>
+    </div>
+  </form>
+</main>

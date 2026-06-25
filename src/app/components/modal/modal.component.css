@@ -1,0 +1,4 @@
+/* Styles pour le composant modal */
+.backdrop-blur-sm {
+  backdrop-filter: blur(5px);
+}

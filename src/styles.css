@@ -1,3 +1,196 @@
-/* You can add global styles to this file, and also import other style files */
+/* Importation de base de Tailwind CSS v4 */
+@import "tailwindcss";
 
-@import 'tailwindcss';
+@theme {
+  /* ==========================================
+     VOS COULEURS PERSONNALISÉES (Transito)
+     ========================================== */
+  --color-card-bg: #FFFFFF;
+  --color-tertiary-fixed-dim: #ffb68b;
+  --color-surface-container: #e6eff8;
+  --color-on-tertiary: #ffffff;
+  --color-inverse-primary: #afc6ff;
+  --color-border-subtle: #E0E0E0;
+  --color-inverse-on-surface: #e9f2fb;
+  --color-surface-container-high: #e0e9f2;
+  --color-surface-bg: #F4F5F8;
+  --color-warning-gold: #FFCE00;
+  --color-on-background: #141d23;
+  --color-secondary-fixed: #9af0ff;
+  --color-on-error: #ffffff;
+  --color-success-green: #10DC60;
+  --color-primary-fixed-dim: #afc6ff;
+  --color-surface-bright: #f6faff;
+  --color-outline: #727786;
+  --color-surface-tint: #3880ff;
+  --color-surface-container-highest: #dbe4ed;
+  --color-on-primary-fixed: #001944;
+  --color-tertiary-fixed: #ffdbc8;
+  --color-on-primary-container: #ffffff;
+  --color-surface-variant: #dbe4ed;
+  --color-on-secondary-container: #006571;
+  --color-background: #f6faff;
+  --color-inverse-surface: #293138;
+  --color-surface-dim: #d2dbe4;
+  --color-secondary-container: #44e8ff;
+  --color-primary-container: #3880ff;
+  --color-on-secondary: #ffffff;
+  --color-tertiary: #954500;
+  --color-surface: #f6faff;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-secondary-fixed-variant: #004f58;
+  --color-on-tertiary-fixed-variant: #753400;
+  --color-on-surface-variant: #424754;
+  --color-tertiary-container: #bb5800;
+  --color-on-secondary-fixed: #001f24;
+  --color-on-primary: #ffffff;
+  --color-outline-variant: #c2c6d7;
+  --color-on-surface: #141d23;
+  --color-secondary: #006875;
+  --color-primary: #3880ff;
+  --color-on-error-container: #93000a;
+  --color-on-tertiary-fixed: #321300;
+  --color-surface-container-low: #ecf5fe;
+  --color-primary-fixed: #d9e2ff;
+  --color-on-primary-fixed-variant: #004299;
+  --color-secondary-fixed-dim: #28daf1;
+  --color-on-tertiary-container: #fffbff;
+  --color-danger-red: #F04141;
+  --color-surface-container-lowest: #ffffff;
+
+  /* ==========================================
+     VOS ARRONDIS (Borders)
+     ========================================== */
+  --radius-default: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+  --radius-full-btn: 9999px;
+
+  /* ==========================================
+     VOS ESPACEMENTS (Spacing)
+     ========================================== */
+  --spacing-dense-padding: 8px;
+  --spacing-container-margin: 24px;
+  --spacing-base: 8px;
+  --spacing-standard-padding: 16px;
+  --spacing-desktop-max-width: 1440px;
+  --spacing-widget-gap: 16px;
+
+  /* ==========================================
+     VOS FAMILLES DE POLICES
+     ========================================== */
+  --font-body-lg: "Inter", sans-serif;
+  --font-stats-metric: "Inter", sans-serif;
+  --font-mono-data: "Courier Prime", monospace;
+  --font-headline-lg: "Inter", sans-serif;
+  --font-headline-lg-mobile: "Inter", sans-serif;
+  --font-label-sm: "Inter", sans-serif;
+  --font-headline-md: "Inter", sans-serif;
+  --font-body-md: "Inter", sans-serif;
+  --font-display-lg: "Inter", sans-serif;
+}
+
+/* ==========================================
+   VOS UTILITAIRES DE TYPOGRAPHIE COMPOSÉS
+   (Assure la conservation exacte du design)
+   ========================================== */
+@utility text-body-lg {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  font-family: var(--font-body-lg);
+}
+
+@utility text-stats-metric {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+  font-family: var(--font-stats-metric);
+}
+
+@utility text-mono-data {
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 400;
+  font-family: var(--font-mono-data);
+}
+
+@utility text-headline-lg {
+  font-size: 28px;
+  line-height: 36px;
+  font-weight: 600;
+  font-family: var(--font-headline-lg);
+}
+
+@utility text-headline-lg-mobile {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  font-family: var(--font-headline-lg-mobile);
+}
+
+@utility text-label-sm {
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  font-family: var(--font-label-sm);
+}
+
+@utility text-headline-md {
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  font-family: var(--font-headline-md);
+}
+
+@utility text-body-md {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  font-family: var(--font-body-md);
+}
+
+@utility text-display-lg {
+  font-size: 36px;
+  line-height: 44px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  font-family: var(--font-display-lg);
+}
+
+/* --- Styles globaux pour toutes les barres de défilement --- */
+
+/* Pour Firefox (Propriétés standards récentes) */
+* {
+  scrollbar-width: thin;          /* Options: auto | thin | none */
+  scrollbar-color: #3880ff #e6eff8; /* [Couleur du curseur] [Couleur de la piste] */
+}
+
+/* Pour les navigateurs basés sur WebKit (Chrome, Safari, Edge) */
+
+/* 1. Dimensions de la barre */
+::-webkit-scrollbar {
+  width: 8px;     /* Largeur de la barre verticale */
+  height: 8px;    /* Hauteur de la barre horizontale */
+}
+
+/* 2. La piste (l'arrière-plan de la barre) */
+::-webkit-scrollbar-track {
+  background: #e6eff8; /* Correspond à votre couleur surface-container */
+  border-radius: 9999px;
+}
+
+/* 3. Le curseur (la partie qui bouge) */
+::-webkit-scrollbar-thumb {
+  background-color: #3880ff; /* Correspond à votre couleur primary */
+  border-radius: 9999px;
+  border: 2px solid #e6eff8;  /* Crée un effet de marge interne autour du curseur */
+}
+
+/* 4. Le curseur au survol */
+::-webkit-scrollbar-thumb:hover {
+  background-color: #3880ff; /* Correspond à votre couleur surface-tint */
+}

@@ -1,0 +1,183 @@
+<main class="flex-1 p-container-margin p-4 overflow-y-auto">
+  <div class="max-w-4xl mx-auto">
+    <div class="bg-card-bg rounded-xl shadow-ambient p-6 md:p-8 border border-border-subtle">
+      <div class="mb-8 border-b border-border-subtle pb-4">
+        <h3 class="font-headline-md text-headline-md text-on-surface">Détails du Trajet</h3>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          Saisissez les informations pour planifier un nouveau trajet dans la flotte.
+        </p>
+      </div>
+      <form class="space-y-6">
+        <!-- Route Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="departureCity"
+              >Ville de Départ *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >location_on</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-body-md text-body-md transition-all"
+                id="departureCity"
+                placeholder="Ex: Douala"
+                required=""
+                type="text"
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="arrivalCity"
+              >Ville d'Arrivée *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >flag</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-body-md text-body-md transition-all"
+                id="arrivalCity"
+                placeholder="Ex: Yaoundé"
+                required=""
+                type="text"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Schedule Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="departureDate"
+              >Date de Départ *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >calendar_today</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-body-md text-body-md transition-all text-on-surface"
+                id="departureDate"
+                required=""
+                type="date"
+              />
+            </div>
+          </div>
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="departureTime"
+              >Heure de Départ *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >schedule</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-body-md text-body-md transition-all text-on-surface"
+                id="departureTime"
+                required=""
+                type="time"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Resource & Pricing Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-border-subtle pt-6">
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="assignedBus"
+              >Bus Assigné *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >directions_bus</span
+              >
+              <select
+                class="w-full pl-10 pr-10 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-body-md text-body-md appearance-none transition-all text-on-surface"
+                id="assignedBus"
+                required=""
+              >
+                <option disabled="" selected="" value="">Sélectionner un bus disponible</option>
+                <option value="bus1">VIP - Mercedes Travego (LT 1234 A)</option>
+                <option value="bus2">Standard - Toyota Coaster (CE 5678 B)</option>
+                <option value="bus3">Classic - Yutong ZK6122 (OU 9012 C)</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none"
+                >expand_more</span
+              >
+            </div>
+          </div>
+          <div>
+            <label
+              class="block font-label-sm text-label-sm text-on-surface-variant mb-2"
+              for="ticketPrice"
+              >Prix du Billet (XAF) *</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >payments</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-3 rounded-lg border border-border-subtle bg-surface focus:border-primary focus:border-2 focus:ring-0 font-mono-data text-mono-data transition-all text-on-surface"
+                id="ticketPrice"
+                min="0"
+                placeholder="Ex: 5000"
+                required=""
+                step="100"
+                type="number"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Actions -->
+        <div class="flex items-center justify-end gap-4 pt-6 border-t border-border-subtle mt-8">
+          <button
+            class="px-6 py-2.5 rounded-lg border border-primary text-primary font-label-sm text-label-sm hover:bg-primary-fixed transition-colors"
+            type="button"
+          >
+            Annuler
+          </button>
+          <button
+            class="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm hover:bg-surface-tint transition-colors shadow-sm flex items-center gap-2"
+            type="submit"
+          >
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            Enregistrer le Trajet
+          </button>
+        </div>
+      </form>
+    </div>
+    <!-- Info Card Widget style -->
+    <div
+      class="mt-6 bg-surface-container-low rounded-xl border border-outline-variant p-4 flex items-start gap-4"
+    >
+      <div
+        class="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0"
+      >
+        <span class="material-symbols-outlined">info</span>
+      </div>
+      <div>
+        <h4 class="font-label-sm text-label-sm text-on-surface">Rappel de Planification</h4>
+        <p class="font-body-md text-body-md text-on-surface-variant mt-1 text-sm">
+          Assurez-vous que le chauffeur principal est assigné au bus sélectionné avant la date de
+          départ. Les conflits d'horaire seront signalés dans l'onglet "Flotte".
+        </p>
+      </div>
+    </div>
+  </div>
+</main>

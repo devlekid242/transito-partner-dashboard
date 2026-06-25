@@ -1,0 +1,310 @@
+<main class="flex-1 h-full overflow-y-auto bg-surface-bg p-4 md:p-container-margin">
+  <!-- Header & Filters -->
+  <div
+    class="mb-widget-gap flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
+  >
+    <div>
+      <h1 class="text-headline-lg font-headline-lg text-on-surface">Rapports &amp; Analyses</h1>
+      <p class="text-body-md font-body-md text-outline">
+        Analyse des performances de la flotte et données financières.
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+      <div class="relative">
+        <select
+          class="appearance-none bg-card-bg border border-border-subtle rounded-xl py-2 pl-4 pr-10 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary shadow-sm cursor-pointer transition-shadow"
+        >
+          <option>Derniers 30 Jours</option>
+          <option>Ce Mois</option>
+          <option>Trimestre en cours</option>
+          <option>Année en cours</option>
+          <option>Personnalisé...</option>
+        </select>
+        <span
+          class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]"
+          >calendar_today</span
+        >
+      </div>
+      <div class="relative">
+        <select
+          class="appearance-none bg-card-bg border border-border-subtle rounded-xl py-2 pl-4 pr-10 text-body-md font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary shadow-sm cursor-pointer transition-shadow"
+        >
+          <option>Tous les Rapports</option>
+          <option>Financier</option>
+          <option>Opérationnel</option>
+          <option>Passagers</option>
+        </select>
+        <span
+          class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]"
+          >filter_list</span
+        >
+      </div>
+      <button
+        class="bg-primary text-on-primary rounded-xl py-2 px-4 font-label-sm text-label-sm flex items-center justify-center gap-2 hover:bg-primary-fixed-variant transition-colors shadow-sm"
+      >
+        <span class="material-symbols-outlined text-[18px]">download</span>
+        Exporter
+      </button>
+    </div>
+  </div>
+  <!-- Key Metrics (Bento Grid Style) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-widget-gap mb-widget-gap">
+    <!-- Metric 1 -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+    >
+      <div class="flex justify-between items-start">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Revenu Total</span
+        >
+        <span class="material-symbols-outlined text-outline">payments</span>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">12.4M XAF</div>
+        <div class="flex items-center gap-1 mt-1 text-success-green">
+          <span class="material-symbols-outlined text-[16px]">trending_up</span>
+          <span class="text-label-sm font-label-sm">+8.4% vs mois préc.</span>
+        </div>
+      </div>
+    </div>
+    <!-- Metric 2 -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+    >
+      <div class="flex justify-between items-start">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Trajets Complétés</span
+        >
+        <span class="material-symbols-outlined text-outline">route</span>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">1,248</div>
+        <div class="flex items-center gap-1 mt-1 text-success-green">
+          <span class="material-symbols-outlined text-[16px]">trending_up</span>
+          <span class="text-label-sm font-label-sm">+2.1% vs mois préc.</span>
+        </div>
+      </div>
+    </div>
+    <!-- Metric 3 -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+    >
+      <div class="flex justify-between items-start">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Taux de Remplissage</span
+        >
+        <span class="material-symbols-outlined text-outline">groups</span>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">76%</div>
+        <div class="flex items-center gap-1 mt-1 text-danger-red">
+          <span class="material-symbols-outlined text-[16px]">trending_down</span>
+          <span class="text-label-sm font-label-sm">-1.5% vs mois préc.</span>
+        </div>
+      </div>
+    </div>
+    <!-- Metric 4 -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+    >
+      <div class="flex justify-between items-start">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Incidents signalés</span
+        >
+        <span class="material-symbols-outlined text-outline">warning</span>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">14</div>
+        <div class="flex items-center gap-1 mt-1 text-outline">
+          <span class="material-symbols-outlined text-[16px]">horizontal_rule</span>
+          <span class="text-label-sm font-label-sm">Stable</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Charts Area (Asymmetric Layout) -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap mb-widget-gap">
+    <!-- Main Chart (Takes 2/3 width) -->
+    <div
+      class="lg:col-span-2 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col transition-shadow"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">
+          Performance des Trajets &amp; Revenus
+        </h3>
+        <button class="text-outline hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">more_vert</span>
+        </button>
+      </div>
+      <div class="flex-1 min-h-[300px] relative">
+        <app-revenue-chart></app-revenue-chart>
+      </div>
+    </div>
+    <!-- Secondary Chart (Takes 1/3 width) -->
+    <div
+      class="lg:col-span-1 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col transition-shadow"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Charges de Passagers</h3>
+        <button class="text-outline hover:text-primary transition-colors">
+          <span class="material-symbols-outlined">more_vert</span>
+        </button>
+      </div>
+      <div class="flex-1 min-h-[300px] relative flex justify-center items-center">
+        <app-revenue-chart></app-revenue-chart>
+      </div>
+    </div>
+  </div>
+  <!-- Saved Reports & Data Table -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap pb-8">
+    <!-- Saved Reports List -->
+    <div
+      class="lg:col-span-1 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle transition-shadow"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Rapports Sauvegardés</h3>
+        <button class="text-primary hover:text-primary-fixed-variant transition-colors p-1">
+          <span class="material-symbols-outlined">add</span>
+        </button>
+      </div>
+      <ul class="space-y-2">
+        <li
+          class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-bg cursor-pointer group transition-colors"
+        >
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-outline">description</span>
+            <div>
+              <p class="text-body-md font-body-md text-on-surface font-semibold">
+                Bilan Mensuel Q1
+              </p>
+              <p class="text-label-sm font-label-sm text-outline">Généré le 01 Mars</p>
+            </div>
+          </div>
+          <span
+            class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity"
+            >download</span
+          >
+        </li>
+        <li
+          class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-bg cursor-pointer group transition-colors"
+        >
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-outline">description</span>
+            <div>
+              <p class="text-body-md font-body-md text-on-surface font-semibold">
+                Analyse Flotte Nord
+              </p>
+              <p class="text-label-sm font-label-sm text-outline">Généré le 28 Fév</p>
+            </div>
+          </div>
+          <span
+            class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity"
+            >download</span
+          >
+        </li>
+        <li
+          class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-bg cursor-pointer group transition-colors"
+        >
+          <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-outline">description</span>
+            <div>
+              <p class="text-body-md font-body-md text-on-surface font-semibold">
+                Récap. Incidents
+              </p>
+              <p class="text-label-sm font-label-sm text-outline">Généré le 15 Fév</p>
+            </div>
+          </div>
+          <span
+            class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity"
+            >download</span
+          >
+        </li>
+      </ul>
+    </div>
+    <!-- Recent Data Table -->
+    <div
+      class="lg:col-span-2 bg-card-bg rounded-xl shadow-sm border border-border-subtle overflow-hidden flex flex-col transition-shadow"
+    >
+      <div
+        class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright"
+      >
+        <h3 class="text-headline-md font-headline-md text-on-surface">Activité Récente</h3>
+        <a class="text-label-sm font-label-sm text-primary hover:underline" href="#">Voir tout</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface border-b border-border-subtle">
+              <th
+                class="p-3 text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold"
+              >
+                ID Trajet
+              </th>
+              <th
+                class="p-3 text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold"
+              >
+                Route
+              </th>
+              <th
+                class="p-3 text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold"
+              >
+                Date
+              </th>
+              <th
+                class="p-3 text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold"
+              >
+                Statut
+              </th>
+              <th
+                class="p-3 text-label-sm font-label-sm text-outline uppercase tracking-wider font-semibold text-right"
+              >
+                Revenu
+              </th>
+            </tr>
+          </thead>
+          <tbody class="text-body-md font-body-md">
+            <tr class="border-b border-border-subtle hover:bg-surface-bg transition-colors">
+              <td class="p-3 text-mono-data font-mono-data text-on-surface-variant">TR-8492</td>
+              <td class="p-3 text-on-surface">Douala - Yaoundé</td>
+              <td class="p-3 text-on-surface-variant">Aujourd'hui, 08:30</td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green text-label-sm font-label-sm"
+                >
+                  Terminé
+                </span>
+              </td>
+              <td class="p-3 text-right font-mono-data text-on-surface">125K XAF</td>
+            </tr>
+            <tr class="border-b border-border-subtle hover:bg-surface-bg transition-colors">
+              <td class="p-3 text-mono-data font-mono-data text-on-surface-variant">TR-8491</td>
+              <td class="p-3 text-on-surface">Yaoundé - Bafoussam</td>
+              <td class="p-3 text-on-surface-variant">Aujourd'hui, 07:15</td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-warning-gold/10 text-warning-gold text-label-sm font-label-sm"
+                >
+                  En cours
+                </span>
+              </td>
+              <td class="p-3 text-right font-mono-data text-on-surface">85K XAF</td>
+            </tr>
+            <tr class="hover:bg-surface-bg transition-colors">
+              <td class="p-3 text-mono-data font-mono-data text-on-surface-variant">TR-8490</td>
+              <td class="p-3 text-on-surface">Douala - Kribi</td>
+              <td class="p-3 text-on-surface-variant">Hier, 14:00</td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-danger-red/10 text-danger-red text-label-sm font-label-sm"
+                >
+                  Annulé
+                </span>
+              </td>
+              <td class="p-3 text-right font-mono-data text-on-surface">0 XAF</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>

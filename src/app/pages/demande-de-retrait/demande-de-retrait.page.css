@@ -1,0 +1,4 @@
+/* Styles spécifiques pour la page Demande de Retrait */
+.modal-backdrop {
+  backdrop-filter: blur(5px);
+}

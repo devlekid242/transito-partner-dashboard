@@ -1,0 +1,117 @@
+<main class="bg-surface-bg text-on-surface font-body-md">
+  <div class="flex min-h-screen">
+    <div
+      class="hidden lg:flex lg:w-1/2 relative bg-primary items-center justify-center overflow-hidden"
+    >
+      <img
+        alt="Logistics background"
+        class="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK2gw9RciOgxmG1T-Zqj_lugrh9qpRguY_GlLn6UumV_VJAmXTvwyRTSpvmr5SBv7mKhFJcz_vkb-GG4uWwsrs5FnehUu7urpudJ6ODoPrt0VqffSJwOCsLjYNCX5RArT1cXXozUtuCYDa_BX2GGGGL70Zv9njLzentO25LaSvFrWsmkb7V9ltSRGLWQE0WDakBNoic2D8VH5TftAvjiorrYnBmvDpw8aPCi5ffK0X-QFkZxJ_hA_iBabTy94BMH5fwNhA332jczg"
+      />
+      <div class="relative z-10 text-center text-on-primary px-12 max-w-lg">
+        <h1 class="font-display-lg text-display-lg mb-6">Transito</h1>
+        <p class="font-headline-md text-headline-md font-light">
+          Le portail de référence pour vos opérations logistiques.
+        </p>
+      </div>
+    </div>
+    <div
+      class="w-full lg:w-1/2 flex items-center justify-center p-standard-padding md:p-container-margin"
+    >
+      <main class="w-full max-w-[440px] mx-auto">
+        <div class="text-center mb-8 lg:hidden">
+          <h1 class="font-headline-lg text-headline-lg md:hidden text-primary">Transito</h1>
+          <h1 class="hidden md:block font-display-lg text-display-lg text-primary mb-2">
+            Transito
+          </h1>
+          <p class="font-body-md text-body-md text-on-surface-variant">Portail Partenaire</p>
+        </div>
+        <div
+          class="bg-card-bg rounded-xl shadow-[0px_4px_12px_rgba(0,0,0,0.08)] p-8 md:p-10 border border-border-subtle"
+        >
+          <div class="mb-8 flex flex-col items-center">
+            <div
+              class="w-14 h-14 rounded-full bg-primary-container text-primary flex items-center justify-center mb-6"
+            >
+              <span class="material-symbols-outlined text-[28px]">lock_reset</span>
+            </div>
+            <h2 class="font-headline-lg text-headline-lg text-on-surface text-center mb-3">
+              Récupération de compte
+            </h2>
+            <p class="font-body-lg text-body-lg text-on-surface-variant text-center">
+              Entrez l'adresse e-mail associée à votre compte. Nous vous enverrons un lien sécurisé
+              pour réinitialiser votre mot de passe.
+            </p>
+          </div>
+          
+          <form (submit)="onSubmit($event)" class="space-y-6" method="POST">
+            <div>
+              <label class="block font-label-sm text-label-sm text-on-surface mb-2" for="email"
+                >Adresse E-mail</label
+              >
+              <div class="relative">
+                <div
+                  class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline"
+                >
+                  <span class="material-symbols-outlined text-[20px]">mail</span>
+                </div>
+                <input
+                  class="block w-full pl-11 pr-4 py-3 border border-border-subtle rounded-lg bg-surface-bright text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 font-body-md text-body-md placeholder-outline-variant"
+                  id="email"
+                  name="email"
+                  placeholder="nom@entreprise.com"
+                  required=""
+                  type="email"
+                />
+              </div>
+            </div>
+            
+            <button
+              class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-lg text-on-primary font-label-sm text-label-sm transition-colors duration-200 cursor-pointer active:scale-[0.98] shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
+              [disabled]="isLoading || isSent"
+              [class.bg-primary]="!isSent"
+              [class.hover:bg-primary-container]="!isSent"
+              [class.hover:text-on-primary-container]="!isSent"
+              [class.focus:ring-primary]="!isSent"
+              [class.bg-success-green]="isSent"
+              [class.hover:bg-success-green]="isSent"
+              [class.opacity-80]="isLoading || isSent"
+              [class.pointer-events-none]="isLoading || isSent"
+              type="submit"
+            >
+              @if (!isLoading && !isSent) {
+                Envoyer le lien de récupération
+              }
+              @if (isLoading) {
+                <span class="material-symbols-outlined animate-spin mr-2">refresh</span> Envoi en cours...
+              }
+              @if (isSent) {
+                <span class="material-symbols-outlined mr-2">check</span> Lien envoyé
+              }
+            </button>
+          </form>
+          
+          <div class="mt-8 text-center">
+            <a
+              class="inline-flex items-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm transition-colors duration-200"
+              href="#"
+            >
+              <span class="material-symbols-outlined text-[18px] mr-2">arrow_back</span>
+              Retour à la connexion
+            </a>
+          </div>
+        </div>
+        <div class="mt-8 text-center font-body-md text-body-md text-on-surface-variant">
+          <p>
+            Problème d'accès ?
+            <a
+              class="text-primary hover:text-primary-container font-semibold hover:underline transition-colors"
+              href="#"
+              >Contacter le support</a
+            >
+          </p>
+        </div>
+      </main>
+    </div>
+  </div>
+</main>

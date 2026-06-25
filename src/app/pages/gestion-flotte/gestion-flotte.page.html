@@ -1,0 +1,288 @@
+<main class="flex-1 overflow-y-auto p-standard-padding md:p-container-margin">
+  <div class="flex justify-between items-end mb-6">
+    <div>
+      <h1 class="text-display-lg font-display-lg text-on-surface">Fleet Inventory</h1>
+      <p class="text-body-md font-body-md text-outline">Manage and monitor your active fleet.</p>
+    </div>
+    <div class="flex gap-2">
+      <button
+        class="px-4 py-2 bg-card-bg border border-border-subtle rounded-lg text-label-sm font-label-sm font-bold text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2"
+      >
+        <span class="material-symbols-outlined text-[18px]">filter_list</span>
+        Filter
+      </button>
+    </div>
+  </div>
+  <!-- Stats Row -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-widget-gap mb-8">
+    <!-- Total Buses -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between"
+    >
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Total Fleet</span
+        >
+        <div
+          class="w-8 h-8 rounded-full bg-surface-container-low flex items-center justify-center text-primary"
+        >
+          <span class="material-symbols-outlined text-[18px]">directions_bus</span>
+        </div>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">15</div>
+        <div class="text-label-sm font-label-sm text-outline mt-1">Total registered vehicles</div>
+      </div>
+    </div>
+    <!-- Active Buses -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between relative overflow-hidden"
+    >
+      <div
+        class="absolute right-0 bottom-0 w-24 h-24 bg-success-green opacity-[0.05] rounded-tl-full pointer-events-none"
+      ></div>
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Active</span
+        >
+        <div
+          class="w-8 h-8 rounded-full bg-success-green/10 flex items-center justify-center text-success-green"
+        >
+          <span class="material-symbols-outlined text-[18px]">check_circle</span>
+        </div>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">12</div>
+        <div class="text-label-sm font-label-sm text-success-green flex items-center gap-1 mt-1">
+          <span class="material-symbols-outlined text-[14px]">trending_up</span>
+          80% Utilization
+        </div>
+      </div>
+    </div>
+    <!-- Maintenance -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between relative overflow-hidden"
+    >
+      <div
+        class="absolute right-0 bottom-0 w-24 h-24 bg-warning-gold opacity-[0.05] rounded-tl-full pointer-events-none"
+      ></div>
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >In Maintenance</span
+        >
+        <div
+          class="w-8 h-8 rounded-full bg-warning-gold/10 flex items-center justify-center text-warning-gold"
+        >
+          <span class="material-symbols-outlined text-[18px]">build</span>
+        </div>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">3</div>
+        <div class="text-label-sm font-label-sm text-outline mt-1">Scheduled service</div>
+      </div>
+    </div>
+  </div>
+  <!-- Bento Layout Content -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap">
+    <!-- Bus Grid (Takes up 2 columns on large screens) -->
+    <div class="lg:col-span-2 flex flex-col gap-4">
+      <h2 class="text-headline-md font-headline-md text-on-surface mb-2">Vehicle Roster</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Bus Card 1 (Active) -->
+        <div
+          class="bg-card-bg rounded-xl overflow-hidden shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle group hover:border-primary/50 transition-colors cursor-pointer"
+        >
+          <div class="h-32 bg-surface-variant relative">
+            <img
+              alt="Bus image"
+              class="w-full h-full object-cover"
+              data-alt="A modern, high-end intercity coach bus parked on a clean tarmac under bright, clear daylight. The bus is painted in a professional, sleek silver and corporate blue livery, matching the Transito brand colors. The setting is a well-maintained corporate transport depot with a minimalist, functional aesthetic. High-resolution, sharp focus on the vehicle's aerodynamic front profile."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyntYheFJryZMHS0ciJcN2vwoaUUVGZJaL5V0UPD_1s8C_xgdT-hnTFWAqS7QGs_vmbQ5cTF5vd9yp-50b56jhjut_6_wBK0-IbUw_BRi4k8bkC1RGINPb4tbOncoFtoP0NT1DnduwCmn8ZFI2rNH47MNxcPkSoqwAyG0Ss6-XbnJ0l-q9S6iWAbh5ft2-tf6fNR0ur4GYAWUjSl4H9ecM1-tBOhpg08NR5RfPjU-9mrTkHReiE7G-Tl9m9Ka7b3Uk_7XhJAfNERI"
+            />
+            <div
+              class="absolute top-2 right-2 px-2 py-1 bg-card-bg/90 backdrop-blur-sm rounded-full border border-border-subtle"
+            >
+              <span class="text-[10px] font-bold text-success-green flex items-center gap-1">
+                <div class="w-1.5 h-1.5 rounded-full bg-success-green"></div>
+                Active
+              </span>
+            </div>
+          </div>
+          <div class="p-standard-padding">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-mono-data font-mono-data font-bold text-on-surface"
+                >LT-1024-AB</span
+              >
+              <span class="text-label-sm font-label-sm text-outline">55 Seats</span>
+            </div>
+            <h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-3">
+              Volvo 9900 Coach
+            </h3>
+            <div class="flex items-center justify-between pt-3 border-t border-border-subtle">
+              <div class="flex items-center gap-2 text-outline">
+                <span class="material-symbols-outlined text-[16px]">speed</span>
+                <span class="text-mono-data font-mono-data">142,500 km</span>
+              </div>
+              <button
+                class="text-primary hover:text-surface-tint text-label-sm font-label-sm font-bold flex items-center"
+              >
+                Details
+                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Bus Card 2 (Active) -->
+        <div
+          class="bg-card-bg rounded-xl overflow-hidden shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle group hover:border-primary/50 transition-colors cursor-pointer"
+        >
+          <div class="h-32 bg-surface-variant relative">
+            <img
+              alt="Bus image"
+              class="w-full h-full object-cover"
+              data-alt="A pristine white luxury long-distance bus waiting at a modern transport hub on a sunny day. The vehicle features dark tinted windows and aerodynamic curves, reflecting a highly professional logistics operation. The background is slightly blurred to emphasize the bus, conveying reliability and corporate efficiency in a light-mode color palette."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGEl8_gwUJ06ylgoWb0wJ30MQpLaXG9a6vlc9XN5_zBom5sWnMrGlSBc1G7hY4McJfytURLt9OcP7-vpRckHKpbwiTiCOnePKfKGjSC8juREP45LJiSiJLkGZQklPc2AJMHMuikdR5fOt3Kh74XAnZ7ubjLsT2xTZ9cbH9OY-LX7O_GfyBoQwsQ5f03NO6K-wnP2hDcZVq1imCc0O81IWYmM9qe41RZUAsUylSvcMNlmEjrsaVGSc_zEebKvswhdGB664e3nobov8"
+            />
+            <div
+              class="absolute top-2 right-2 px-2 py-1 bg-card-bg/90 backdrop-blur-sm rounded-full border border-border-subtle"
+            >
+              <span class="text-[10px] font-bold text-success-green flex items-center gap-1">
+                <div class="w-1.5 h-1.5 rounded-full bg-success-green"></div>
+                Active
+              </span>
+            </div>
+          </div>
+          <div class="p-standard-padding">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-mono-data font-mono-data font-bold text-on-surface"
+                >CE-8831-XY</span
+              >
+              <span class="text-label-sm font-label-sm text-outline">50 Seats</span>
+            </div>
+            <h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-3">
+              Scania Touring HD
+            </h3>
+            <div class="flex items-center justify-between pt-3 border-t border-border-subtle">
+              <div class="flex items-center gap-2 text-outline">
+                <span class="material-symbols-outlined text-[16px]">speed</span>
+                <span class="text-mono-data font-mono-data">89,200 km</span>
+              </div>
+              <button
+                class="text-primary hover:text-surface-tint text-label-sm font-label-sm font-bold flex items-center"
+              >
+                Details
+                <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Bus Card 3 (Maintenance) -->
+        <div
+          class="bg-card-bg rounded-xl overflow-hidden shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle group hover:border-primary/50 transition-colors cursor-pointer opacity-90"
+        >
+          <div class="h-32 bg-surface-variant relative">
+            <img
+              alt="Bus image"
+              class="w-full h-full object-cover grayscale-[30%]"
+              data-alt="A large commercial transport bus parked inside a well-lit, immaculate mechanical workshop for routine maintenance. The setting implies operational rigor and technical precision, with subtle blue and grey workshop tones. The bus is the primary focus, conveying a sense of planned downtime rather than disrepair, fitting a professional fleet management context."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAVJS-1NEMZ6OsYvY2I52iDrq10g48Gdh5-tbRQi42Opx7j_VxXpD-FlEBrTZtj1goBt5p-1oCH_2rb7g4GIkHjebnwnkjM_HpcaXVC8i91cqOglNkWox28PUGvUMfX9_dIX45UhMNuHqp4Q-Af1D-Jy2PEJ7q_ExrL07WpyxpWzxnByHuDM8BKUp2YQbQpp6haoXZpxCn515uiqHbX_jCQPjWHhi7n9ggL7IQa93MRgykmAST6IMeo0_aUuGPZvESrKjGMTkP9XiY"
+            />
+            <div
+              class="absolute top-2 right-2 px-2 py-1 bg-card-bg/90 backdrop-blur-sm rounded-full border border-warning-gold/30"
+            >
+              <span class="text-[10px] font-bold text-warning-gold flex items-center gap-1">
+                <span class="material-symbols-outlined text-[12px]">build</span>
+                Maint
+              </span>
+            </div>
+          </div>
+          <div class="p-standard-padding">
+            <div class="flex justify-between items-center mb-1">
+              <span class="text-mono-data font-mono-data font-bold text-on-surface"
+                >NW-4402-QZ</span
+              >
+              <span class="text-label-sm font-label-sm text-outline">60 Seats</span>
+            </div>
+            <h3 class="text-body-lg font-body-lg font-bold text-on-surface mb-3">
+              Mercedes Tourismo
+            </h3>
+            <div class="flex items-center justify-between pt-3 border-t border-border-subtle">
+              <div class="flex items-center gap-2 text-warning-gold">
+                <span class="material-symbols-outlined text-[16px]">schedule</span>
+                <span class="text-label-sm font-label-sm">Est. return: Tomorrow</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button
+        class="mt-2 w-full py-3 border border-border-subtle rounded-xl text-label-sm font-label-sm font-bold text-primary hover:bg-surface-container-low transition-colors"
+      >
+        View All Vehicles
+      </button>
+    </div>
+    <!-- Maintenance Timeline (Side Column) -->
+    <div class="lg:col-span-1">
+      <div
+        class="bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle h-full flex flex-col"
+      >
+        <div
+          class="p-standard-padding border-b border-border-subtle bg-surface-container-lowest rounded-t-xl"
+        >
+          <h2 class="text-headline-md font-headline-md text-on-surface flex items-center gap-2">
+            <span class="material-symbols-outlined text-outline">calendar_month</span>
+            Maintenance Schedule
+          </h2>
+        </div>
+        <div class="p-standard-padding flex-1 overflow-y-auto">
+          <div class="relative border-l-2 border-surface-container-high ml-3 space-y-6 pb-4">
+            <!-- Timeline Item 1 -->
+            <div class="relative pl-6">
+              <div
+                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-warning-gold"
+              ></div>
+              <div class="text-label-sm font-label-sm text-outline mb-1">Today, 09:00 AM</div>
+              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
+                <div class="font-bold text-body-md font-body-md text-on-surface">NW-4402-QZ</div>
+                <div class="text-label-sm font-label-sm text-outline">
+                  Brake pad replacement (Routine)
+                </div>
+              </div>
+            </div>
+            <!-- Timeline Item 2 -->
+            <div class="relative pl-6">
+              <div
+                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-warning-gold"
+              ></div>
+              <div class="text-label-sm font-label-sm text-outline mb-1">Tomorrow, 14:00 PM</div>
+              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
+                <div class="font-bold text-body-md font-body-md text-on-surface">LT-1024-AB</div>
+                <div class="text-label-sm font-label-sm text-outline">
+                  Oil change &amp; 150k Inspection
+                </div>
+              </div>
+            </div>
+            <!-- Timeline Item 3 -->
+            <div class="relative pl-6">
+              <div
+                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-surface-variant"
+              ></div>
+              <div class="text-label-sm font-label-sm text-outline mb-1">Oct 24, 08:00 AM</div>
+              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
+                <div class="font-bold text-body-md font-body-md text-on-surface">SW-7719-OP</div>
+                <div class="text-label-sm font-label-sm text-outline">AC System Calibration</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-standard-padding border-t border-border-subtle">
+          <button
+            class="w-full py-2 bg-primary-container text-on-primary-container rounded-lg text-label-sm font-label-sm font-bold hover:bg-primary hover:text-on-primary transition-colors"
+          >
+            Schedule Service
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

@@ -1,0 +1,280 @@
+<!-- Main Content -->
+<main class="p-4 p-container-margin max-w-desktop-max-width mx-auto">
+  <div class="mb-8 flex flex-col gap-2">
+    <div class="flex items-center text-outline font-label-sm text-label-sm gap-2">
+      <span>Staff</span>
+      <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+      <span class="text-primary">Inviter un Utilisateur</span>
+    </div>
+    <h1 class="font-headline-lg text-headline-lg lg:text-display-lg font-bold text-on-surface">
+      Inviter un Utilisateur
+    </h1>
+    <p class="text-on-surface-variant font-body-lg text-body-lg">
+      Ajoutez un nouveau membre à votre équipe et configurez ses accès.
+    </p>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-widget-gap">
+    <!-- Form Card -->
+    <div class="lg:col-span-8 bg-card-bg rounded-xl shadow-sm border border-subtle p-6">
+      <form class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Email Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="email"
+              >Adresse Email <span class="text-danger-red">*</span></label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >mail</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="email"
+                placeholder="nom@entreprise.com"
+                type="email"
+              />
+            </div>
+          </div>
+          <!-- Phone Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="phone"
+              >Numéro de Téléphone</label
+            >
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >phone</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="phone"
+                placeholder="+237 6XX XXX XXX"
+                type="tel"
+              />
+            </div>
+          </div>
+        </div>
+        <!-- Role Selection -->
+        <div class="space-y-3">
+          <label class="font-label-sm text-label-sm text-on-surface block"
+            >Rôle de l'Utilisateur <span class="text-danger-red">*</span></label
+          >
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Admin Role -->
+            <label class="relative cursor-pointer">
+              <input class="peer sr-only" name="role" type="radio" value="admin" />
+              <div
+                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
+              >
+                <span class="material-symbols-outlined text-primary text-[32px] mb-1"
+                  >admin_panel_settings</span
+                >
+                <span class="font-headline-md text-headline-md text-on-surface">Admin</span>
+                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
+                  >Accès total au système</span
+                >
+              </div>
+            </label>
+            <!-- Manager Role -->
+            <label class="relative cursor-pointer">
+              <input checked="" class="peer sr-only" name="role" type="radio" value="manager" />
+              <div
+                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2 ring-2 ring-primary"
+              >
+                <span
+                  class="material-symbols-outlined text-primary text-[32px] mb-1"
+                  style="font-variation-settings: 'FILL' 1"
+                  >manage_accounts</span
+                >
+                <span class="font-headline-md text-headline-md text-on-surface">Manager</span>
+                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
+                  >Gestion flotte et trajets</span
+                >
+              </div>
+            </label>
+            <!-- Staff Role -->
+            <label class="relative cursor-pointer">
+              <input class="peer sr-only" name="role" type="radio" value="staff" />
+              <div
+                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
+              >
+                <span class="material-symbols-outlined text-primary text-[32px] mb-1">person</span>
+                <span class="font-headline-md text-headline-md text-on-surface">Staff</span>
+                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
+                  >Accès limité (lecture)</span
+                >
+              </div>
+            </label>
+          </div>
+        </div>
+        <!-- Permissions Matrix -->
+        <div class="space-y-4 pt-4 border-t border-subtle">
+          <label class="font-label-sm text-label-sm text-on-surface block"
+            >Permissions Spécifiques</label
+          >
+          <div class="bg-surface rounded-lg border border-subtle overflow-hidden">
+            <div
+              class="flex items-center justify-between p-3 border-b border-subtle hover:bg-surface-container transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-outline">local_shipping</span>
+                <div>
+                  <div class="font-body-md text-body-md font-semibold text-on-surface">
+                    Gestion de la Flotte
+                  </div>
+                  <div class="font-label-sm text-label-sm text-outline font-normal">
+                    Ajouter, modifier ou supprimer des véhicules
+                  </div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input checked="" class="sr-only peer" type="checkbox" value="" />
+                <div
+                  class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+                ></div>
+              </label>
+            </div>
+            <div
+              class="flex items-center justify-between p-3 border-b border-subtle hover:bg-surface-container transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-outline">payments</span>
+                <div>
+                  <div class="font-body-md text-body-md font-semibold text-on-surface">
+                    Accès Financier
+                  </div>
+                  <div class="font-label-sm text-label-sm text-outline font-normal">
+                    Voir les revenus et valider les paiements
+                  </div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input class="sr-only peer" type="checkbox" value="" />
+                <div
+                  class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+                ></div>
+              </label>
+            </div>
+            <div
+              class="flex items-center justify-between p-3 hover:bg-surface-container transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-outline">analytics</span>
+                <div>
+                  <div class="font-body-md text-body-md font-semibold text-on-surface">
+                    Rapports &amp; Analytiques
+                  </div>
+                  <div class="font-label-sm text-label-sm text-outline font-normal">
+                    Exporter les données de performance
+                  </div>
+                </div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input checked="" class="sr-only peer" type="checkbox" value="" />
+                <div
+                  class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
+                ></div>
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="pt-6 flex justify-end gap-4 border-t border-subtle">
+          <button
+            class="px-4 py-2 font-label-sm text-label-sm text-on-surface-variant hover:bg-surface-container rounded-lg transition-colors border border-transparent hover:border-subtle"
+            type="button"
+          >
+            Annuler
+          </button>
+          <button
+            class="px-6 py-2 bg-primary text-on-primary font-label-sm text-label-sm rounded-lg hover:bg-surface-tint transition-colors shadow-sm flex items-center gap-2"
+            type="submit"
+          >
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            Envoyer l'Invitation
+          </button>
+        </div>
+      </form>
+    </div>
+    <!-- Info Side Card -->
+    <div class="lg:col-span-4 flex flex-col gap-widget-gap">
+      <div class="bg-surface-container-low rounded-xl p-6 border border-subtle">
+        <div class="flex items-center gap-3 mb-4 text-secondary">
+          <span class="material-symbols-outlined">info</span>
+          <h3 class="font-headline-md text-headline-md font-semibold">Processus d'Invitation</h3>
+        </div>
+        <ul class="space-y-4 font-body-md text-body-md text-on-surface-variant">
+          <li class="flex items-start gap-3">
+            <div
+              class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center shrink-0 font-label-sm text-label-sm"
+            >
+              1
+            </div>
+            <p>Remplissez les informations de base et sélectionnez le rôle approprié.</p>
+          </li>
+          <li class="flex items-start gap-3">
+            <div
+              class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center shrink-0 font-label-sm text-label-sm"
+            >
+              2
+            </div>
+            <p>Un email contenant un lien sécurisé sera envoyé à l'adresse indiquée.</p>
+          </li>
+          <li class="flex items-start gap-3">
+            <div
+              class="w-6 h-6 rounded-full bg-primary-fixed text-primary flex items-center justify-center shrink-0 font-label-sm text-label-sm"
+            >
+              3
+            </div>
+            <p>
+              L'utilisateur aura 48 heures pour créer son mot de passe et finaliser son inscription.
+            </p>
+          </li>
+        </ul>
+      </div>
+      <div class="bg-card-bg rounded-xl p-6 border border-subtle shadow-sm">
+        <h4
+          class="font-label-sm text-label-sm text-on-surface mb-3 uppercase tracking-wider text-outline"
+        >
+          Invitations Récentes
+        </h4>
+        <div class="space-y-3">
+          <div
+            class="flex items-center justify-between p-2 hover:bg-surface rounded-lg transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm"
+              >
+                MJ
+              </div>
+              <div>
+                <div class="font-body-md text-body-md text-on-surface">marc.j@example.com</div>
+                <div class="font-label-sm text-label-sm text-warning-gold">En attente</div>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-outline text-[18px]">schedule</span>
+          </div>
+          <div
+            class="flex items-center justify-between p-2 hover:bg-surface rounded-lg transition-colors"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant font-label-sm text-label-sm"
+              >
+                SL
+              </div>
+              <div>
+                <div class="font-body-md text-body-md text-on-surface">s.leclerc@example.com</div>
+                <div class="font-label-sm text-label-sm text-success-green">Acceptée hier</div>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-success-green text-[18px]"
+              >check_circle</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

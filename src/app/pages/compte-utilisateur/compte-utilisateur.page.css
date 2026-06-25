@@ -1,0 +1,11 @@
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: #0056c4;
+}
+.toggle-checkbox:checked + .toggle-label {
+  background-color: #0056c4;
+}
+.toggle-checkbox:checked + .toggle-label:after {
+  transform: translateX(100%);
+  border-color: white;
+}

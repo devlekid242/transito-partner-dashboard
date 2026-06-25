@@ -1,0 +1,178 @@
+<main class="flex-1 p-4 min-h-screen flex flex-col">
+  <!-- Header Section -->
+  <div class="px-standard-padding md:px-container-margin py-8">
+    <h1 class="font-display-lg text-display-lg text-on-surface">Ajouter un Point de Vente</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-2xl">
+      Enregistrez un nouveau point de vente pour étendre votre réseau de distribution et assigner un
+      gestionnaire responsable.
+    </p>
+  </div>
+  <!-- Form Canvas -->
+  <div class="flex-1 p-standard-padding md:p-container-margin bg-surface-bg">
+    <div class="max-w-desktop-max-width mx-auto grid grid-cols-1 xl:grid-cols-12 gap-widget-gap">
+      <!-- Main Form Area -->
+      <div class="xl:col-span-8 space-y-widget-gap">
+        <form
+          class="bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-6 md:p-8"
+        >
+          <div class="mb-8 border-b border-border-subtle pb-4">
+            <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-primary">storefront</span>
+              Informations du Point de Vente
+            </h2>
+            <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+              Détails principaux d'identification de la succursale.
+            </p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Nom du Point -->
+            <div class="md:col-span-2">
+              <label
+                class="block font-label-sm text-label-sm text-on-surface mb-1.5"
+                for="nom_point"
+                >Nom du Point de Vente *</label
+              >
+              <input
+                class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow font-body-md text-body-md placeholder-outline"
+                id="nom_point"
+                placeholder="Ex: Agence Centrale Douala"
+                type="text"
+              />
+            </div>
+            <!-- Emplacement/Adresse -->
+            <div class="md:col-span-2">
+              <label class="block font-label-sm text-label-sm text-on-surface mb-1.5" for="adresse"
+                >Emplacement / Adresse *</label
+              >
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant"
+                  >location_on</span
+                >
+                <input
+                  class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow font-body-md text-body-md placeholder-outline"
+                  id="adresse"
+                  placeholder="Adresse complète ou repère"
+                  type="text"
+                />
+              </div>
+            </div>
+            <!-- Téléphone -->
+            <div>
+              <label
+                class="block font-label-sm text-label-sm text-on-surface mb-1.5"
+                for="telephone"
+                >Téléphone de Contact *</label
+              >
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant"
+                  >phone</span
+                >
+                <input
+                  class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow font-body-md text-body-md placeholder-outline"
+                  id="telephone"
+                  placeholder="+237 XXXXXXXX"
+                  type="tel"
+                />
+              </div>
+            </div>
+            <!-- Manager -->
+            <div>
+              <label class="block font-label-sm text-label-sm text-on-surface mb-1.5" for="manager"
+                >Gestionnaire Assigné *</label
+              >
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant"
+                  >person</span
+                >
+                <select
+                  class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg pl-10 pr-10 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow font-body-md text-body-md appearance-none"
+                  id="manager"
+                >
+                  <option disabled="" selected="" value="">Sélectionner un employé</option>
+                  <option value="1">Jean Dupont</option>
+                  <option value="2">Marie Curie</option>
+                  <option value="3">Paul Atreides</option>
+                </select>
+                <span
+                  class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none"
+                  >expand_more</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Action Area -->
+          <div class="mt-10 pt-6 border-t border-border-subtle flex items-center justify-end gap-4">
+            <button
+              class="px-6 py-2.5 border border-primary text-primary rounded-lg font-label-sm text-label-sm hover:bg-surface-container-low transition-colors active:scale-95"
+              type="button"
+            >
+              Annuler
+            </button>
+            <button
+              class="px-6 py-2.5 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm shadow-sm hover:bg-surface-tint transition-colors active:scale-95 flex items-center gap-2"
+              type="submit"
+            >
+              <span class="material-symbols-outlined text-[18px]">save</span>
+              Enregistrer le Point
+            </button>
+          </div>
+        </form>
+      </div>
+      <!-- Contextual Side Panel -->
+      <div class="xl:col-span-4 space-y-widget-gap hidden md:block">
+        <!-- Map Preview Placeholder -->
+        <div
+          class="bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle overflow-hidden flex flex-col h-[300px]"
+        >
+          <div class="p-4 border-b border-border-subtle bg-surface-container-lowest">
+            <h3 class="font-label-sm text-label-sm text-on-surface flex items-center gap-2">
+              <span class="material-symbols-outlined text-outline">map</span>
+              Aperçu Géographique
+            </h3>
+          </div>
+          <div class="flex-1 bg-surface-container-low relative">
+            <!-- Using a subtle pattern to indicate a map area since we shouldn't use raw map images without specific prompts if not requested, but keeping it clean -->
+            <div
+              class="absolute inset-0 bg-[radial-gradient(#c2c6d7_1px,transparent_1px)] [background-size:16px_16px] opacity-30"
+            ></div>
+            <div
+              class="absolute inset-0 flex items-center justify-center flex-col text-on-surface-variant p-6 text-center"
+            >
+              <span class="material-symbols-outlined text-4xl mb-2 text-outline-variant"
+                >location_searching</span
+              >
+              <p class="font-body-md text-body-md">
+                Saisissez une adresse pour visualiser l'emplacement sur la carte.
+              </p>
+            </div>
+          </div>
+        </div>
+        <!-- Guidance Widget -->
+        <div class="bg-surface-container-low rounded-xl border border-surface-variant p-6">
+          <h3 class="font-headline-md text-headline-md text-on-surface mb-3">
+            Directives Opérationnelles
+          </h3>
+          <ul class="space-y-3 font-body-md text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5"
+                >check_circle</span
+              >
+              <span
+                >Assurez-vous que le gestionnaire assigné a complété sa formation de caisse.</span
+              >
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5"
+                >info</span
+              >
+              <span>L'adresse doit être précise pour faciliter les livraisons de la flotte.</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

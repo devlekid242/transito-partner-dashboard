@@ -1,0 +1,17 @@
+<div class="bg-surface-bg text-on-surface font-body-md antialiased min-h-screen flex">
+  <!-- Sidebar -->
+  <app-sidebar></app-sidebar>
+  
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col">
+    <!-- Header -->
+    <app-header></app-header>
+    
+    <!-- Page Content -->
+    <div class="flex-1 lg:ml-[280px] flex flex-col min-w-0">
+      <ng-content>
+        <router-outlet />
+      </ng-content>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,50 @@
+<header
+  class="sticky top-0 z-40 flex justify-between items-center w-full px-container-margin py-dense-padding bg-surface-bright shadow-sm border-b-0 h-[64px]"
+>
+  <div class="flex items-center gap-4">
+    <button
+      class="lg:hidden text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full cursor-pointer active:opacity-80"
+    >
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+    <div class="font-headline-md text-headline-md font-bold text-primary hidden md:block">
+      <a routerLink="/dashboard" class="text-primary hover:underline">Transito Partner</a>
+    </div>
+  </div>
+  <div class="flex-1 max-w-md mx-4">
+    <div class="relative flex items-center">
+      <span class="material-symbols-outlined absolute left-3 text-on-surface-variant">search</span>
+      <input
+        class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-subtle focus:border-primary focus:ring-1 focus:ring-primary rounded-full text-body-md font-body-md outline-none transition-colors"
+        placeholder="Rechercher trajets, bus ou transactions..."
+        type="text"
+      />
+    </div>
+  </div>
+  <div class="flex items-center gap-2">
+    <button
+      class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full cursor-pointer active:opacity-80 relative"
+      routerLink="/notifications"
+    >
+      <span class="material-symbols-outlined">notifications</span>
+      <span class="absolute top-1 right-1 w-2 h-2 bg-danger-red rounded-full"></span>
+    </button>
+    <button
+      class="p-2 text-on-surface-variant hover:bg-surface-container-low transition-colors rounded-full cursor-pointer active:opacity-80"
+      routerLink="/support"
+    >
+      <span class="material-symbols-outlined">help</span>
+    </button>
+    <div
+      class="w-8 h-8 ml-2 rounded-full bg-surface-container-highest overflow-hidden cursor-pointer active:opacity-80 border border-border-subtle"
+      routerLink="/compte-utilisateur"
+    >
+      <img
+        alt="Partner profile avatar"
+        class="w-full h-full object-cover"
+        data-alt="A professional headshot of a modern corporate executive. The subject is wearing a crisp white shirt and a dark tailored blazer, set against a blurred, bright office background with subtle blue and white tones. The lighting is soft and flattering, conveying trustworthiness and competence."
+        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRjnWdkK_FFmLyclp5df4cCZcI2YiUi65U5vXkI-2wo39nQI-zz5uWwvZLdYdXkuWX5CavfQz98UA8kGMRG4CKjk4Yk-VFp24SsH8-UWD4_TIit9m3DePDj5YPJr5kb8OTRzwM0-x2VsRtlx3nJVbYAbHBFGLMbMOnId74L1VfLX9oADarYAAL3ELE-Tzyy8Cbd8dnU7QylWwNRcIO6HewatggDGNpbddLXCm3cd-DsAnXr7Z63c4RKK7Bt0CkPyEbMymPao6MMW8"
+      />
+    </div>
+  </div>
+</header>

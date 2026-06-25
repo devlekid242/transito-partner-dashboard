@@ -1,0 +1,179 @@
+<div class="p-4 p-container-margin max-w-desktop-max-width mx-auto w-full">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-2">Paramètres du Compte</h1>
+    <p class="text-body-md font-body-md text-on-surface-variant">
+      Gérez les préférences de votre compte et les paramètres de sécurité.
+    </p>
+  </div>
+  <!-- Tabs -->
+  <div class="flex border-b border-outline-variant mb-8 overflow-x-auto">
+    <button
+      class="px-6 py-3 text-body-md font-body-md font-bold text-primary border-b-2 border-primary whitespace-nowrap"
+    >
+      Profil
+    </button>
+    <button
+      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+    >
+      Sécurité
+    </button>
+    <button
+      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+    >
+      Notifications
+    </button>
+    <button
+      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+    >
+      Préférences
+    </button>
+  </div>
+  <!-- Bento Grid Layout for Settings -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-widget-gap">
+    <!-- Profile Information Column -->
+    <div class="lg:col-span-8 space-y-widget-gap">
+      <!-- Basic Info Card -->
+      <div class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6">
+        <h3 class="text-headline-md font-headline-md text-on-surface mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">person</span>
+          Informations Personnelles
+        </h3>
+        <form class="space-y-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+                >Nom Complet</label
+              >
+              <input
+                class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md font-body-md transition-colors"
+                type="text"
+                value="Jean Dupont"
+              />
+            </div>
+            <div>
+              <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+                >Adresse Email</label
+              >
+              <input
+                class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md font-body-md transition-colors"
+                type="email"
+                value="jean.dupont@transito.com"
+              />
+            </div>
+            <div>
+              <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+                >Numéro de Téléphone</label
+              >
+              <input
+                class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md font-body-md transition-colors"
+                type="tel"
+                value="+33 6 12 34 56 78"
+              />
+            </div>
+            <div>
+              <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+                >Rôle</label
+              >
+              <input
+                class="w-full bg-surface-variant text-on-surface-variant border border-border-subtle rounded-lg px-4 py-2 text-body-md font-body-md cursor-not-allowed"
+                disabled=""
+                type="text"
+                value="Administrateur Flotte"
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- Side Column -->
+    <div class="lg:col-span-4 space-y-widget-gap">
+      <!-- Profile Picture Card -->
+      <div
+        class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6 flex flex-col items-center text-center"
+      >
+        <div class="relative w-32 h-32 mb-4 group cursor-pointer">
+          <img
+            alt="Profile Picture"
+            class="w-full h-full rounded-full object-cover border-4 border-surface-container"
+            data-alt="A professional headshot of a modern corporate logistics manager in a well-lit office. The lighting is high-key and bright, adhering to a clean, light-mode aesthetic. The man is wearing a sharp, dark blue blazer over a crisp white shirt, exuding authority and trust. The background is slightly blurred showing subtle hints of a modern tech-forward workspace. The overall color palette is dominated by calm blues and clean whites."
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRuB5snCectrX4tnjJpaKunziUsKUtR96NNH3PTPpDnHRpTpjCEKdQv1Ee2R8UOTn6x_2nKYe-bmIwlhlzncrOQz_zENQH_J9jN4hNOobe4KUGMbNy4He8KWvgPzgY_68ydPz-3aQP0U6MZC9XT0-w1BvlumVG9Zm17i55eP8OnU5XqV8nkc7hD9cTVGp7rJTZHpQZ4dPXZ6mPepiHJqzdqFwPOxh2R9KoKrQq58EaF_gGKXSVoj6k-rW4StcoNfNUS8M8IBXdkuM"
+          />
+          <div
+            class="absolute inset-0 bg-on-background bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <span class="material-symbols-outlined text-on-primary">photo_camera</span>
+          </div>
+        </div>
+        <h4 class="text-body-lg font-body-lg font-bold text-on-surface mb-1">Photo de Profil</h4>
+        <p class="text-label-sm font-label-sm text-on-surface-variant mb-4">
+          JPG, GIF ou PNG. Max 2MB.
+        </p>
+        <button
+          class="w-full py-2 px-4 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-bold"
+        >
+          Changer la photo
+        </button>
+      </div>
+      <div class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6">
+        <h3 class="text-body-lg font-bold text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">translate</span>Préférences
+        </h3>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+              >Langue</label
+            ><select
+              class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md font-body-md"
+            >
+              <option selected="">Français</option>
+              <option>English</option>
+              <option>Español</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
+              >Thème</label
+            >
+            <div class="flex gap-2">
+              <button
+                class="flex-1 py-2 px-3 border border-primary bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-bold"
+              >
+                Clair</button
+              ><button
+                class="flex-1 py-2 px-3 border border-outline text-on-surface-variant rounded-lg text-label-sm font-bold hover:bg-surface-container"
+              >
+                Sombre
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Save Action Banner -->
+  <div
+    class="mt-8 bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6 flex justify-between items-center sticky bottom-6 z-30"
+  >
+    <div>
+      <h4 class="text-body-lg font-body-lg font-bold text-on-surface">
+        Modifications non enregistrées
+      </h4>
+      <p class="text-body-md font-body-md text-on-surface-variant">
+        N'oubliez pas de sauvegarder vos changements.
+      </p>
+    </div>
+    <div class="flex gap-4">
+      <button
+        class="px-6 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-bold"
+      >
+        Annuler
+      </button>
+      <button
+        class="px-6 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors text-body-md font-body-md font-bold shadow-sm"
+      >
+        Enregistrer
+      </button>
+    </div>
+  </div>
+</div>

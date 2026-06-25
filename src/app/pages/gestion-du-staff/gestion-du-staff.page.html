@@ -1,0 +1,264 @@
+<main class="flex-1 overflow-y-auto p-standard-padding md:p-container-margin">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <div>
+      <h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface">
+        Staff Management
+      </h2>
+      <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+        Manage user access and roles for your logistics operations.
+      </p>
+    </div>
+    <button
+      class="bg-primary hover:bg-surface-tint text-on-primary px-4 py-2 rounded-lg font-label-sm text-label-sm uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm"
+    >
+      <span class="material-symbols-outlined">person_add</span>
+      Invite New User
+    </button>
+  </div>
+  <div class="grid grid-cols-1 xl:grid-cols-4 gap-widget-gap">
+    <!-- Role Distribution (Side Card) -->
+    <div class="xl:col-span-1 order-2 xl:order-1 flex flex-col gap-widget-gap">
+      <div
+        class="bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] p-standard-padding border border-border-subtle"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Role Distribution</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="flex justify-between items-end mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Admin</span>
+              <span class="font-mono-data text-mono-data text-on-surface">2</span>
+            </div>
+            <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+              <div class="bg-primary h-2 rounded-full" style="width: 20%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-end mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Manager</span>
+              <span class="font-mono-data text-mono-data text-on-surface">3</span>
+            </div>
+            <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+              <div class="bg-secondary h-2 rounded-full" style="width: 30%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between items-end mb-1">
+              <span class="font-label-sm text-label-sm text-on-surface-variant">Staff</span>
+              <span class="font-mono-data text-mono-data text-on-surface">5</span>
+            </div>
+            <div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+              <div class="bg-outline h-2 rounded-full" style="width: 50%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Staff Table (Main Content) -->
+    <div
+      class="xl:col-span-3 order-1 xl:order-2 bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle overflow-hidden flex flex-col"
+    >
+      <div
+        class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-surface">Active Personnel</h3>
+        <div class="flex gap-2">
+          <button
+            class="p-1.5 text-on-surface-variant hover:bg-surface-container-highest rounded border border-border-subtle"
+          >
+            <span class="material-symbols-outlined text-sm">filter_list</span>
+          </button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-low border-b border-border-subtle">
+              <th
+                class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold"
+              >
+                User
+              </th>
+              <th
+                class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold"
+              >
+                Role
+              </th>
+              <th
+                class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold"
+              >
+                Status
+              </th>
+              <th
+                class="p-3 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold text-right"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border-subtle font-body-md text-body-md">
+            <!-- Row 1 -->
+            <tr class="hover:bg-surface-container-low transition-colors">
+              <td class="p-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full bg-primary-container text-primary font-bold flex items-center justify-center text-xs"
+                  >
+                    JD
+                  </div>
+                  <div>
+                    <div class="font-semibold text-on-surface">John Doe</div>
+                    <div class="text-xs text-on-surface-variant font-mono-data">
+                      john.doe@transito.com
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-block px-2 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-semibold"
+                  >Admin</span
+                >
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success-green/10 text-success-green text-xs font-semibold"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-success-green"></span>
+                  Active
+                </span>
+              </td>
+              <td class="p-3 text-right">
+                <div class="flex justify-end gap-2">
+                  <button
+                    class="text-on-surface-variant hover:text-primary transition-colors p-1"
+                    title="Edit"
+                  >
+                    <span class="material-symbols-outlined text-base">edit</span>
+                  </button>
+                  <button
+                    class="text-on-surface-variant hover:text-danger-red transition-colors p-1"
+                    title="Deactivate"
+                  >
+                    <span class="material-symbols-outlined text-base">block</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 2 -->
+            <tr class="hover:bg-surface-container-low transition-colors bg-surface-bg/30">
+              <td class="p-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container font-bold flex items-center justify-center text-xs"
+                  >
+                    SM
+                  </div>
+                  <div>
+                    <div class="font-semibold text-on-surface">Sarah Miller</div>
+                    <div class="text-xs text-on-surface-variant font-mono-data">
+                      sarah.m@transito.com
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-block px-2 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-semibold"
+                  >Manager</span
+                >
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success-green/10 text-success-green text-xs font-semibold"
+                >
+                  <span class="w-1.5 h-1.5 rounded-full bg-success-green"></span>
+                  Active
+                </span>
+              </td>
+              <td class="p-3 text-right">
+                <div class="flex justify-end gap-2">
+                  <button
+                    class="text-on-surface-variant hover:text-primary transition-colors p-1"
+                    title="Edit"
+                  >
+                    <span class="material-symbols-outlined text-base">edit</span>
+                  </button>
+                  <button
+                    class="text-on-surface-variant hover:text-danger-red transition-colors p-1"
+                    title="Deactivate"
+                  >
+                    <span class="material-symbols-outlined text-base">block</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <!-- Row 3 -->
+            <tr class="hover:bg-surface-container-low transition-colors">
+              <td class="p-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-8 h-8 rounded-full bg-surface-variant text-on-surface-variant font-bold flex items-center justify-center text-xs border border-dashed border-outline"
+                  >
+                    ?
+                  </div>
+                  <div>
+                    <div class="font-semibold text-on-surface italic text-on-surface-variant">
+                      Pending Acceptance
+                    </div>
+                    <div class="text-xs text-on-surface-variant font-mono-data">
+                      mike.williams@transito.com
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-block px-2 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-semibold"
+                  >Staff</span
+                >
+              </td>
+              <td class="p-3">
+                <span
+                  class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-warning-gold/10 text-warning-gold text-xs font-semibold"
+                >
+                  <span class="material-symbols-outlined text-[10px]">mail</span>
+                  Invited
+                </span>
+              </td>
+              <td class="p-3 text-right">
+                <div class="flex justify-end gap-2">
+                  <button
+                    class="text-on-surface-variant hover:text-primary transition-colors p-1"
+                    title="Resend Invite"
+                  >
+                    <span class="material-symbols-outlined text-base">refresh</span>
+                  </button>
+                  <button
+                    class="text-on-surface-variant hover:text-danger-red transition-colors p-1"
+                    title="Cancel Invite"
+                  >
+                    <span class="material-symbols-outlined text-base">close</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="p-3 border-t border-border-subtle bg-surface-bright flex justify-between items-center text-xs text-on-surface-variant"
+      >
+        <span class="">Showing 1 to 3 of 10 users</span>
+        <div class="flex gap-1">
+          <button class="p-1 rounded hover:bg-surface-container-highest disabled:opacity-50">
+            <span class="material-symbols-outlined text-sm">chevron_left</span>
+          </button>
+          <button class="p-1 rounded hover:bg-surface-container-highest">
+            <span class="material-symbols-outlined text-sm">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>

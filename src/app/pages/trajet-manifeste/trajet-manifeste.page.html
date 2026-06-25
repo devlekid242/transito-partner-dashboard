@@ -1,0 +1,444 @@
+<!-- Canvas -->
+<div class="flex-1 p-4 p-container-margin lg:p-8 overflow-y-auto">
+    <!-- Page Header -->
+  <div class="mb-8">
+    <h2 class="font-display-lg text-display-lg text-on-background mb-2">Manifeste de voyage</h2>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">
+      Aperçu sur les manifeste et detail de voyage.
+    </p>
+  </div>
+  <!-- Trip Header Banner -->
+  <div class="mb-widget-gap glass-card rounded-xl overflow-hidden relative">
+    <div class="h-2 bg-primary w-full"></div>
+    <div
+      class="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative z-10"
+    >
+      <div class="flex items-start gap-4">
+        <div
+          class="w-12 h-12 rounded-lg bg-surface-container-high flex items-center justify-center text-primary flex-shrink-0"
+        >
+          <span class="material-symbols-outlined text-[32px]">route</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span
+              class="px-2 py-0.5 rounded-full bg-success-green/20 text-success-green font-label-sm text-label-sm border border-success-green/30"
+              >EN COURS</span
+            >
+            <span class="font-mono-data text-mono-data text-outline">TRP-8492-X</span>
+          </div>
+          <h2
+            class="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-3"
+          >
+            Douala
+            <span class="material-symbols-outlined text-outline">arrow_forward</span>
+            Yaoundé
+          </h2>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-1 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+            14 Nov 2023, 08:00
+          </p>
+        </div>
+      </div>
+      <div class="flex gap-3 w-full md:w-auto">
+        <button
+          class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-primary text-primary rounded-lg font-label-sm text-label-sm hover:bg-primary/5 transition-colors"
+        >
+          <span class="material-symbols-outlined text-[20px]">print</span>
+          Imprimer Manifeste
+        </button>
+        <button
+          class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm shadow-sm hover:opacity-90 transition-opacity"
+        >
+          <span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+          Scanner Billet
+        </button>
+      </div>
+    </div>
+    <!-- Decorative background map pattern -->
+    <div
+      class="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 pointer-events-none"
+      style="
+        background-image: radial-gradient(#0056c4 1px, transparent 1px);
+        background-size: 20px 20px;
+      "
+    ></div>
+  </div>
+  <!-- Bento Grid Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-widget-gap">
+    <!-- Bus & Crew Info (Left Column) -->
+    <div class="lg:col-span-4 flex flex-col gap-widget-gap">
+      <!-- Vehicle Info -->
+      <div class="bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle">
+        <h3
+          class="font-headline-md text-headline-md font-semibold text-on-surface mb-4 flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-primary">directions_bus</span>
+          Véhicule
+        </h3>
+        <div class="flex items-center gap-4 mb-4">
+          <div
+            class="w-16 h-16 rounded-lg bg-surface-container overflow-hidden flex-shrink-0 border border-border-subtle"
+          >
+            <img
+              alt="Bus Image"
+              class="w-full h-full object-cover"
+              data-alt="A modern commercial intercity bus parked in a terminal on a bright sunny day. The bus is painted in clean white and blue corporate colors. The lighting is crisp, casting sharp shadows on the clean concrete ground. The aesthetic is highly professional, emphasizing modern logistics and reliable transportation within a corporate framework."
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmQT60wY4g94ZeRyuo7JeL07pMWJQUdF9QPsHc8Z-XO-PnhbQvoFxjnf_KAXKGfkjqfvR9vrl-kTnca3_88B5A7ykcnDAlBC3ZnXauNosSboM5n8yG1VbPhAmVK1qiw5vCyKryB6TlL4SUhpQTUu7IS0JcW_oziU3jDzQecY8D8EWCa_MX2JO6frqxJrid-j4iwCfWAw-iX-Zp8bPca-H1BmVGJu5ctGyCBqRx-P5GvA9uHnPkBd2IzL2Sd2CHQvR1AbCtC_5NvV0"
+            />
+          </div>
+          <div>
+            <p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">
+              Plaque d'immatriculation
+            </p>
+            <p class="font-mono-data text-mono-data text-on-surface font-bold text-lg">CE 492 LT</p>
+            <p class="font-body-md text-body-md text-on-surface-variant">VIP Express - 50 places</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
+          <div>
+            <p class="font-label-sm text-label-sm text-outline">Capacité</p>
+            <p class="font-stats-metric text-stats-metric text-on-surface">50</p>
+          </div>
+          <div>
+            <p class="font-label-sm text-label-sm text-outline">Occupés</p>
+            <p class="font-stats-metric text-stats-metric text-primary">42</p>
+          </div>
+        </div>
+      </div>
+      <!-- Crew Info -->
+      <div class="bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle">
+        <h3
+          class="font-headline-md text-headline-md font-semibold text-on-surface mb-4 flex items-center gap-2"
+        >
+          <span class="material-symbols-outlined text-primary">badge</span>
+          Équipage
+        </h3>
+        <div class="flex items-center gap-4 mb-4">
+          <img
+            alt="Driver Avatar"
+            class="w-12 h-12 rounded-full border-2 border-surface-bg"
+            data-alt="A professional portrait of a senior bus driver wearing a crisp blue uniform shirt. The lighting is studio quality, emphasizing competence and trust. The background is a soft, out-of-focus light gray. The image conveys reliability and safety, matching the overall corporate logistics design aesthetic."
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1HsAzU7swks_-X-lsNlixRrRzR6fhPeAeZJDLgRQ2YTDeKwczbvoXaIcJEHvFHpNeOa5wk0zCJ3zJQtTiXmTqIfk3aWZswDcHsPucHUBUpRXMAI8hCMK2w2BOTqPsYLnICVpBqqou80HVHOMp_Z4i521RyumRuiknfzlD3Xa8qKCFNwaBif49mt6DVu9humZu-D_1fQwoSGF9mQqDu0j6f9DZIk2CVmFeSjrF1wIY1q-Qc7grs6JraVv45Otqldg1qvHrHGQtro0"
+          />
+          <div>
+            <p class="font-label-sm text-label-sm text-primary font-bold">Chauffeur Principal</p>
+            <p class="font-body-lg text-body-lg text-on-surface font-medium">Marc Oumarou</p>
+            <p class="font-label-sm text-label-sm text-outline">Permis: D - Exp: 12 ans</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-4 pt-4 border-t border-border-subtle">
+          <div
+            class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-outline"
+          >
+            <span class="material-symbols-outlined">person</span>
+          </div>
+          <div>
+            <p class="font-label-sm text-label-sm text-on-surface-variant font-bold">Hôtesse</p>
+            <p class="font-body-lg text-body-lg text-on-surface font-medium">Sarah Eboa</p>
+          </div>
+        </div>
+      </div>
+      <!-- Trip Progress -->
+      <div class="bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle">
+        <h3 class="font-label-sm text-label-sm text-outline uppercase tracking-wider mb-4">
+          Progression du Trajet
+        </h3>
+        <div class="relative pl-6 pb-2">
+          <!-- Timeline line -->
+          <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border-subtle"></div>
+          <!-- Timeline items -->
+          <div class="relative mb-6">
+            <div
+              class="absolute -left-6 w-3 h-3 rounded-full bg-success-green ring-4 ring-surface-bg top-1.5"
+            ></div>
+            <p class="font-body-md text-body-md font-bold text-on-surface">Douala (Agence Akwa)</p>
+            <p class="font-label-sm text-label-sm text-outline">Départ: 08:00 (Effectif)</p>
+          </div>
+          <div class="relative mb-6">
+            <div
+              class="absolute -left-6 w-3 h-3 rounded-full bg-primary ring-4 ring-surface-bg top-1.5 animate-pulse"
+            ></div>
+            <p class="font-body-md text-body-md font-bold text-on-surface">Edéa (Escale)</p>
+            <p class="font-label-sm text-label-sm text-primary">Prévu: 09:30 (En approche)</p>
+          </div>
+          <div class="relative">
+            <div
+              class="absolute -left-6 w-3 h-3 rounded-full border-2 border-outline bg-surface-bg top-1.5"
+            ></div>
+            <p class="font-body-md text-body-md font-bold text-on-surface text-on-surface-variant">
+              Yaoundé (Mvan)
+            </p>
+            <p class="font-label-sm text-label-sm text-outline">Arrivée estimée: 12:45</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Passenger List (Right Column) -->
+    <div
+      class="lg:col-span-8 bg-card-bg rounded-xl shadow-sm border border-border-subtle flex flex-col h-full overflow-hidden"
+    >
+      <div
+        class="p-6 border-b border-border-subtle flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+      >
+        <div>
+          <h3 class="font-headline-md text-headline-md font-bold text-on-surface">
+            Manifeste des Passagers
+          </h3>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+            42 embarqués sur 50 réservations
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <div class="relative">
+            <span class="material-symbols-outlined absolute left-2.5 top-2 text-[18px] text-outline"
+              >filter_list</span
+            >
+            <select
+              class="pl-9 pr-8 py-1.5 bg-surface-bg border border-border-subtle rounded-lg font-label-sm text-label-sm text-on-surface focus:ring-primary focus:border-primary appearance-none"
+            >
+              <option>Tous les statuts</option>
+              <option>Embarqué</option>
+              <option>En attente</option>
+              <option>Annulé</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="flex-1 overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-container-lowest border-b border-border-subtle">
+              <th
+                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              >
+                Siège
+              </th>
+              <th
+                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              >
+                Passager
+              </th>
+              <th
+                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              >
+                N° Billet
+              </th>
+              <th
+                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              >
+                Statut
+              </th>
+              <th
+                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider text-right"
+              >
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border-subtle bg-card-bg">
+            <!-- Row 1 -->
+            <tr class="hover:bg-surface-bg transition-colors">
+              <td class="py-3 px-6">
+                <span
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
+                  >01</span
+                >
+              </td>
+              <td class="py-3 px-6">
+                <p class="font-body-md text-body-md font-medium text-on-surface">Alain Mvondo</p>
+                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
+              </td>
+              <td class="py-3 px-6">
+                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88392</span>
+              </td>
+              <td class="py-3 px-6">
+                <span
+                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
+                >
+                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Embarqué
+                </span>
+              </td>
+              <td class="py-3 px-6 text-right">
+                <button
+                  class="p-1 text-outline hover:text-primary transition-colors"
+                  title="Voir détails"
+                >
+                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+              </td>
+            </tr>
+            <!-- Row 2 -->
+            <tr class="hover:bg-surface-bg transition-colors">
+              <td class="py-3 px-6">
+                <span
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
+                  >02</span
+                >
+              </td>
+              <td class="py-3 px-6">
+                <p class="font-body-md text-body-md font-medium text-on-surface">Marie Ngo</p>
+                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
+              </td>
+              <td class="py-3 px-6">
+                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88393</span>
+              </td>
+              <td class="py-3 px-6">
+                <span
+                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
+                >
+                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Embarqué
+                </span>
+              </td>
+              <td class="py-3 px-6 text-right">
+                <button
+                  class="p-1 text-outline hover:text-primary transition-colors"
+                  title="Voir détails"
+                >
+                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+              </td>
+            </tr>
+            <!-- Row 3 (Pending) -->
+            <tr class="hover:bg-surface-bg transition-colors bg-warning-gold/5">
+              <td class="py-3 px-6">
+                <span
+                  class="inline-flex items-center justify-center w-8 h-8 rounded border border-warning-gold text-warning-gold font-mono-data text-mono-data font-bold"
+                  >03</span
+                >
+              </td>
+              <td class="py-3 px-6">
+                <p class="font-body-md text-body-md font-medium text-on-surface">Paul Biya (Jr)</p>
+                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
+              </td>
+              <td class="py-3 px-6">
+                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88401</span>
+              </td>
+              <td class="py-3 px-6">
+                <span
+                  class="px-2.5 py-1 rounded-full bg-warning-gold/10 text-tertiary-container border border-warning-gold/30 font-label-sm text-label-sm flex items-center gap-1 w-max"
+                >
+                  <span class="material-symbols-outlined text-[14px]">schedule</span>
+                  En attente
+                </span>
+              </td>
+              <td class="py-3 px-6 text-right flex justify-end gap-2">
+                <button
+                  class="px-3 py-1 bg-primary text-on-primary rounded text-xs font-semibold hover:bg-primary-container transition-colors"
+                >
+                  Valider
+                </button>
+                <button
+                  class="p-1 text-outline hover:text-primary transition-colors"
+                  title="Voir détails"
+                >
+                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+              </td>
+            </tr>
+            <!-- More Rows placeholder -->
+            <tr class="hover:bg-surface-bg transition-colors">
+              <td class="py-3 px-6">
+                <span
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
+                  >04</span
+                >
+              </td>
+              <td class="py-3 px-6">
+                <p class="font-body-md text-body-md font-medium text-on-surface">Jeanne Kamga</p>
+                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
+              </td>
+              <td class="py-3 px-6">
+                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88405</span>
+              </td>
+              <td class="py-3 px-6">
+                <span
+                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
+                >
+                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
+                  Embarqué
+                </span>
+              </td>
+              <td class="py-3 px-6 text-right">
+                <button
+                  class="p-1 text-outline hover:text-primary transition-colors"
+                  title="Voir détails"
+                >
+                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+              </td>
+            </tr>
+            <!-- Cancelled Row -->
+            <tr class="hover:bg-surface-bg transition-colors opacity-60">
+              <td class="py-3 px-6">
+                <span
+                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-variant text-outline font-mono-data text-mono-data font-bold line-through"
+                  >05</span
+                >
+              </td>
+              <td class="py-3 px-6">
+                <p class="font-body-md text-body-md font-medium text-on-surface line-through">
+                  Luc Tchuente
+                </p>
+              </td>
+              <td class="py-3 px-6">
+                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88410</span>
+              </td>
+              <td class="py-3 px-6">
+                <span
+                  class="px-2.5 py-1 rounded-full bg-danger-red/10 text-danger-red border border-danger-red/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
+                >
+                  <span class="material-symbols-outlined text-[14px]">cancel</span>
+                  Annulé
+                </span>
+              </td>
+              <td class="py-3 px-6 text-right">
+                <button
+                  class="p-1 text-outline hover:text-primary transition-colors"
+                  title="Voir détails"
+                >
+                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div
+        class="p-4 border-t border-border-subtle bg-surface-container-lowest flex justify-between items-center"
+      >
+        <span class="font-label-sm text-label-sm text-outline">Affichage 1-5 sur 50 sièges</span>
+        <div class="flex gap-1">
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-border-subtle text-outline hover:bg-surface-bg disabled:opacity-50"
+          >
+            <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+          </button>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded bg-primary text-on-primary font-label-sm"
+          >
+            1
+          </button>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-border-subtle text-on-surface hover:bg-surface-bg font-label-sm"
+          >
+            2
+          </button>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-border-subtle text-on-surface hover:bg-surface-bg font-label-sm"
+          >
+            3
+          </button>
+          <span class="w-8 h-8 flex items-center justify-center text-outline">...</span>
+          <button
+            class="w-8 h-8 flex items-center justify-center rounded border border-border-subtle text-on-surface hover:bg-surface-bg"
+          >
+            <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

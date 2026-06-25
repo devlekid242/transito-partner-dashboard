@@ -1,0 +1,165 @@
+<main class="flex-1 p-standard-padding lg:p-container-margin overflow-y-auto">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <h2 class="font-display-lg text-display-lg text-on-background mb-2">Gestion Financière</h2>
+    <p class="font-body-lg text-body-lg text-on-surface-variant">
+      Aperçu de vos revenus et paiements.
+    </p>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-widget-gap">
+    <!-- Balance Summary Widget -->
+    <div
+      class="md:col-span-8 bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] p-standard-padding flex flex-col justify-between"
+    >
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">
+            Current Balance
+          </p>
+          <h3 class="font-stats-metric text-stats-metric text-on-background">3,450,000 XAF</h3>
+        </div>
+        <div class="bg-success-green/10 px-3 py-1 rounded-full flex items-center gap-1">
+          <span class="material-symbols-outlined text-success-green text-sm">trending_up</span>
+          <span class="font-label-sm text-label-sm text-success-green">+12.5%</span>
+        </div>
+      </div>
+        <app-revenue-chart></app-revenue-chart>
+      <div
+        class="flex flex-col sm:flex-row justify-between items-end gap-4 border-t border-border-subtle pt-4"
+      >
+        <div>
+          <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">
+            Available for Payout
+          </p>
+          <h4 class="font-headline-md text-headline-md text-primary">2,950,000 XAF</h4>
+        </div>
+        <button
+          class="bg-primary hover:bg-surface-tint text-on-primary font-label-sm text-label-sm uppercase tracking-wider px-6 py-3 rounded-lg shadow-sm transition-colors w-full sm:w-auto"
+        >
+          Request Payout
+        </button>
+      </div>
+    </div>
+    <!-- Financial Breakdown Widget -->
+    <div
+      class="md:col-span-4 bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] p-standard-padding flex flex-col"
+    >
+      <h3 class="font-headline-md text-headline-md text-on-background mb-4">Revenue Breakdown</h3>
+      <div class="relative w-full h-48 flex-1 flex items-center justify-center">
+        <app-revenue-chart></app-revenue-chart>
+      </div>
+    </div>
+    <!-- Transactions Table Widget -->
+    <div
+      class="md:col-span-12 bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] overflow-hidden"
+    >
+      <div
+        class="p-standard-padding border-b border-border-subtle flex flex-col sm:flex-row justify-between items-center gap-4"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-background">Recent Transactions</h3>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <select
+            class="form-select w-full sm:w-auto rounded-lg border-border-subtle focus:border-primary focus:ring-primary font-body-md text-body-md py-2 pl-3 pr-10"
+          >
+            <option>All Types</option>
+            <option>Revenue</option>
+            <option>Payout</option>
+            <option>Fee</option>
+          </select>
+          <input
+            class="form-input w-full sm:w-auto rounded-lg border-border-subtle focus:border-primary focus:ring-primary font-body-md text-body-md py-2 px-3"
+            type="date"
+          />
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-surface-bg border-b border-border-subtle">
+              <th
+                class="font-label-sm text-label-sm text-on-surface-variant uppercase p-4 font-semibold"
+              >
+                Date
+              </th>
+              <th
+                class="font-label-sm text-label-sm text-on-surface-variant uppercase p-4 font-semibold"
+              >
+                Type
+              </th>
+              <th
+                class="font-label-sm text-label-sm text-on-surface-variant uppercase p-4 font-semibold text-right"
+              >
+                Amount (XAF)
+              </th>
+              <th
+                class="font-label-sm text-label-sm text-on-surface-variant uppercase p-4 font-semibold text-center"
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody
+            class="font-mono-data text-mono-data text-on-background divide-y divide-border-subtle"
+          >
+            <tr class="hover:bg-surface-container-low transition-colors h-[48px]">
+              <td class="p-4">2023-10-27 14:30</td>
+              <td class="p-4">Revenue (Route A)</td>
+              <td class="p-4 text-right text-success-green">+ 150,000</td>
+              <td class="p-4 text-center">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green font-label-sm text-[10px] uppercase"
+                  >Completed</span
+                >
+              </td>
+            </tr>
+            <tr
+              class="hover:bg-surface-container-low transition-colors h-[48px] bg-surface-bright/50"
+            >
+              <td class="p-4">2023-10-26 09:15</td>
+              <td class="p-4">Payout</td>
+              <td class="p-4 text-right text-on-surface">- 500,000</td>
+              <td class="p-4 text-center">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-warning-gold/10 text-tertiary-container font-label-sm text-[10px] uppercase"
+                  >Pending</span
+                >
+              </td>
+            </tr>
+            <tr class="hover:bg-surface-container-low transition-colors h-[48px]">
+              <td class="p-4">2023-10-25 18:45</td>
+              <td class="p-4">Fee (Platform)</td>
+              <td class="p-4 text-right text-danger-red">- 15,000</td>
+              <td class="p-4 text-center">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green font-label-sm text-[10px] uppercase"
+                  >Completed</span
+                >
+              </td>
+            </tr>
+            <tr
+              class="hover:bg-surface-container-low transition-colors h-[48px] bg-surface-bright/50"
+            >
+              <td class="p-4">2023-10-24 11:20</td>
+              <td class="p-4">Revenue (Route B)</td>
+              <td class="p-4 text-right text-success-green">+ 220,000</td>
+              <td class="p-4 text-center">
+                <span
+                  class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green font-label-sm text-[10px] uppercase"
+                  >Completed</span
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="p-4 border-t border-border-subtle flex justify-end">
+        <button
+          class="text-primary font-label-sm text-label-sm hover:underline flex items-center gap-1"
+        >
+          View All
+          <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
