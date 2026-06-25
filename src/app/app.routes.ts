@@ -4,12 +4,12 @@ import { LayoutComponent } from './layout/layout.component';
 export const routes: Routes = [
   {
     path: 'connexion',
-    loadComponent: () => import('./pages/connexion/connexion.page').then((m) => m.ConnexionPage),
+    loadComponent: () => import('./pages/auth/connexion/connexion.page').then((m) => m.ConnexionPage),
   },
   {
     path: 'recuperation-de-compte',
     loadComponent: () =>
-      import('./pages/recuperation-de-compte/recuperation-de-compte.page').then(
+      import('./pages/auth/recuperation-de-compte/recuperation-de-compte.page').then(
         (m) => m.RecuperationDeComptePage,
       ),
   },

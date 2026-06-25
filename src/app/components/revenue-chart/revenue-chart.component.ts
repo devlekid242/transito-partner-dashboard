@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, AfterViewInit, ElementRef, ViewChild, OnDestroy } from '@angular/core';
 // CORRECTION : Import depuis 'chart.js/auto' pour enregistrer automatiquement les échelles et graphiques
 import { Chart, ChartConfiguration, ChartType } from 'chart.js/auto';
@@ -6,8 +7,9 @@ import { Chart, ChartConfiguration, ChartType } from 'chart.js/auto';
   selector: 'app-revenue-chart',
   templateUrl: './revenue-chart.component.html',
   styleUrls: ['./revenue-chart.component.css'],
-  // Si votre application utilise le mode moderne, vous pouvez ajouter standalone: true ici
+  imports: [CommonModule]
 })
+
 export class RevenueChartComponent implements AfterViewInit, OnDestroy {
   // Typage plus précis du ElementRef pour un élément Canvas
   @ViewChild('revenueChart') revenueChart!: ElementRef<HTMLCanvasElement>;

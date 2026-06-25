@@ -20,7 +20,7 @@
       </button>
       <button
         class="flex-1 md:flex-none px-4 py-2 bg-primary cursor-pointer text-on-primary rounded-lg font-label-sm text-label-sm hover:bg-surface-tint transition-colors flex items-center justify-center gap-2 shadow-sm"
-        (click)="openModal()"
+        (click)="openWithdrawalModal()"
       >
         <span class="material-symbols-outlined text-sm">account_balance_wallet</span>
         Demander un Retrait
@@ -40,8 +40,9 @@
         Solde Disponible
       </h3>
       <div class="flex items-end gap-4 mb-4">
-        <span class="font-display-lg text-display-lg text-on-surface font-mono-data tracking-tight"
-          >12,450,000</span
+        <span
+          class="font-display-lg text-display-lg text-on-surface font-mono-data tracking-tight"
+          >{{ balance.available }}</span
         >
         <span class="font-headline-md text-headline-md text-on-surface-variant mb-1">XAF</span>
       </div>
@@ -65,13 +66,13 @@
       </div>
       <div>
         <div class="flex items-end gap-2 mb-1">
-          <span class="font-stats-metric text-stats-metric text-on-surface font-mono-data"
-            >850,000</span
-          >
+          <span class="font-stats-metric text-stats-metric text-on-surface font-mono-data">{{
+            balance.pending
+          }}</span>
           <span class="font-body-md text-body-md text-on-surface-variant pb-1">XAF</span>
         </div>
         <p class="font-body-md text-body-md text-on-surface-variant text-sm">
-          2 transactions en cours
+          {{ balance.pendingTransactions }} transactions en cours
         </p>
       </div>
     </div>
@@ -179,54 +180,26 @@
           </thead>
           <tbody class="font-body-md text-body-md">
             <tr
+              *ngFor="let transaction of recentTransactions"
               class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"
+              [class.bg-surface-bg/30]="transaction.status !== 'Complété'"
             >
-              <td class="p-4 text-on-surface">12 Oct 2023, 14:30</td>
-              <td class="p-4 text-on-surface">Revenus Flotte Semaine 41</td>
+              <td class="p-4 text-on-surface">{{ transaction.date }}</td>
+              <td class="p-4 text-on-surface">{{ transaction.description }}</td>
               <td class="p-4">
                 <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-green/10 text-success-green"
-                  >Complété</span
+                  [ngClass]="{
+                    'bg-success-green/10 text-success-green': transaction.status === 'Complété',
+                    'bg-warning-gold/10 text-tertiary-container': transaction.status === 'En cours',
+                  }"
+                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border"
                 >
+                  {{ transaction.status }}
+                </span>
               </td>
-              <td class="p-4 text-right text-on-surface font-mono-data">+ 2,450,000</td>
-            </tr>
-            <tr
-              class="border-b border-outline-variant hover:bg-surface-container-low transition-colors bg-surface-bg/30"
-            >
-              <td class="p-4 text-on-surface">10 Oct 2023, 09:15</td>
-              <td class="p-4 text-on-surface">Retrait Bancaire (UBA)</td>
-              <td class="p-4">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-warning-gold/10 text-tertiary-container"
-                  >En cours</span
-                >
+              <td class="p-4 text-right text-on-surface font-mono-data">
+                {{ transaction.amount }}
               </td>
-              <td class="p-4 text-right text-on-surface font-mono-data">- 500,000</td>
-            </tr>
-            <tr
-              class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"
-            >
-              <td class="p-4 text-on-surface">08 Oct 2023, 16:45</td>
-              <td class="p-4 text-on-surface">Frais de Plateforme</td>
-              <td class="p-4">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-green/10 text-success-green"
-                  >Complété</span
-                >
-              </td>
-              <td class="p-4 text-right text-on-surface font-mono-data">- 122,500</td>
-            </tr>
-            <tr class="hover:bg-surface-container-low transition-colors bg-surface-bg/30">
-              <td class="p-4 text-on-surface">05 Oct 2023, 11:20</td>
-              <td class="p-4 text-on-surface">Revenus Flotte Semaine 40</td>
-              <td class="p-4">
-                <span
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success-green/10 text-success-green"
-                  >Complété</span
-                >
-              </td>
-              <td class="p-4 text-right text-on-surface font-mono-data">+ 2,100,000</td>
             </tr>
           </tbody>
         </table>
@@ -234,123 +207,60 @@
     </div>
   </div>
 </main>
-<!-- Withdrawal Modal (Level 3 Elevation) -->
-<div *ngIf="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-  <!-- Backdrop -->
-  <div
-    class="absolute inset-0 bg-on-surface/40 modal-backdrop transition-opacity"
-    (click)="closeModal()"
-  ></div>
-  <!-- Modal Dialog -->
-  <div
-    class="relative w-full max-w-md bg-card-bg rounded-xl shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] border border-border-subtle flex flex-col overflow-hidden"
-  >
-    <!-- Modal Header -->
+
+<!-- Withdrawal Modal -->
+<app-modal
+  [isOpen]="isWithdrawalModalOpen"
+  [title]="'Demande de Retrait de Fonds'"
+  [size]="'md'"
+  (close)="closeWithdrawalModal()"
+>
+  <div class="p-6 flex flex-col gap-6">
+    <!-- Available Balance Highlight -->
     <div
-      class="px-6 py-4 border-b border-outline-variant flex justify-between items-center bg-surface-bg"
+      class="bg-surface-container-low rounded-lg p-4 flex items-center justify-between border border-primary-fixed-dim"
     >
-      <h2 class="font-headline-md text-headline-md text-on-surface font-bold">
-        Demande de Retrait de Fonds
-      </h2>
-      <button class="text-outline hover:text-on-surface transition-colors" (click)="closeModal()">
-        <span class="material-symbols-outlined">close</span>
-      </button>
-    </div>
-    <!-- Modal Body -->
-    <div class="p-6 flex flex-col gap-6">
-      <!-- Available Balance Highlight -->
-      <div
-        class="bg-surface-container-low rounded-lg p-4 flex items-center justify-between border border-primary-fixed-dim"
-      >
-        <div class="flex items-center gap-3">
-          <div
-            class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center"
-          >
-            <span class="material-symbols-outlined">wallet</span>
-          </div>
-          <div>
-            <p class="font-label-sm text-label-sm text-on-surface-variant">Solde Disponible</p>
-            <p
-              class="font-headline-md text-headline-md text-on-surface font-mono-data font-bold tracking-tight"
-            >
-              12,450,000 XAF
-            </p>
-          </div>
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center"
+        >
+          <span class="material-symbols-outlined">wallet</span>
         </div>
-      </div>
-      <!-- Form Fields -->
-      <form class="flex flex-col gap-5">
-        <!-- Amount Input -->
         <div>
-          <label class="block font-label-sm text-label-sm text-on-surface mb-1.5" for="amount"
-            >Montant à retirer (XAF) <span class="text-danger-red">*</span></label
+          <p class="font-label-sm text-label-sm text-on-surface-variant">Solde Disponible</p>
+          <p
+            class="font-headline-md text-headline-md text-on-surface font-mono-data font-bold tracking-tight"
           >
-          <div class="relative">
-            <input
-              class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 font-mono-data text-mono-data text-on-surface focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-50 outline-none transition-all placeholder-outline-variant"
-              id="amount"
-              placeholder="Ex: 500000"
-              type="number"
-            />
-            <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-              <span class="text-on-surface-variant font-label-sm">XAF</span>
-            </div>
-          </div>
-          <!-- Example Validation Error (Hidden by default) -->
-          <p class="hidden text-danger-red font-label-sm text-xs mt-1">
-            Le montant doit être inférieur ou égal au solde disponible.
+            {{ balance.available }}
           </p>
         </div>
-        <!-- Payment Method Select -->
-        <div>
-          <label
-            class="block font-label-sm text-label-sm text-on-surface mb-1.5"
-            for="payment-method"
-            >Méthode de paiement <span class="text-danger-red">*</span></label
-          >
-          <div class="relative">
-            <select
-              class="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary focus:ring-opacity-50 outline-none transition-all appearance-none"
-              id="payment-method"
-            >
-              <option disabled="" selected="" value="">Sélectionnez une méthode</option>
-              <option value="bank">Virement Bancaire (UBA - **** 1234)</option>
-              <option value="momo">Mobile Money (Orange - 69X XXX XXX)</option>
-              <option value="momo_mtn">Mobile Money (MTN - 67X XXX XXX)</option>
-            </select>
-            <div
-              class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-on-surface-variant"
-            >
-              <span class="material-symbols-outlined">expand_more</span>
-            </div>
-          </div>
-        </div>
-      </form>
-      <!-- Informational Note -->
-      <div class="flex gap-2 p-3 bg-surface-variant/30 rounded-lg">
-        <span class="material-symbols-outlined text-outline text-sm mt-0.5">info</span>
-        <p class="font-body-md text-body-md text-sm text-on-surface-variant">
-          Les virements bancaires peuvent prendre 1 à 3 jours ouvrables. Les retraits Mobile Money
-          sont généralement instantanés.
-        </p>
       </div>
     </div>
-    <!-- Modal Footer -->
-    <div class="px-6 py-4 border-t border-outline-variant bg-surface-bg flex justify-end gap-3">
-      <button
-        class="px-5 py-2.5 rounded-lg border border-outline-variant font-label-sm text-label-sm text-on-surface hover:bg-surface-container transition-colors"
-        (click)="closeModal()"
-        type="button"
-      >
-        Annuler
-      </button>
-      <button
-        class="px-5 py-2.5 rounded-lg bg-primary text-on-primary font-label-sm text-label-sm font-bold hover:bg-surface-tint transition-colors flex items-center gap-2"
-        type="button"
-      >
-        <span class="material-symbols-outlined text-sm">check_circle</span>
-        Confirmer le Retrait
-      </button>
+
+    <!-- Utilisation du composant FormComponent pour le retrait -->
+    <app-form
+      [fields]="withdrawalFormFields"
+      [submitLabel]="'Confirmer le Retrait'"
+      (submit)="onFormSubmit($event)"
+    >
+    </app-form>
+
+    <!-- Informational Note -->
+    <div class="flex gap-2 p-3 bg-surface-variant/30 rounded-lg">
+      <span class="material-symbols-outlined text-outline text-sm mt-0.5">info</span>
+      <p class="font-body-md text-body-md text-sm text-on-surface-variant">
+        Les virements bancaires peuvent prendre 1 à 3 jours ouvrables. Les retraits Mobile Money
+        sont généralement instantanés.
+      </p>
     </div>
   </div>
-</div>
+</app-modal>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>

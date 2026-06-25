@@ -26,6 +26,7 @@
       <!-- Add Trip CTA -->
       <button
         class="bg-primary text-on-primary px-6 py-2.5 rounded-full font-label-sm text-label-sm uppercase tracking-wider hover:bg-on-primary-fixed-variant transition-all duration-200 flex items-center gap-2 shadow-md active:scale-95"
+        (click)="addNewTrip()"
       >
         <span class="material-symbols-outlined text-[18px]">add</span>
         Add New Trip
@@ -53,146 +54,69 @@
           >
         </div>
       </div>
+
+      <!-- Utilisation du composant TableComponent avec le même style que l'original -->
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr
-              class="border-b border-border-subtle bg-surface-bg text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider"
-            >
-              <th class="p-standard-padding font-medium">Time &amp; Date</th>
-              <th class="p-standard-padding font-medium">Route</th>
-              <th class="p-standard-padding font-medium">Assigned Bus</th>
-              <th class="p-standard-padding font-medium">Status</th>
-              <th class="p-standard-padding font-medium text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody class="text-body-md font-body-md">
-            <!-- Row 1 -->
-            <tr
-              class="border-b border-border-subtle hover:bg-surface-container-low transition-colors group"
-            >
-              <td class="p-standard-padding whitespace-nowrap">
-                <div class="font-semibold text-on-surface">08:00 AM</div>
-                <div class="text-on-surface-variant text-sm">Oct 24, 2023</div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">Douala</span>
-                  <span class="material-symbols-outlined text-outline text-[16px]"
-                    >arrow_right_alt</span
-                  >
-                  <span class="font-semibold">Yaoundé</span>
-                </div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-surface-tint">directions_bus</span>
-                  <span class="font-mono-data text-mono-data bg-surface-container px-2 py-1 rounded"
-                    >TR-842-X</span
-                  >
-                </div>
-              </td>
-              <td class="p-standard-padding">
+        <app-table
+          [data]="todayDepartures"
+          [columns]="departureColumns"
+          [actions]="departureActions"
+          [pageSize]="10"
+        >
+          <ng-template #customCell let-item let-column="column">
+            <!-- Cellule personnalisée pour correspondre au design original -->
+            <div *ngIf="column.key === 'time'" class="p-standard-padding whitespace-nowrap">
+              <div class="font-semibold text-on-surface">{{ item.time }}</div>
+              <div class="text-on-surface-variant text-sm">{{ item.date }}</div>
+            </div>
+
+            <div *ngIf="column.key === 'route'" class="p-standard-padding">
+              <div class="flex items-center gap-2">
+                <span class="font-semibold">{{ item.route.split('→')[0].trim() }}</span>
+                <span class="material-symbols-outlined text-outline text-[16px]"
+                  >arrow_right_alt</span
+                >
+                <span class="font-semibold">{{ item.route.split('→')[1].trim() }}</span>
+              </div>
+            </div>
+
+            <div *ngIf="column.key === 'bus'" class="p-standard-padding">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-surface-tint">directions_bus</span>
                 <span
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-success-green/20 text-success-green border border-success-green/30"
+                  class="font-mono-data text-mono-data bg-surface-container px-2 py-1 rounded"
+                  >{{ item.bus }}</span
                 >
-                  <span class="w-1.5 h-1.5 rounded-full bg-success-green"></span>
-                  Active
-                </span>
-              </td>
-              <td class="p-standard-padding text-right">
-                <button
-                  class="text-primary hover:text-on-primary-fixed-variant font-label-sm text-label-sm border border-primary px-3 py-1.5 rounded hover:bg-primary-fixed transition-colors"
-                >
-                  Manage
-                </button>
-              </td>
-            </tr>
-            <!-- Row 2 -->
-            <tr
-              class="border-b border-border-subtle hover:bg-surface-container-low transition-colors group"
-            >
-              <td class="p-standard-padding whitespace-nowrap">
-                <div class="font-semibold text-on-surface">10:30 AM</div>
-                <div class="text-on-surface-variant text-sm">Oct 24, 2023</div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">Yaoundé</span>
-                  <span class="material-symbols-outlined text-outline text-[16px]"
-                    >arrow_right_alt</span
-                  >
-                  <span class="font-semibold">Bafoussam</span>
-                </div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-surface-tint">directions_bus</span>
-                  <span class="font-mono-data text-mono-data bg-surface-container px-2 py-1 rounded"
-                    >TR-119-Y</span
-                  >
-                </div>
-              </td>
-              <td class="p-standard-padding">
+              </div>
+            </div>
+
+            <div *ngIf="column.key === 'status'" class="p-standard-padding">
+              <span
+                [ngClass]="{
+                  'bg-success-green/20 text-success-green border-success-green/30':
+                    item.status === 'Active',
+                  'bg-surface-container-highest text-on-surface border-outline-variant':
+                    item.status === 'Scheduled',
+                  'bg-warning-gold/20 text-tertiary border-warning-gold/50':
+                    item.status === 'Delayed',
+                }"
+                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border"
+              >
                 <span
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-surface-container-highest text-on-surface border border-outline-variant"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-outline"></span>
-                  Scheduled
-                </span>
-              </td>
-              <td class="p-standard-padding text-right">
-                <button
-                  class="text-primary hover:text-on-primary-fixed-variant font-label-sm text-label-sm border border-primary px-3 py-1.5 rounded hover:bg-primary-fixed transition-colors"
-                >
-                  Manage
-                </button>
-              </td>
-            </tr>
-            <!-- Row 3 -->
-            <tr
-              class="border-b border-border-subtle hover:bg-surface-container-low transition-colors group"
-            >
-              <td class="p-standard-padding whitespace-nowrap">
-                <div class="font-semibold text-on-surface">12:15 PM</div>
-                <div class="text-on-surface-variant text-sm">Oct 24, 2023</div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="font-semibold">Douala</span>
-                  <span class="material-symbols-outlined text-outline text-[16px]"
-                    >arrow_right_alt</span
-                  >
-                  <span class="font-semibold">Kribi</span>
-                </div>
-              </td>
-              <td class="p-standard-padding">
-                <div class="flex items-center gap-2">
-                  <span class="material-symbols-outlined text-surface-tint">directions_bus</span>
-                  <span class="font-mono-data text-mono-data bg-surface-container px-2 py-1 rounded"
-                    >TR-505-Z</span
-                  >
-                </div>
-              </td>
-              <td class="p-standard-padding">
-                <span
-                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-warning-gold/20 text-tertiary border border-warning-gold/50"
-                >
-                  <span class="w-1.5 h-1.5 rounded-full bg-warning-gold"></span>
-                  Delayed
-                </span>
-              </td>
-              <td class="p-standard-padding text-right">
-                <button
-                  class="text-primary hover:text-on-primary-fixed-variant font-label-sm text-label-sm border border-primary px-3 py-1.5 rounded hover:bg-primary-fixed transition-colors"
-                >
-                  Manage
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  class="w-1.5 h-1.5 rounded-full"
+                  [ngClass]="{
+                    'bg-success-green': item.status === 'Active',
+                    'bg-outline': item.status === 'Scheduled',
+                    'bg-warning-gold': item.status === 'Delayed',
+                  }"
+                ></span>
+                {{ item.status }}
+              </span>
+            </div>
+          </ng-template>
+        </app-table>
       </div>
+
       <div
         class="p-standard-padding border-t border-border-subtle bg-surface-bg flex justify-center mt-auto"
       >
@@ -287,3 +211,74 @@
     </div>
   </div>
 </div>
+
+<!-- Modal pour les détails du trajet -->
+<app-modal [isOpen]="isModalOpen" [title]="'Trip Details'" [size]="'md'" (close)="closeModal()">
+  <div *ngIf="selectedTrip" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Time</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedTrip.time }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Date</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedTrip.date }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Route</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedTrip.route }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Bus</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedTrip.bus }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Status</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedTrip.status }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
+      <button
+        class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"
+        (click)="closeModal()"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Modal pour le formulaire de gestion de trajet -->
+<app-modal
+  [isOpen]="isFormModalOpen"
+  [title]="selectedTrip ? 'Manage Trip' : 'Add New Trip'"
+  [size]="'md'"
+  (close)="closeModal()"
+>
+  <app-form
+    [fields]="tripFormFields"
+    [submitLabel]="selectedTrip ? 'Update Trip' : 'Add Trip'"
+    (submit)="onFormSubmit($event)"
+  >
+  </app-form>
+</app-modal>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>

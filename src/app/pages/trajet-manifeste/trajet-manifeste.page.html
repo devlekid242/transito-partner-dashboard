@@ -1,6 +1,6 @@
 <!-- Canvas -->
 <div class="flex-1 p-4 p-container-margin lg:p-8 overflow-y-auto">
-    <!-- Page Header -->
+  <!-- Page Header -->
   <div class="mb-8">
     <h2 class="font-display-lg text-display-lg text-on-background mb-2">Manifeste de voyage</h2>
     <p class="font-body-lg text-body-lg text-on-surface-variant">
@@ -43,6 +43,7 @@
       <div class="flex gap-3 w-full md:w-auto">
         <button
           class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-transparent border border-primary text-primary rounded-lg font-label-sm text-label-sm hover:bg-primary/5 transition-colors"
+          (click)="printManifest()"
         >
           <span class="material-symbols-outlined text-[20px]">print</span>
           Imprimer Manifeste
@@ -205,207 +206,71 @@
           </div>
         </div>
       </div>
-      <div class="flex-1 overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-surface-container-lowest border-b border-border-subtle">
-              <th
-                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+
+      <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
+      <app-table
+        [data]="passengers"
+        [columns]="passengerColumns"
+        [actions]="passengerActions"
+        [pageSize]="10"
+      >
+        <ng-template #customCell let-item let-column="column">
+          <!-- Cellule personnalisée pour le siège -->
+          <div *ngIf="column.key === 'seat'" class="p-3">
+            <span
+              [ngClass]="{
+                'bg-surface-container-high': item.status === 'Embarqué',
+                'border border-warning-gold text-warning-gold': item.status === 'En attente',
+                'bg-surface-variant text-outline line-through': item.status === 'Annulé',
+              }"
+              class="inline-flex items-center justify-center w-8 h-8 rounded font-mono-data text-mono-data font-bold"
+            >
+              {{ item.seat }}
+            </span>
+          </div>
+
+          <!-- Cellule personnalisée pour le passager -->
+          <div *ngIf="column.key === 'name'" class="p-3">
+            <p class="font-body-md text-body-md font-medium text-on-surface">{{ item.name }}</p>
+            <p class="font-label-sm text-label-sm text-outline">{{ item.phone }}</p>
+          </div>
+
+          <!-- Cellule personnalisée pour le billet -->
+          <div *ngIf="column.key === 'ticket'" class="p-3">
+            <span class="font-mono-data text-mono-data text-on-surface-variant">{{
+              item.ticket
+            }}</span>
+          </div>
+
+          <!-- Cellule personnalisée pour le statut -->
+          <div *ngIf="column.key === 'status'" class="p-3">
+            <span
+              [ngClass]="{
+                'bg-success-green/10 text-success-green border-success-green/20':
+                  item.status === 'Embarqué',
+                'bg-warning-gold/10 text-tertiary-container border-warning-gold/30':
+                  item.status === 'En attente',
+                'bg-danger-red/10 text-danger-red border-danger-red/20': item.status === 'Annulé',
+              }"
+              class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border"
+            >
+              <span *ngIf="item.status === 'Embarqué'" class="material-symbols-outlined text-[14px]"
+                >check_circle</span
               >
-                Siège
-              </th>
-              <th
-                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              <span
+                *ngIf="item.status === 'En attente'"
+                class="material-symbols-outlined text-[14px]"
+                >schedule</span
               >
-                Passager
-              </th>
-              <th
-                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
+              <span *ngIf="item.status === 'Annulé'" class="material-symbols-outlined text-[14px]"
+                >cancel</span
               >
-                N° Billet
-              </th>
-              <th
-                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider"
-              >
-                Statut
-              </th>
-              <th
-                class="py-3 px-6 font-label-sm text-label-sm text-outline uppercase tracking-wider text-right"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border-subtle bg-card-bg">
-            <!-- Row 1 -->
-            <tr class="hover:bg-surface-bg transition-colors">
-              <td class="py-3 px-6">
-                <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
-                  >01</span
-                >
-              </td>
-              <td class="py-3 px-6">
-                <p class="font-body-md text-body-md font-medium text-on-surface">Alain Mvondo</p>
-                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
-              </td>
-              <td class="py-3 px-6">
-                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88392</span>
-              </td>
-              <td class="py-3 px-6">
-                <span
-                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
-                >
-                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                  Embarqué
-                </span>
-              </td>
-              <td class="py-3 px-6 text-right">
-                <button
-                  class="p-1 text-outline hover:text-primary transition-colors"
-                  title="Voir détails"
-                >
-                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
-              </td>
-            </tr>
-            <!-- Row 2 -->
-            <tr class="hover:bg-surface-bg transition-colors">
-              <td class="py-3 px-6">
-                <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
-                  >02</span
-                >
-              </td>
-              <td class="py-3 px-6">
-                <p class="font-body-md text-body-md font-medium text-on-surface">Marie Ngo</p>
-                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
-              </td>
-              <td class="py-3 px-6">
-                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88393</span>
-              </td>
-              <td class="py-3 px-6">
-                <span
-                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
-                >
-                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                  Embarqué
-                </span>
-              </td>
-              <td class="py-3 px-6 text-right">
-                <button
-                  class="p-1 text-outline hover:text-primary transition-colors"
-                  title="Voir détails"
-                >
-                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
-              </td>
-            </tr>
-            <!-- Row 3 (Pending) -->
-            <tr class="hover:bg-surface-bg transition-colors bg-warning-gold/5">
-              <td class="py-3 px-6">
-                <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded border border-warning-gold text-warning-gold font-mono-data text-mono-data font-bold"
-                  >03</span
-                >
-              </td>
-              <td class="py-3 px-6">
-                <p class="font-body-md text-body-md font-medium text-on-surface">Paul Biya (Jr)</p>
-                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
-              </td>
-              <td class="py-3 px-6">
-                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88401</span>
-              </td>
-              <td class="py-3 px-6">
-                <span
-                  class="px-2.5 py-1 rounded-full bg-warning-gold/10 text-tertiary-container border border-warning-gold/30 font-label-sm text-label-sm flex items-center gap-1 w-max"
-                >
-                  <span class="material-symbols-outlined text-[14px]">schedule</span>
-                  En attente
-                </span>
-              </td>
-              <td class="py-3 px-6 text-right flex justify-end gap-2">
-                <button
-                  class="px-3 py-1 bg-primary text-on-primary rounded text-xs font-semibold hover:bg-primary-container transition-colors"
-                >
-                  Valider
-                </button>
-                <button
-                  class="p-1 text-outline hover:text-primary transition-colors"
-                  title="Voir détails"
-                >
-                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
-              </td>
-            </tr>
-            <!-- More Rows placeholder -->
-            <tr class="hover:bg-surface-bg transition-colors">
-              <td class="py-3 px-6">
-                <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-container-high font-mono-data text-mono-data font-bold"
-                  >04</span
-                >
-              </td>
-              <td class="py-3 px-6">
-                <p class="font-body-md text-body-md font-medium text-on-surface">Jeanne Kamga</p>
-                <p class="font-label-sm text-label-sm text-outline">+237 6XX XX XX XX</p>
-              </td>
-              <td class="py-3 px-6">
-                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88405</span>
-              </td>
-              <td class="py-3 px-6">
-                <span
-                  class="px-2.5 py-1 rounded-full bg-success-green/10 text-success-green border border-success-green/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
-                >
-                  <span class="material-symbols-outlined text-[14px]">check_circle</span>
-                  Embarqué
-                </span>
-              </td>
-              <td class="py-3 px-6 text-right">
-                <button
-                  class="p-1 text-outline hover:text-primary transition-colors"
-                  title="Voir détails"
-                >
-                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
-              </td>
-            </tr>
-            <!-- Cancelled Row -->
-            <tr class="hover:bg-surface-bg transition-colors opacity-60">
-              <td class="py-3 px-6">
-                <span
-                  class="inline-flex items-center justify-center w-8 h-8 rounded bg-surface-variant text-outline font-mono-data text-mono-data font-bold line-through"
-                  >05</span
-                >
-              </td>
-              <td class="py-3 px-6">
-                <p class="font-body-md text-body-md font-medium text-on-surface line-through">
-                  Luc Tchuente
-                </p>
-              </td>
-              <td class="py-3 px-6">
-                <span class="font-mono-data text-mono-data text-on-surface-variant">TKT-88410</span>
-              </td>
-              <td class="py-3 px-6">
-                <span
-                  class="px-2.5 py-1 rounded-full bg-danger-red/10 text-danger-red border border-danger-red/20 font-label-sm text-label-sm flex items-center gap-1 w-max"
-                >
-                  <span class="material-symbols-outlined text-[14px]">cancel</span>
-                  Annulé
-                </span>
-              </td>
-              <td class="py-3 px-6 text-right">
-                <button
-                  class="p-1 text-outline hover:text-primary transition-colors"
-                  title="Voir détails"
-                >
-                  <span class="material-symbols-outlined text-[20px]">more_vert</span>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              {{ item.status }}
+            </span>
+          </div>
+        </ng-template>
+      </app-table>
+
       <div
         class="p-4 border-t border-border-subtle bg-surface-container-lowest flex justify-between items-center"
       >
@@ -442,3 +307,64 @@
     </div>
   </div>
 </div>
+
+<!-- Modal pour les détails du passager -->
+<app-modal
+  [isOpen]="isModalOpen"
+  [title]="'Détails du Passager'"
+  [size]="'md'"
+  (close)="closeModal()"
+>
+  <div *ngIf="selectedPassenger" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Siège</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.seat }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Nom</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.name }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.phone }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Billet</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
+          {{ selectedPassenger.ticket }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Statut</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.status }}
+        </p>
+      </div>
+    </div>
+    \n
+    <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
+      <button
+        class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"
+        (click)="closeModal()"
+      >
+        Fermer
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>

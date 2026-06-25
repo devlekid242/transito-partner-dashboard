@@ -23,7 +23,12 @@
       <tbody class="divide-y divide-border-subtle">
         <tr *ngFor="let item of paginatedData" class="hover:bg-surface-container-low transition-colors">
           <td *ngFor="let column of columns" class="p-3 font-body-md text-body-md text-on-surface">
-            {{ item[column.key] }}
+            <ng-container *ngIf="customCellTemplate; else defaultCell">
+              <ng-container *ngTemplateOutlet="customCellTemplate; context: {$implicit: item, column: column}"></ng-container>
+            </ng-container>
+            <ng-template #defaultCell>
+              {{ getCellValue(item, column) }}
+            </ng-template>
           </td>
           <td *ngIf="actions.length > 0" class="p-3 text-right">
             <div class="flex justify-end gap-2">

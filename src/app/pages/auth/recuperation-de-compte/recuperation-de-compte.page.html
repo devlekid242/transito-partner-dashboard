@@ -43,54 +43,15 @@
               pour réinitialiser votre mot de passe.
             </p>
           </div>
-          
-          <form (submit)="onSubmit($event)" class="space-y-6" method="POST">
-            <div>
-              <label class="block font-label-sm text-label-sm text-on-surface mb-2" for="email"
-                >Adresse E-mail</label
-              >
-              <div class="relative">
-                <div
-                  class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-outline"
-                >
-                  <span class="material-symbols-outlined text-[20px]">mail</span>
-                </div>
-                <input
-                  class="block w-full pl-11 pr-4 py-3 border border-border-subtle rounded-lg bg-surface-bright text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-colors duration-200 font-body-md text-body-md placeholder-outline-variant"
-                  id="email"
-                  name="email"
-                  placeholder="nom@entreprise.com"
-                  required=""
-                  type="email"
-                />
-              </div>
-            </div>
-            
-            <button
-              class="w-full flex items-center justify-center py-3 px-4 border border-transparent rounded-lg text-on-primary font-label-sm text-label-sm transition-colors duration-200 cursor-pointer active:scale-[0.98] shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2"
-              [disabled]="isLoading || isSent"
-              [class.bg-primary]="!isSent"
-              [class.hover:bg-primary-container]="!isSent"
-              [class.hover:text-on-primary-container]="!isSent"
-              [class.focus:ring-primary]="!isSent"
-              [class.bg-success-green]="isSent"
-              [class.hover:bg-success-green]="isSent"
-              [class.opacity-80]="isLoading || isSent"
-              [class.pointer-events-none]="isLoading || isSent"
-              type="submit"
-            >
-              @if (!isLoading && !isSent) {
-                Envoyer le lien de récupération
-              }
-              @if (isLoading) {
-                <span class="material-symbols-outlined animate-spin mr-2">refresh</span> Envoi en cours...
-              }
-              @if (isSent) {
-                <span class="material-symbols-outlined mr-2">check</span> Lien envoyé
-              }
-            </button>
-          </form>
-          
+
+          <!-- Utilisation du composant FormComponent -->
+          <app-form
+            [fields]="recoveryFormFields"
+            [submitLabel]="'Envoyer le lien de récupération'"
+            (submit)="onSubmit($event)"
+          >
+          </app-form>
+
           <div class="mt-8 text-center">
             <a
               class="inline-flex items-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm transition-colors duration-200"
@@ -115,3 +76,12 @@
     </div>
   </div>
 </main>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>

@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -5,7 +6,8 @@ export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 @Component({
   selector: 'app-notification',
   templateUrl: './notification.component.html',
-  styleUrls: ['./notification.component.css']
+  styleUrls: ['./notification.component.css'],
+  imports: [ CommonModule ]
 })
 export class NotificationComponent {
   @Input() type: NotificationType = 'info';

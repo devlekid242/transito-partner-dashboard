@@ -1,4 +1,5 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, Input, Output, EventEmitter, TemplateRef, ContentChild } from '@angular/core';
 
 export interface TableColumn {
   key: string;
@@ -15,7 +16,8 @@ export interface TableAction {
 @Component({
   selector: 'app-table',
   templateUrl: './table.component.html',
-  styleUrls: ['./table.component.css']
+  styleUrls: ['./table.component.css'],
+  imports: [ CommonModule ]
 })
 export class TableComponent {
   @Input() data: any[] = [];
@@ -23,6 +25,8 @@ export class TableComponent {
   @Input() actions: TableAction[] = [];
   @Input() pageSize: number = 10;
   @Output() sort = new EventEmitter<{ key: string; direction: 'asc' | 'desc' }>();
+  
+  @ContentChild('customCell') customCellTemplate: TemplateRef<any> | undefined;
 
   currentPage: number = 1;
   sortKey: string = '';
@@ -54,4 +58,10 @@ export class TableComponent {
   onActionClick(action: TableAction, item: any): void {
     action.action(item);
   }
+
+  // Méthode pour obtenir la valeur d'une cellule
+  getCellValue(item: any, column: TableColumn): any {
+    return item[column.key];
+  }
+
 }

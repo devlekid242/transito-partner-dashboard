@@ -10,234 +10,153 @@
       </div>
       <button
         class="bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm py-2 px-4 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors shrink-0"
+        (click)="addNewSalesPoint()"
       >
         <span class="material-symbols-outlined text-[18px]" data-icon="add_business"
           >add_business</span
         >Ajouter un point de vente
       </button>
     </div>
-    <!-- Bento Grid Layout for Agencies -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-widget-gap">
-      <!-- Agency Card 1 -->
-      <div
-        class="bg-card-bg rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-standard-padding flex flex-col gap-4 relative overflow-hidden group hover:shadow-md transition-shadow"
-      >
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
-              Gare Centrale - Yaoundé
-            </h3>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">
-              Agence Principale
-            </p>
+
+    <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
+    <app-table
+      [data]="salesPoints"
+      [columns]="salesPointColumns"
+      [actions]="salesPointActions"
+      [pageSize]="10"
+    >
+      <ng-template #customCell let-item let-column="column">
+        <!-- Cellule personnalisée pour le nom avec badge de statut -->
+        <div *ngIf="column.key === 'name'" class="p-3">
+          <div class="flex justify-between items-start">
+            <div>
+              <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
+                {{ item.name }}
+              </h3>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">
+                {{ item.type }}
+              </p>
+            </div>
+            <span
+              [ngClass]="getStatusBadgeClass(item.status)"
+              class="font-label-sm text-label-sm px-3 py-1 rounded-full border flex items-center gap-1"
+            >
+              <span class="w-2 h-2 rounded-full inline-block"></span>
+              {{ item.status }}
+            </span>
           </div>
-          <span
-            class="bg-[#e6f4ea] text-success-green font-label-sm text-label-sm px-3 py-1 rounded-full border border-[#cce8d6] flex items-center gap-1"
-          >
-            <span class="w-2 h-2 rounded-full bg-success-green inline-block"></span>
-            Ouvert
-          </span>
         </div>
-        <div class="flex flex-col gap-2 mt-2">
+
+        <!-- Cellule personnalisée pour l'adresse -->
+        <div *ngIf="column.key === 'address'" class="p-3">
           <div class="flex items-center gap-2 text-on-surface-variant">
             <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
               >location_on</span
             >
-            <span class="font-body-md text-body-md text-[13px]"
-              >Bvd du 20 Mai, Yaoundé, Cameroun</span
-            >
+            <span class="font-body-md text-body-md text-[13px]">{{ item.address }}</span>
           </div>
+        </div>
+
+        <!-- Cellule personnalisée pour le téléphone -->
+        <div *ngIf="column.key === 'phone'" class="p-3">
           <div class="flex items-center gap-2 text-on-surface-variant">
             <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
             <span class="font-mono-data text-mono-data text-[13px]"
-              >+237 6 99 00 11 22 (Jean Dupont)</span
+              >{{ item.phone }} ({{ item.manager }})</span
             >
           </div>
         </div>
-        <div class="mt-auto pt-4 border-t border-border-subtle flex justify-between items-center">
-          <div class="flex gap-4">
-            <div class="text-center">
-              <span class="block font-label-sm text-label-sm text-on-surface-variant"
-                >Ventes J.</span
-              >
-              <span class="font-stats-metric text-stats-metric text-[16px] text-on-surface"
-                >145</span
-              >
-            </div>
-          </div>
-          <button
-            class="text-primary hover:text-primary-container font-label-sm text-label-sm flex items-center gap-1"
-          >
-            Gérer
-            <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward"
-              >arrow_forward</span
-            >
-          </button>
+
+        <!-- Cellule par défaut pour les autres colonnes -->
+        <div
+          *ngIf="column.key !== 'name' && column.key !== 'address' && column.key !== 'phone'"
+          class="p-3 font-body-md text-body-md"
+        >
+          {{ item[column.key] }}
         </div>
-      </div>
-      <!-- Agency Card 2 -->
-      <div
-        class="bg-card-bg rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-standard-padding flex flex-col gap-4 relative overflow-hidden group hover:shadow-md transition-shadow"
-      >
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
-              Akwa Douala - VIP
-            </h3>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Kiosque Premium</p>
-          </div>
-          <span
-            class="bg-[#e6f4ea] text-success-green font-label-sm text-label-sm px-3 py-1 rounded-full border border-[#cce8d6] flex items-center gap-1"
-          >
-            <span class="w-2 h-2 rounded-full bg-success-green inline-block"></span>
-            Ouvert
-          </span>
-        </div>
-        <div class="flex flex-col gap-2 mt-2">
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
-              >location_on</span
-            >
-            <span class="font-body-md text-body-md text-[13px]">Rue Sylvani, Akwa, Douala</span>
-          </div>
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-mono-data text-mono-data text-[13px]"
-              >+237 6 77 88 99 00 (Marie Kamga)</span
-            >
-          </div>
-        </div>
-        <div class="mt-auto pt-4 border-t border-border-subtle flex justify-between items-center">
-          <div class="flex gap-4">
-            <div class="text-center">
-              <span class="block font-label-sm text-label-sm text-on-surface-variant"
-                >Ventes J.</span
-              >
-              <span class="font-stats-metric text-stats-metric text-[16px] text-on-surface"
-                >89</span
-              >
-            </div>
-          </div>
-          <button
-            class="text-primary hover:text-primary-container font-label-sm text-label-sm flex items-center gap-1"
-          >
-            Gérer
-            <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward"
-              >arrow_forward</span
-            >
-          </button>
-        </div>
-      </div>
-      <!-- Agency Card 3 (Closed) -->
-      <div
-        class="bg-surface-container-lowest rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-standard-padding flex flex-col gap-4 relative overflow-hidden group opacity-80 hover:opacity-100 transition-opacity"
-      >
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
-              Bafoussam Centre
-            </h3>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Guichet Express</p>
-          </div>
-          <span
-            class="bg-error-container text-danger-red font-label-sm text-label-sm px-3 py-1 rounded-full border border-[#f5c6c6] flex items-center gap-1"
-          >
-            <span class="w-2 h-2 rounded-full bg-danger-red inline-block"></span>
-            Fermé
-          </span>
-        </div>
-        <div class="flex flex-col gap-2 mt-2">
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
-              >location_on</span
-            >
-            <span class="font-body-md text-body-md text-[13px]">Marché A, Bafoussam</span>
-          </div>
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-mono-data text-mono-data text-[13px]"
-              >+237 6 55 44 33 22 (Paul Etoga)</span
-            >
-          </div>
-        </div>
-        <div class="mt-auto pt-4 border-t border-border-subtle flex justify-between items-center">
-          <div class="flex gap-4">
-            <div class="text-center">
-              <span class="block font-label-sm text-label-sm text-on-surface-variant"
-                >Ventes J.</span
-              >
-              <span class="font-stats-metric text-stats-metric text-[16px] text-on-surface-variant"
-                >0</span
-              >
-            </div>
-          </div>
-          <button
-            class="text-primary hover:text-primary-container font-label-sm text-label-sm flex items-center gap-1"
-          >
-            Gérer
-            <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward"
-              >arrow_forward</span
-            >
-          </button>
-        </div>
-      </div>
-      <!-- Agency Card 4 -->
-      <div
-        class="bg-card-bg rounded-xl shadow-[0_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-standard-padding flex flex-col gap-4 relative overflow-hidden group hover:shadow-md transition-shadow"
-      >
-        <div class="flex justify-between items-start">
-          <div>
-            <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
-              Gare Nord - N'Djamena
-            </h3>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">
-              Agence Transfrontalière
-            </p>
-          </div>
-          <span
-            class="bg-[#fff9e6] text-tertiary-container font-label-sm text-label-sm px-3 py-1 rounded-full border border-[#fce8b2] flex items-center gap-1"
-          >
-            <span class="w-2 h-2 rounded-full bg-warning-gold inline-block"></span>
-            Maintenance
-          </span>
-        </div>
-        <div class="flex flex-col gap-2 mt-2">
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
-              >location_on</span
-            >
-            <span class="font-body-md text-body-md text-[13px]"
-              >Avenue Charles de Gaulle, N'Djamena</span
-            >
-          </div>
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-mono-data text-mono-data text-[13px]"
-              >+235 66 77 88 99 (Ahmat Saleh)</span
-            >
-          </div>
-        </div>
-        <div class="mt-auto pt-4 border-t border-border-subtle flex justify-between items-center">
-          <div class="flex gap-4">
-            <div class="text-center">
-              <span class="block font-label-sm text-label-sm text-on-surface-variant"
-                >Ventes J.</span
-              >
-              <span class="font-stats-metric text-stats-metric text-[16px] text-on-surface"
-                >12</span
-              >
-            </div>
-          </div>
-          <button
-            class="text-primary hover:text-primary-container font-label-sm text-label-sm flex items-center gap-1"
-          >
-            Gérer
-            <span class="material-symbols-outlined text-[16px]" data-icon="arrow_forward"
-              >arrow_forward</span
-            >
-          </button>
-        </div>
-      </div>
-    </div>
+      </ng-template>
+    </app-table>
   </div>
 </main>
+
+<!-- Modal pour les détails du point de vente -->
+<app-modal
+  [isOpen]="isModalOpen"
+  [title]="'Détails du Point de Vente'"
+  [size]="'md'"
+  (close)="closeModal()"
+>
+  <div *ngIf="selectedSalesPoint" class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Nom</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.name }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Type</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.type }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Adresse</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.address }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.phone }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Gestionnaire</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.manager }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Statut</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedSalesPoint.status }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
+      <button
+        class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"
+        (click)="closeModal()"
+      >
+        Fermer
+      </button>
+    </div>
+  </div>
+</app-modal>
+
+<!-- Modal pour le formulaire de point de vente -->
+<app-modal
+  [isOpen]="isFormModalOpen"
+  [title]="selectedSalesPoint?.id ? 'Modifier le Point de Vente' : 'Ajouter un Point de Vente'"
+  [size]="'md'"
+  (close)="closeModal()"
+>
+  <app-form
+    [fields]="salesPointFormFields"
+    [submitLabel]="selectedSalesPoint?.id ? 'Mettre à Jour' : 'Ajouter'"
+    (submit)="onFormSubmit($event)"
+  >
+  </app-form>
+</app-modal>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>

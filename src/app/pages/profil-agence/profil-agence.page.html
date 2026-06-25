@@ -2,8 +2,8 @@
   <!-- Header Section -->
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
-      <h1 class="text-headline-lg font-headline-lg text-on-surface">Profil de l'Agence</h1>
-      <p class="text-body-md font-body-md text-on-surface-variant mt-1">
+      <h1 class="text-headline-lg text-headline-lg text-on-surface">Profil de l'Agence</h1>
+      <p class="text-body-md text-body-md text-on-surface-variant mt-1">
         Gérez les informations publiques et les documents de votre flotte.
       </p>
     </div>
@@ -57,8 +57,8 @@
           </div>
         </div>
         <div class="mb-2">
-          <h2 class="text-headline-md font-headline-md text-on-surface">Express Transit SA</h2>
-          <p class="text-body-md font-body-md text-on-surface-variant flex items-center gap-1">
+          <h2 class="text-headline-md text-headline-md text-on-surface">Express Transit SA</h2>
+          <p class="text-body-md text-body-md text-on-surface-variant flex items-center gap-1">
             <span class="material-symbols-outlined text-[16px]">verified</span>
             Partenaire Premium
           </p>
@@ -78,40 +78,14 @@
             Informations Générales
           </h3>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-              >Nom de l'Agence</label
-            >
-            <input
-              class="w-full px-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all bg-surface-container-lowest"
-              type="text"
-              value="Express Transit SA"
-            />
-          </div>
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-              >Numéro d'Enregistrement</label
-            >
-            <input
-              class="w-full px-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md font-mono-data bg-surface-container-low text-on-surface-variant"
-              readonly=""
-              type="text"
-              value="RC-DLA-2021-B-1452"
-            />
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-              >Description courte</label
-            >
-            <textarea
-              class="w-full px-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all bg-surface-container-lowest resize-none"
-              rows="3"
-            >
-Leader du transport interurbain au Cameroun, offrant des services de bus climatisés haut de gamme avec une ponctualité garantie.</textarea
-            >
-          </div>
-        </div>
+
+        <!-- Utilisation du composant FormComponent -->
+        <app-form
+          [fields]="profileFormFields"
+          [submitLabel]="'Enregistrer les modifications'"
+          (submit)="onFormSubmit($event)"
+        >
+        </app-form>
       </div>
       <!-- Contact & Address -->
       <div class="bento-card">
@@ -132,7 +106,7 @@ Leader du transport interurbain au Cameroun, offrant des services de bus climati
                 >mail</span
               >
               <input
-                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary transition-all"
+                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                 type="email"
                 value="direction@expresstransit.cm"
               />
@@ -148,7 +122,7 @@ Leader du transport interurbain au Cameroun, offrant des services de bus climati
                 >call</span
               >
               <input
-                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary transition-all"
+                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all"
                 type="tel"
                 value="+237 6XX XX XX XX"
               />
@@ -301,13 +275,15 @@ Leader du transport interurbain au Cameroun, offrant des services de bus climati
           Points de vente actifs
         </h3>
         <div class="flex items-end gap-2">
-          <span class="text-display-lg font-display-lg leading-none">12</span>
+          <span class="text-display-lg font-display-lg leading-none">{{
+            agencyStats.activeSalesPoints
+          }}</span>
           <span class="text-body-md font-body-md text-primary-fixed mb-1 pb-1">agences</span>
         </div>
         <div
           class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center text-label-sm font-label-sm"
         >
-          <span class="">Couverture nationale: 4 régions</span>
+          <span class="">Couverture nationale: {{ agencyStats.nationalCoverage }}</span>
           <a
             class="flex items-center gap-1 text-secondary-fixed hover:text-white transition-colors"
             href="#"
@@ -320,3 +296,27 @@ Leader du transport interurbain au Cameroun, offrant des services de bus climati
     </div>
   </div>
 </main>
+
+<!-- Notification Component -->
+<app-notification
+  [show]="showNotification"
+  [type]="notificationType"
+  [message]="notificationMessage"
+  [duration]="5000"
+>
+</app-notification>
+
+<!-- Modal Component -->
+<app-modal [isOpen]="isModalOpen" [title]="modalTitle" [size]="'md'" (close)="closeModal()">
+  <div class="p-4">
+    <p class="font-body-md text-body-md text-on-surface">{{ modalMessage }}</p>
+    <div class="flex justify-end gap-3 mt-6">
+      <button
+        class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
+        (click)="closeModal()"
+      >
+        OK
+      </button>
+    </div>
+  </div>
+</app-modal>
