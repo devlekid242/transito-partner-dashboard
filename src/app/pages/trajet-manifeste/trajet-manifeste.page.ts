@@ -1,8 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
 import { CommonModule } from '@angular/common';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { ManifestData } from '../../models/partner.model';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-trajet-manifeste',
@@ -10,84 +13,17 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./trajet-manifeste.page.css'],
   imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule],
 })
-export class TrajetManifestePage {
-  // Trip information
-  tripInfo = {
-    id: 'TRP-8492-X',
-    route: 'Douala → Yaoundé',
-    date: '14 Nov 2023, 08:00',
-    status: 'EN COURS',
-    bus: {
-      plate: 'CE 492 LT',
-      model: 'VIP Express',
-      capacity: 50,
-      occupied: 42,
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuAB9PnIu9alG0SPCfdWzOgwyIurvVs62CncRbg4-frk2K1eUfmxP86djK63xaGp3TBV_5eAliqI3aHcSuDOGEZq6dtF4TpD_2Nw1V1NcFZQD05FGInUCmEWNZxlHlxlDdqrf0DcfDzPJzHT0x-vKBKYTRl61z9rKxCJQJGTVEbhCGaMpr_YTZonaSQKrxzhL48fl3CW0LpSaPVIE7fFS-BOpQHV5pWrME92beMKsTaUMUYwqSuyl5JDyb994bFU_LHyGHJQ85QO3pQ85ctGyCBqRx-P5GvA9uHnPkBd2IzL2Sd2CHQvR1AbCtC_5NvV0',
-    },
-    driver: {
-      name: 'Marc Oumarou',
-      license: 'D',
-      experience: '12 ans',
-    },
-    hostess: {
-      name: 'Sarah Eboa',
-    },
-  };
-
-  // Passenger data
-  passengers = [
-    {
-      id: 1,
-      seat: '01',
-      name: 'Alain Mvondo',
-      phone: '+237 6XX XX XX XX',
-      ticket: 'TKT-88392',
-      status: 'Embarqué',
-    },
-    {
-      id: 2,
-      seat: '02',
-      name: 'Marie Ngo',
-      phone: '+237 6XX XX XX XX',
-      ticket: 'TKT-88393',
-      status: 'Embarqué',
-    },
-    {
-      id: 3,
-      seat: '03',
-      name: 'Paul Biya (Jr)',
-      phone: '+237 6XX XX XX XX',
-      ticket: 'TKT-88401',
-      status: 'En attente',
-    },
-    {
-      id: 4,
-      seat: '04',
-      name: 'Jeanne Kamga',
-      phone: '+237 6XX XX XX XX',
-      ticket: 'TKT-88405',
-      status: 'Embarqué',
-    },
-    {
-      id: 5,
-      seat: '05',
-      name: 'Luc Tchuente',
-      phone: '+237 6XX XX XX XX',
-      ticket: 'TKT-88410',
-      status: 'Annulé',
-    },
-  ];
-
-  // Table columns
+export class TrajetManifestePage implements OnInit {
+  tripInfo: ManifestData | null = null;
+  passengers: Array<any> = [];
   passengerColumns: TableColumn[] = [
-    { key: 'seat', title: 'Siège' },
-    { key: 'name', title: 'Passager' },
-    { key: 'ticket', title: 'N° Billet' },
-    { key: 'status', title: 'Statut' },
+    { key: 'seatNumber', title: 'Siège', sortable: true },
+    { key: 'name', title: 'Passager', sortable: true },
+    { key: 'ticketNumber', title: 'N° Billet' },
+    { key: 'boardingStatus', title: 'Statut' },
+    { key: 'boardingPoint', title: 'Point d’embarquement' },
   ];
 
-  // Table actions
   passengerActions: TableAction[] = [
     {
       icon: 'check',
@@ -101,20 +37,110 @@ export class TrajetManifestePage {
     },
   ];
 
-  // Modal state
   isModalOpen = false;
   selectedPassenger: any = null;
 
-  // Notification state
+  manifestStatusOptions: { value: string; label: string }[] = [];
+  selectedManifestStatus = 'all';
+
   showNotification = false;
   notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
   notificationMessage = '';
 
-  constructor() {}
+  tripProgress: Array<{
+    location: string;
+    time: string;
+    status: string;
+    completed?: boolean;
+    current?: boolean;
+  }> = [];
+
+  constructor(
+    private partnerApiService: PartnerApiService,
+    private route: ActivatedRoute,
+  ) {}
+
+  ngOnInit() {
+    this.partnerApiService.getManifestStatusOptions().subscribe((options) => {
+      this.manifestStatusOptions = options;
+      if (!options.some((option) => option.value === this.selectedManifestStatus)) {
+        this.selectedManifestStatus = options[0]?.value || this.selectedManifestStatus;
+      }
+    });
+
+    this.route.params.subscribe((params) => {
+      const tripId = Number(params['id'] || 1);
+      this.loadManifestData(tripId);
+    });
+  }
+
+  get filteredPassengers() {
+    if (this.selectedManifestStatus === 'all') {
+      return this.passengers;
+    }
+    return this.passengers.filter((passenger) => {
+      if (this.selectedManifestStatus === 'boarded') {
+        return passenger.boardingStatus === 'Embarqué';
+      }
+      if (this.selectedManifestStatus === 'pending') {
+        return passenger.boardingStatus === 'En attente';
+      }
+      if (this.selectedManifestStatus === 'cancelled') {
+        return passenger.boardingStatus === 'Annulé';
+      }
+      return true;
+    });
+  }
+
+  loadManifestData(tripId: number) {
+    this.partnerApiService.getTripManifest(tripId).subscribe(
+      (manifest: ManifestData) => {
+        this.tripInfo = manifest;
+        this.passengers = manifest.passengers.map((passenger) => ({
+          ...passenger,
+          boardingStatus: this.getStatusText(passenger.boardingStatus),
+        }));
+
+        this.tripProgress = (manifest.stops ?? []).map((stop) => ({
+          location: stop.location,
+          time: stop.time,
+          status: stop.status,
+          completed: stop.completed,
+          current: stop.current,
+        }));
+      },
+      (error) => {
+        console.error('Error loading manifest:', error);
+        this.showToastNotification('error', 'Erreur de chargement du manifeste');
+      },
+    );
+  }
+
+  getStatusText(status: string): string {
+    const statusMap: Record<string, string> = {
+      PENDING: 'En attente',
+      BOARDED: 'Embarqué',
+      NO_SHOW: 'Non présenté',
+      CANCELLED: 'Annulé',
+    };
+    return statusMap[status] || status;
+  }
 
   validatePassenger(passenger: any): void {
-    passenger.status = 'Embarqué';
-    this.showToastNotification('success', `Passager ${passenger.name} validé avec succès`);
+    this.partnerApiService.validateTicket(passenger.ticketNumber).subscribe(
+      (response) => {
+        if (response.success) {
+          passenger.boardingStatus = 'Embarqué';
+          this.showToastNotification('success', `Passager ${passenger.name} validé avec succès`);
+        } else {
+          this.showToastNotification('error', response.message || 'Validation échouée');
+        }
+      },
+      (error) => {
+        console.error('Error validating ticket:', error);
+        this.showToastNotification('error', 'Erreur de validation du billet');
+      },
+    );
   }
 
   viewPassengerDetails(passenger: any): void {
@@ -123,13 +149,38 @@ export class TrajetManifestePage {
   }
 
   printManifest(): void {
-    this.showToastNotification('info', 'Impression du manifeste en cours...');
-    // Logique d'impression
+    const tripId = this.tripInfo?.tripId;
+    if (!tripId) {
+      return;
+    }
+    this.partnerApiService.generateManifestPDF(tripId).subscribe(
+      (blob: Blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `manifeste-${tripId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        this.showToastNotification('success', 'Manifeste téléchargé avec succès');
+      },
+      (error) => {
+        console.error('Error generating PDF:', error);
+        this.showToastNotification('error', 'Erreur de génération du PDF');
+      },
+    );
   }
 
   scanTicket(): void {
     this.showToastNotification('info', 'Scanner de billet activé');
-    // Logique de scan
+  }
+
+  selectManifestStatus(value: string | null): void {
+    if (!value) {
+      return;
+    }
+    this.selectedManifestStatus = value;
   }
 
   closeModal(): void {
@@ -146,27 +197,4 @@ export class TrajetManifestePage {
       this.showNotification = false;
     }, 5000);
   }
-
-  // Trip progress data
-  tripProgress = [
-    {
-      location: 'Douala (Agence Akwa)',
-      time: '08:00',
-      status: 'Départ: 08:00 (Effectif)',
-      completed: true,
-    },
-    {
-      location: 'Edéa (Escale)',
-      time: '09:30',
-      status: 'Prévu: 09:30 (En approche)',
-      completed: false,
-      current: true,
-    },
-    {
-      location: 'Yaoundé (Mvan)',
-      time: '12:45',
-      status: 'Arrivée estimée: 12:45',
-      completed: false,
-    },
-  ];
 }

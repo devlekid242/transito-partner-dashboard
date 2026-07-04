@@ -1,50 +1,27 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
-import { ModalComponent } from '../../components/modal/modal.component';
-import { FormComponent, FormField } from '../../components/form/form.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { Trip } from '../../models/partner.model';
 import { CommonModule } from '@angular/common';
+import { AlertService } from '../../services/alert.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-trip-schedule',
   templateUrl: './trip-schedule.page.html',
   styleUrls: ['./trip-schedule.page.css'],
-  imports: [TableComponent, CommonModule, ModalComponent, FormComponent, NotificationComponent],
+  imports: [TableComponent, CommonModule],
 })
-export class TripSchedulePage {
-  // Données pour le tableau des départs
-  todayDepartures = [
-    {
-      time: '08:00 AM',
-      date: 'Oct 24, 2023',
-      route: 'Douala → Yaoundé',
-      bus: 'TR-842-X',
-      status: 'Active',
-    },
-    {
-      time: '10:30 AM',
-      date: 'Oct 24, 2023',
-      route: 'Yaoundé → Bafoussam',
-      bus: 'TR-119-Y',
-      status: 'Scheduled',
-    },
-    {
-      time: '12:15 PM',
-      date: 'Oct 24, 2023',
-      route: 'Douala → Kribi',
-      bus: 'TR-505-Z',
-      status: 'Delayed',
-    },
-  ];
+export class TripSchedulePage implements OnInit {
+  todayDepartures: any[] = [];
+  upcomingTrips: any[] = [];
+  nextDeparture: any | null = null;
+  isLoading = false;
+  private pendingLoadingRequests = 0;
 
-  upcomingTrips = [
-    { id: '10h', time: '10:30 AM', route: 'YDE - BAF', bus: 'TR-119-Y', status: 'In 2h 15m' },
-    { id: '12h', time: '12:15 PM', route: 'DLA - KBI', bus: 'TR-505-Z', status: 'In 4h 00m' },
-  ];
-
-  // Colonnes du tableau
   departureColumns: TableColumn[] = [
-    { key: 'time', title: 'Time & Date', sortable: true },
+    { key: 'departureTime', title: 'Time & Date', sortable: true },
     { key: 'route', title: 'Route', sortable: true },
     { key: 'bus', title: 'Assigned Bus', sortable: true },
     { key: 'status', title: 'Status', sortable: true },
@@ -52,13 +29,12 @@ export class TripSchedulePage {
 
   upcomingColumns: TableColumn[] = [
     { key: 'id', title: 'ID' },
-    { key: 'time', title: 'Time' },
+    { key: 'departureTime', title: 'Time' },
     { key: 'route', title: 'Route' },
     { key: 'bus', title: 'Bus' },
     { key: 'status', title: 'Status' },
   ];
 
-  // Actions du tableau
   departureActions: TableAction[] = [
     {
       icon: 'visibility',
@@ -72,104 +48,123 @@ export class TripSchedulePage {
     },
   ];
 
-  // Modal state
-  isModalOpen = false;
-  isFormModalOpen = false;
-  selectedTrip: any = null;
+  constructor(
+    private partnerApiService: PartnerApiService,
+    private router: Router,
+    private alertService: AlertService,
+  ) {}
 
-  // Form state
-  tripFormFields: FormField[] = [
-    {
-      key: 'route',
-      label: 'Route',
-      type: 'text',
-      required: true,
-      placeholder: 'e.g. Douala → Yaoundé',
-    },
-    {
-      key: 'bus',
-      label: 'Assigned Bus',
-      type: 'select',
-      required: true,
-      options: [
-        { value: 'TR-842-X', label: 'TR-842-X (Volvo 9900)' },
-        { value: 'TR-119-Y', label: 'TR-119-Y (Scania Touring)' },
-        { value: 'TR-505-Z', label: 'TR-505-Z (Mercedes Tourismo)' },
-      ],
-    },
-    {
-      key: 'departureTime',
-      label: 'Departure Time',
-      type: 'text',
-      required: true,
-      placeholder: 'HH:MM',
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      required: true,
-      options: [
-        { value: 'Active', label: 'Active' },
-        { value: 'Scheduled', label: 'Scheduled' },
-        { value: 'Delayed', label: 'Delayed' },
-        { value: 'Completed', label: 'Completed' },
-      ],
-    },
-  ];
+  private beginLoading(): void {
+    this.pendingLoadingRequests += 1;
+    this.isLoading = true;
+  }
 
-  // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
+  private finishLoading(): void {
+    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
+    this.isLoading = this.pendingLoadingRequests > 0;
+  }
 
-  constructor() {}
+  ngOnInit() {
+    this.loadTrips();
+  }
+
+  loadTrips() {
+    this.beginLoading();
+    this.partnerApiService
+      .getTodaysTrips()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe(
+        (trips: Trip[]) => {
+          this.todayDepartures = trips.map((trip) => {
+            const anyTrip = trip as any;
+            return {
+              ...trip,
+              departureTime:
+                anyTrip.tripDate && anyTrip.departureTimeOfDay
+                  ? `${anyTrip.tripDate} ${anyTrip.departureTimeOfDay}`
+                  : trip.departureTime,
+              date: anyTrip.tripDate ?? trip.departureTime?.split('T')[0] ?? '',
+              route:
+                trip.departureCity || trip.boardingPoints?.[0]?.name || trip.departurePoint?.name
+                  ? `${trip.departureCity || trip.boardingPoints?.[0]?.name || trip.departurePoint?.name} → ${
+                      trip.arrivalCity ||
+                      trip.deboardingPoints?.[0]?.name ||
+                      trip.arrivalPoint?.name ||
+                      'Route'
+                    }`
+                  : 'Route',
+              bus: trip.bus?.registrationNumber || 'N/A',
+              status: trip.status,
+              driverName: trip.driverName || 'Non précisé',
+            };
+          });
+          this.nextDeparture = this.todayDepartures.length ? this.todayDepartures[0] : null;
+        },
+        (error) => {
+          console.error('Error loading today trips:', error);
+          this.alertService.error('Erreur de chargement des départs du jour');
+        },
+      );
+
+    this.beginLoading();
+    this.partnerApiService
+      .getTrips()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe(
+        (trips: Trip[]) => {
+          this.upcomingTrips = trips.slice(0, 5).map((trip) => {
+            const anyTrip = trip as any;
+            return {
+              id: trip.id?.toString() ?? '',
+              departureTime:
+                anyTrip.tripDate && anyTrip.departureTimeOfDay
+                  ? `${anyTrip.tripDate} ${anyTrip.departureTimeOfDay}`
+                  : trip.departureTime,
+              route:
+                trip.departureCity || trip.boardingPoints?.[0]?.name || trip.departurePoint?.name
+                  ? `${trip.departureCity || trip.boardingPoints?.[0]?.name || trip.departurePoint?.name} → ${
+                      trip.arrivalCity ||
+                      trip.deboardingPoints?.[0]?.name ||
+                      trip.arrivalPoint?.name ||
+                      'Route'
+                    }`
+                  : 'Route',
+              bus: trip.bus?.registrationNumber || 'N/A',
+              status: this.getStatusText(trip.status),
+            };
+          });
+        },
+        (error) => {
+          console.error('Error loading upcoming trips:', error);
+          this.alertService.error('Erreur de chargement des trajets à venir');
+        },
+      );
+  }
+
+  getStatusText(status: string): string {
+    const statusMap: Record<string, string> = {
+      planifie: 'Scheduled',
+      embarquement: 'Boarding',
+      en_route: 'In Transit',
+      termine: 'Completed',
+      annule: 'Cancelled',
+    };
+    return statusMap[status] || status;
+  }
 
   viewTripDetails(trip: any): void {
-    this.selectedTrip = trip;
-    this.isModalOpen = true;
+    this.router.navigate(['/ajout-trajet', trip.id]);
   }
 
   manageTrip(trip: any): void {
-    this.selectedTrip = trip;
-    this.isFormModalOpen = true;
+    this.router.navigate(['/ajout-trajet', trip.id]);
   }
 
   addNewTrip(): void {
-    this.selectedTrip = {
-      time: '',
-      date: new Date().toISOString().split('T')[0],
-      route: '',
-      bus: '',
-      status: 'Scheduled',
-    };
-    this.isFormModalOpen = true;
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
-    this.isFormModalOpen = false;
-    this.selectedTrip = null;
-  }
-
-  onFormSubmit(formData: any): void {
-    console.log('Form submitted:', formData);
-    this.showToatNotification('success', 'Trip updated successfully!');
-    this.closeModal();
-  }
-
-  showToatNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
-
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 5000);
+    this.router.navigate(['/ajout-trajet']);
   }
 
   onSortChange(event: { key: string; direction: 'asc' | 'desc' }): void {
     console.log('Sort changed:', event);
-    // Logique de tri à implémenter
   }
 }

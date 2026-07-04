@@ -23,20 +23,20 @@
           <div class="flex items-center gap-2 mb-1">
             <span
               class="px-2 py-0.5 rounded-full bg-success-green/20 text-success-green font-label-sm text-label-sm border border-success-green/30"
-              >EN COURS</span
+              >{{ tripInfo?.status === 'embarquement' ? 'EN COURS' : tripInfo?.status === 'termine' ? 'TERMINE' : tripInfo?.status === 'planifie' ? 'PLANIFIÉ' : 'EN ROUTE' }}</span
             >
-            <span class="font-mono-data text-mono-data text-outline">TRP-8492-X</span>
+            <span class="font-mono-data text-mono-data text-outline">TRP-{{ tripInfo?.tripId || '—' }}</span>
           </div>
           <h2
             class="font-headline-lg text-headline-lg font-bold text-on-surface flex items-center gap-3"
           >
-            Douala
+            {{ tripInfo?.route?.departure || tripInfo?.departure || '—' }}
             <span class="material-symbols-outlined text-outline">arrow_forward</span>
-            Yaoundé
+            {{ tripInfo?.route?.arrival || tripInfo?.arrival || '—' }}
           </h2>
           <p class="font-body-md text-body-md text-on-surface-variant mt-1 flex items-center gap-2">
             <span class="material-symbols-outlined text-[18px]">calendar_today</span>
-            14 Nov 2023, 08:00
+            {{ tripInfo?.route?.departureDateTime || tripInfo?.departureTime || '—' }}
           </p>
         </div>
       </div>
@@ -50,6 +50,7 @@
         </button>
         <button
           class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm shadow-sm hover:opacity-90 transition-opacity"
+          (click)="scanTicket()"
         >
           <span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
           Scanner Billet
@@ -84,26 +85,32 @@
             <img
               alt="Bus Image"
               class="w-full h-full object-cover"
-              data-alt="A modern commercial intercity bus parked in a terminal on a bright sunny day. The bus is painted in clean white and blue corporate colors. The lighting is crisp, casting sharp shadows on the clean concrete ground. The aesthetic is highly professional, emphasizing modern logistics and reliable transportation within a corporate framework."
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmQT60wY4g94ZeRyuo7JeL07pMWJQUdF9QPsHc8Z-XO-PnhbQvoFxjnf_KAXKGfkjqfvR9vrl-kTnca3_88B5A7ykcnDAlBC3ZnXauNosSboM5n8yG1VbPhAmVK1qiw5vCyKryB6TlL4SUhpQTUu7IS0JcW_oziU3jDzQecY8D8EWCa_MX2JO6frqxJrid-j4iwCfWAw-iX-Zp8bPca-H1BmVGJu5ctGyCBqRx-P5GvA9uHnPkBd2IzL2Sd2CHQvR1AbCtC_5NvV0"
+              [attr.data-alt]="'Bus image for ' + (tripInfo.busInfo?.licensePlate || '')"
+              [src]="tripInfo.busInfo?.image || ''"
             />
           </div>
           <div>
             <p class="font-label-sm text-label-sm text-outline uppercase tracking-wider">
               Plaque d'immatriculation
             </p>
-            <p class="font-mono-data text-mono-data text-on-surface font-bold text-lg">CE 492 LT</p>
-            <p class="font-body-md text-body-md text-on-surface-variant">VIP Express - 50 places</p>
+            <p class="font-mono-data text-mono-data text-on-surface font-bold text-lg">
+              {{ tripInfo.busInfo?.licensePlate || '—' }}
+            </p>
+            <p class="font-body-md text-body-md text-on-surface-variant">
+              {{ tripInfo.busInfo?.model || '—' }} - {{ tripInfo.busInfo?.capacity || '—' }} places
+            </p>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4 pt-4 border-t border-border-subtle">
           <div>
             <p class="font-label-sm text-label-sm text-outline">Capacité</p>
-            <p class="font-stats-metric text-stats-metric text-on-surface">50</p>
+            <p class="font-stats-metric text-stats-metric text-on-surface">
+              {{ tripInfo.busInfo?.capacity || '—' }}
+            </p>
           </div>
           <div>
             <p class="font-label-sm text-label-sm text-outline">Occupés</p>
-            <p class="font-stats-metric text-stats-metric text-primary">42</p>
+            <p class="font-stats-metric text-stats-metric text-primary">{{ passengers.length }}</p>
           </div>
         </div>
       </div>
@@ -119,24 +126,41 @@
           <img
             alt="Driver Avatar"
             class="w-12 h-12 rounded-full border-2 border-surface-bg"
-            data-alt="A professional portrait of a senior bus driver wearing a crisp blue uniform shirt. The lighting is studio quality, emphasizing competence and trust. The background is a soft, out-of-focus light gray. The image conveys reliability and safety, matching the overall corporate logistics design aesthetic."
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuC1HsAzU7swks_-X-lsNlixRrRzR6fhPeAeZJDLgRQ2YTDeKwczbvoXaIcJEHvFHpNeOa5wk0zCJ3zJQtTiXmTqIfk3aWZswDcHsPucHUBUpRXMAI8hCMK2w2BOTqPsYLnICVpBqqou80HVHOMp_Z4i521RyumRuiknfzlD3Xa8qKCFNwaBif49mt6DVu9humZu-D_1fQwoSGF9mQqDu0j6f9DZIk2CVmFeSjrF1wIY1q-Qc7grs6JraVv45Otqldg1qvHrHGQtro0"
+            [src]="tripInfo.driver?.photo || tripInfo.driver?.avatar || ''"
           />
           <div>
             <p class="font-label-sm text-label-sm text-primary font-bold">Chauffeur Principal</p>
-            <p class="font-body-lg text-body-lg text-on-surface font-medium">Marc Oumarou</p>
-            <p class="font-label-sm text-label-sm text-outline">Permis: D - Exp: 12 ans</p>
+            <p class="font-body-lg text-body-lg text-on-surface font-medium">
+              {{ tripInfo.driver?.name || '—' }}
+            </p>
+            <p class="font-label-sm text-label-sm text-outline">
+              {{
+                tripInfo.driver?.license
+                  ? 'Permis: ' +
+                    tripInfo.driver.license +
+                    (tripInfo.driver.experience ? ' - Exp: ' + tripInfo.driver.experience : '')
+                  : ''
+              }}
+            </p>
           </div>
         </div>
         <div class="flex items-center gap-4 pt-4 border-t border-border-subtle">
           <div
             class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-outline"
           >
-            <span class="material-symbols-outlined">person</span>
+            <img
+              *ngIf="tripInfo.hostess?.photo"
+              [src]="tripInfo.hostess.photo"
+              alt="hostess"
+              class="w-full h-full object-cover rounded-full"
+            />
+            <span *ngIf="!tripInfo.hostess?.photo" class="material-symbols-outlined">person</span>
           </div>
           <div>
             <p class="font-label-sm text-label-sm text-on-surface-variant font-bold">Hôtesse</p>
-            <p class="font-body-lg text-body-lg text-on-surface font-medium">Sarah Eboa</p>
+            <p class="font-body-lg text-body-lg text-on-surface font-medium">
+              {{ tripInfo.hostess?.name || '—' }}
+            </p>
           </div>
         </div>
       </div>
@@ -149,29 +173,28 @@
           <!-- Timeline line -->
           <div class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border-subtle"></div>
           <!-- Timeline items -->
-          <div class="relative mb-6">
-            <div
-              class="absolute -left-6 w-3 h-3 rounded-full bg-success-green ring-4 ring-surface-bg top-1.5"
-            ></div>
-            <p class="font-body-md text-body-md font-bold text-on-surface">Douala (Agence Akwa)</p>
-            <p class="font-label-sm text-label-sm text-outline">Départ: 08:00 (Effectif)</p>
-          </div>
-          <div class="relative mb-6">
-            <div
-              class="absolute -left-6 w-3 h-3 rounded-full bg-primary ring-4 ring-surface-bg top-1.5 animate-pulse"
-            ></div>
-            <p class="font-body-md text-body-md font-bold text-on-surface">Edéa (Escale)</p>
-            <p class="font-label-sm text-label-sm text-primary">Prévu: 09:30 (En approche)</p>
-          </div>
-          <div class="relative">
-            <div
-              class="absolute -left-6 w-3 h-3 rounded-full border-2 border-outline bg-surface-bg top-1.5"
-            ></div>
-            <p class="font-body-md text-body-md font-bold text-on-surface text-on-surface-variant">
-              Yaoundé (Mvan)
-            </p>
-            <p class="font-label-sm text-label-sm text-outline">Arrivée estimée: 12:45</p>
-          </div>
+          <ng-container *ngIf="tripProgress?.length; else noProgress">
+            <div *ngFor="let stop of tripProgress; let i = index" class="relative mb-6">
+              <div
+                class="absolute -left-6 w-3 h-3 rounded-full"
+                [ngClass]="{
+                  'bg-success-green ring-4 ring-surface-bg': stop.completed,
+                  'bg-primary ring-4 ring-surface-bg animate-pulse': stop.current,
+                  'border-2 border-outline bg-surface-bg': !stop.current && !stop.completed
+                }"
+              ></div>
+              <p class="font-body-md text-body-md font-bold text-on-surface">{{ stop.location }}</p>
+              <p
+                class="font-label-sm text-label-sm"
+                [ngClass]="stop.completed ? 'text-outline' : stop.current ? 'text-primary' : 'text-outline'"
+              >
+                {{ stop.status }} • {{ stop.time || 'Horaires à venir' }}
+              </p>
+            </div>
+          </ng-container>
+          <ng-template #noProgress>
+            <p class="font-label-sm text-label-sm text-outline">Aucune progression disponible.</p>
+          </ng-template>
         </div>
       </div>
     </div>
@@ -187,7 +210,7 @@
             Manifeste des Passagers
           </h3>
           <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-            42 embarqués sur 50 réservations
+            {{ passengers.length }} embarqués sur {{ tripInfo.busInfo?.capacity || '—' }} réservations
           </p>
         </div>
         <div class="flex gap-2">
@@ -197,11 +220,16 @@
             >
             <select
               class="pl-9 pr-8 py-1.5 bg-surface-bg border border-border-subtle rounded-lg font-label-sm text-label-sm text-on-surface focus:ring-primary focus:border-primary appearance-none"
+              #manifestStatusSelect
+              (change)="selectManifestStatus(manifestStatusSelect.value)"
             >
-              <option>Tous les statuts</option>
-              <option>Embarqué</option>
-              <option>En attente</option>
-              <option>Annulé</option>
+              <option
+                *ngFor="let option of manifestStatusOptions"
+                [value]="option.value"
+                [selected]="selectedManifestStatus === option.value"
+              >
+                {{ option.label }}
+              </option>
             </select>
           </div>
         </div>
@@ -209,63 +237,61 @@
 
       <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
       <app-table
-        [data]="passengers"
+        [data]="filteredPassengers"
         [columns]="passengerColumns"
         [actions]="passengerActions"
         [pageSize]="10"
       >
         <ng-template #customCell let-item let-column="column">
           <!-- Cellule personnalisée pour le siège -->
-          <div *ngIf="column.key === 'seat'" class="p-3">
+          <div *ngIf="column.key === 'seatNumber'" class="p-3">
             <span
               [ngClass]="{
-                'bg-surface-container-high': item.status === 'Embarqué',
-                'border border-warning-gold text-warning-gold': item.status === 'En attente',
-                'bg-surface-variant text-outline line-through': item.status === 'Annulé',
+                'bg-surface-container-high': item.boardingStatus === 'Embarqué',
+                'border border-warning-gold text-warning-gold': item.boardingStatus === 'En attente',
+                'bg-surface-variant text-outline line-through': item.boardingStatus === 'Annulé',
               }"
               class="inline-flex items-center justify-center w-8 h-8 rounded font-mono-data text-mono-data font-bold"
             >
-              {{ item.seat }}
+              {{ item.seatNumber }}
             </span>
           </div>
 
           <!-- Cellule personnalisée pour le passager -->
           <div *ngIf="column.key === 'name'" class="p-3">
             <p class="font-body-md text-body-md font-medium text-on-surface">{{ item.name }}</p>
-            <p class="font-label-sm text-label-sm text-outline">{{ item.phone }}</p>
+            <p class="font-label-sm text-label-sm text-outline">{{ item.phoneNumber || '—' }}</p>
           </div>
 
           <!-- Cellule personnalisée pour le billet -->
-          <div *ngIf="column.key === 'ticket'" class="p-3">
-            <span class="font-mono-data text-mono-data text-on-surface-variant">{{
-              item.ticket
-            }}</span>
+          <div *ngIf="column.key === 'ticketNumber'" class="p-3">
+            <span class="font-mono-data text-mono-data text-on-surface-variant">{{ item.ticketNumber }}</span>
           </div>
 
           <!-- Cellule personnalisée pour le statut -->
-          <div *ngIf="column.key === 'status'" class="p-3">
+          <div *ngIf="column.key === 'boardingStatus'" class="p-3">
             <span
               [ngClass]="{
                 'bg-success-green/10 text-success-green border-success-green/20':
-                  item.status === 'Embarqué',
+                  item.boardingStatus === 'Embarqué',
                 'bg-warning-gold/10 text-tertiary-container border-warning-gold/30':
-                  item.status === 'En attente',
-                'bg-danger-red/10 text-danger-red border-danger-red/20': item.status === 'Annulé',
+                  item.boardingStatus === 'En attente',
+                'bg-danger-red/10 text-danger-red border-danger-red/20': item.boardingStatus === 'Annulé',
               }"
               class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border"
             >
-              <span *ngIf="item.status === 'Embarqué'" class="material-symbols-outlined text-[14px]"
+              <span *ngIf="item.boardingStatus === 'Embarqué'" class="material-symbols-outlined text-[14px]"
                 >check_circle</span
               >
               <span
-                *ngIf="item.status === 'En attente'"
+                *ngIf="item.boardingStatus === 'En attente'"
                 class="material-symbols-outlined text-[14px]"
                 >schedule</span
               >
-              <span *ngIf="item.status === 'Annulé'" class="material-symbols-outlined text-[14px]"
+              <span *ngIf="item.boardingStatus === 'Annulé'" class="material-symbols-outlined text-[14px]"
                 >cancel</span
               >
-              {{ item.status }}
+              {{ item.boardingStatus }}
             </span>
           </div>
         </ng-template>
@@ -320,7 +346,7 @@
       <div>
         <p class="text-label-sm text-label-sm text-outline">Siège</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedPassenger.seat }}
+          {{ selectedPassenger.seatNumber }}
         </p>
       </div>
       <div>
@@ -332,23 +358,41 @@
       <div>
         <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedPassenger.phone }}
+          {{ selectedPassenger.phoneNumber || 'Non défini' }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Billet</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
-          {{ selectedPassenger.ticket }}
+          {{ selectedPassenger.ticketNumber }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedPassenger.status }}
+          {{ selectedPassenger.boardingStatus }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Point d’embarquement</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.boardingPoint || 'Non défini' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Point de débarquement</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.deboardingPoint || 'Non défini' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Prix du billet</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedPassenger.price ? (selectedPassenger.price | currency:'XAF':'symbol') : 'Non renseigné' }}
         </p>
       </div>
     </div>
-    \n
+
     <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
       <button
         class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"

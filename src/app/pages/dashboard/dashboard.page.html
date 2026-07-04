@@ -24,6 +24,11 @@
     </div>
   </div>
 
+  <div *ngIf="isLoading()" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
+    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+    Chargement des données du tableau de bord...
+  </div>
+
   <!-- Stats Row -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-widget-gap mb-widget-gap">
     <!-- Revenue Card -->
@@ -43,12 +48,16 @@
           class="px-2 py-0.5 rounded-full bg-success-green/10 text-success-green font-label-sm text-label-sm flex items-center gap-0.5"
         >
           <span class="material-symbols-outlined" style="font-size: 14px">trending_up</span>
-          +12%
+          {{ metrics().revenue.change }}
         </span>
       </div>
       <div>
-        <div class="font-stats-metric text-stats-metric text-on-surface">1,250,000</div>
-        <div class="font-mono-data text-mono-data text-on-surface-variant mt-1">XAF</div>
+        <div class="font-stats-metric text-stats-metric text-on-surface">
+          {{ metrics().revenue.value }}
+        </div>
+        <div class="font-mono-data text-mono-data text-on-surface-variant mt-1">
+          {{ metrics().revenue.currency }}
+        </div>
       </div>
     </div>
     <!-- Active Trips Card -->
@@ -66,8 +75,12 @@
         </span>
       </div>
       <div class="flex items-end justify-between">
-        <div class="font-stats-metric text-stats-metric text-on-surface">12</div>
-        <div class="font-body-md text-body-md text-on-surface-variant">Sur 5 itinéraires</div>
+        <div class="font-stats-metric text-stats-metric text-on-surface">
+          {{ metrics().activeTrips.value }}
+        </div>
+        <div class="font-body-md text-body-md text-on-surface-variant">
+          {{ metrics().activeTrips.routes }}
+        </div>
       </div>
     </div>
     <!-- Total Passengers Card -->
@@ -85,8 +98,12 @@
         </span>
       </div>
       <div class="flex items-end justify-between">
-        <div class="font-stats-metric text-stats-metric text-on-surface">345</div>
-        <div class="font-body-md text-body-md text-on-surface-variant">Manifestés aujourd'hui</div>
+        <div class="font-stats-metric text-stats-metric text-on-surface">
+          {{ metrics().totalPassengers.value }}
+        </div>
+        <div class="font-body-md text-body-md text-on-surface-variant">
+          {{ metrics().totalPassengers.description }}
+        </div>
       </div>
     </div>
   </div>
@@ -99,13 +116,25 @@
       <h3 class="font-headline-md text-headline-md text-on-surface">Tendance des Revenus</h3>
       <select
         class="bg-surface-bg border-subtle text-body-md font-body-md rounded-lg py-1 px-3 outline-none focus:border-primary"
+        #revenueSelect
+        (change)="selectRevenueRange(revenueSelect.value)"
       >
-        <option>30 derniers jours</option>
-        <option>7 derniers jours</option>
-        <option>Cette année</option>
+        <option
+          *ngFor="let option of revenueRangeOptions()"
+          [value]="option.value"
+          [selected]="selectedRevenueRange() === option.value"
+        >
+          {{ option.label }}
+        </option>
       </select>
     </div>
-    <app-revenue-chart></app-revenue-chart>
+    <app-revenue-chart
+      [chartType]="revenueChartType()"
+      [chartTitle]="'Revenus'"
+      [labels]="revenueChartLabels()"
+      [dataPoints]="revenueChartData()"
+      [chartOptions]="revenueChartOptions"
+    ></app-revenue-chart>
   </div>
 
   <!-- Bottom Row: Activity & Upcoming -->
@@ -116,68 +145,45 @@
     >
       <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Activité Récente</h3>
       <div class="relative flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
-        <!-- Timeline Line -->
         <div
           class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-surface-container-high z-0"
         ></div>
-        <!-- Item 1 -->
-        <div class="relative z-10 flex gap-4">
-          <div
-            class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0 border-2 border-card-bg"
-          >
-            <span class="material-symbols-outlined" style="font-size: 16px">add_circle</span>
-          </div>
-          <div class="pt-1">
-            <p class="font-body-md text-body-md text-on-surface">
-              Nouvelle réservation
-              <span class="font-semibold">trajet Douala</span>
-            </p>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">il y a 2 mins</p>
-          </div>
-        </div>
-        <!-- Item 2 -->
-        <div class="relative z-10 flex gap-4">
-          <div
-            class="w-8 h-8 rounded-full bg-warning-gold/20 text-tertiary-container flex items-center justify-center shrink-0 border-2 border-card-bg"
-          >
-            <span class="material-symbols-outlined" style="font-size: 16px"
-              >account_balance_wallet</span
+        <ng-container *ngIf="recentActivity().length > 0; else noActivity">
+          <div *ngFor="let item of recentActivity()" class="relative z-10 flex gap-4">
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 border-card-bg"
+              [ngClass]="item.colorClass"
             >
+              <span class="material-symbols-outlined" style="font-size: 16px">{{ item.icon }}</span>
+            </div>
+            <div class="pt-1">
+              <p class="font-body-md text-body-md text-on-surface">
+                {{ item.title }}
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
+                {{ item.time }}
+              </p>
+            </div>
           </div>
-          <div class="pt-1">
-            <p class="font-body-md text-body-md text-on-surface">
-              Paiement demandé:
-              <span class="font-mono-data text-mono-data">500,000 XAF</span>
-            </p>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">il y a 15 mins</p>
+        </ng-container>
+
+        <ng-template #noActivity>
+          <div class="relative z-10 flex gap-4">
+            <div
+              class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 border-2 border-card-bg"
+            >
+              <span class="material-symbols-outlined" style="font-size: 16px">info</span>
+            </div>
+            <div class="pt-1">
+              <p class="font-body-md text-body-md text-on-surface">
+                Aucune activité récente disponible.
+              </p>
+              <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
+                Vérifiez vos données ou rafraîchissez la page.
+              </p>
+            </div>
           </div>
-        </div>
-        <!-- Item 3 -->
-        <div class="relative z-10 flex gap-4">
-          <div
-            class="w-8 h-8 rounded-full bg-success-green/20 text-success-green flex items-center justify-center shrink-0 border-2 border-card-bg"
-          >
-            <span class="material-symbols-outlined" style="font-size: 16px">check_circle</span>
-          </div>
-          <div class="pt-1">
-            <p class="font-body-md text-body-md text-on-surface">Trajet TR-8902 arrivé</p>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">il y a 1 heure</p>
-          </div>
-        </div>
-        <!-- Item 4 -->
-        <div class="relative z-10 flex gap-4">
-          <div
-            class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 border-2 border-card-bg"
-          >
-            <span class="material-symbols-outlined" style="font-size: 16px">build</span>
-          </div>
-          <div class="pt-1">
-            <p class="font-body-md text-body-md text-on-surface">Maintenance Bus BX-102</p>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
-              il y a 3 heures
-            </p>
-          </div>
-        </div>
+        </ng-template>
       </div>
     </div>
 
@@ -196,10 +202,11 @@
 
       <!-- Utilisation du composant TableComponent -->
       <app-table
-        [data]="upcomingTrips"
+        [data]="upcomingTrips()"
         [columns]="tripColumns"
         [actions]="tripActions"
-        [pageSize]="4">
+        [pageSize]="4"
+      >
       </app-table>
     </div>
   </div>
@@ -207,9 +214,10 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
-  (close)="onNotificationClosed()">
+  (close)="onNotificationClosed()"
+>
 </app-notification>

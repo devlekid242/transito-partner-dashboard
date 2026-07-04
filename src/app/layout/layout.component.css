@@ -1,1 +1,27 @@
 /* Styles pour le layout général */
+
+/* Mobile Layout - Sidebar Overlay */
+@media (max-width: 1024px) {
+  :host {
+    --sidebar-transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Smooth transitions */
+::ng-deep .transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+/* Overlay backdrop animation */
+::ng-deep [class*='bg-opacity'] {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Prevent body scroll when sidebar is open on mobile */
+@media (max-width: 1024px) {
+  ::ng-deep body.sidebar-open {
+    overflow: hidden;
+  }
+}

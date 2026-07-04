@@ -1,22 +1,78 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { RevenueChartComponent } from '../../components/revenue-chart/revenue-chart.component';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
+import { ChartType } from 'chart.js/auto';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { AuthService } from '../../services/auth.service';
+import { CommonModule } from '@angular/common';
+import { AlertService } from '../../services/alert.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.page.html',
   styleUrls: ['./dashboard.page.css'],
-  imports: [RevenueChartComponent, TableComponent, NotificationComponent],
+  imports: [RevenueChartComponent, TableComponent, NotificationComponent, CommonModule],
 })
-export class DashboardPage {
+export class DashboardPage implements OnInit {
   // Données pour le tableau des départs à venir
-  upcomingTrips = [
-    { id: 'BX-405', route: 'Yaoundé → Douala', time: '14:30', status: 'Embarquement' },
-    { id: 'BX-211', route: 'Douala → Bafoussam', time: '15:00', status: 'Programmé' },
-    { id: 'BX-882', route: 'Yaoundé → Bamenda', time: '16:15', status: 'Retardé' },
-    { id: 'BX-109', route: 'Kribi → Douala', time: '17:00', status: 'Programmé' },
-  ];
+  private readonly upcomingTripsSignal = signal<any[]>([]);
+  upcomingTrips = computed(() => this.upcomingTripsSignal());
+
+  // Notification état
+  private readonly showNotificationSignal = signal<boolean>(false);
+  showNotification = computed(() => this.showNotificationSignal());
+
+  private readonly notificationTypeSignal = signal<'success' | 'error' | 'warning' | 'info'>(
+    'info',
+  );
+  notificationType = computed(() => this.notificationTypeSignal());
+
+  private readonly notificationMessageSignal = signal<string>(
+    'Nouvelle réservation reçue pour le trajet Douala-Yaoundé',
+  );
+  notificationMessage = computed(() => this.notificationMessageSignal());
+
+  // Revenue range
+  private readonly selectedRevenueRangeSignal = signal<string>('30');
+  selectedRevenueRange = computed(() => this.selectedRevenueRangeSignal());
+
+  private readonly revenueRangeOptionsSignal = signal<any[]>([
+    { value: '30', label: '30 derniers jours' },
+    { value: '7', label: '7 derniers jours' },
+    { value: 'year', label: 'Cette année' },
+  ]);
+  revenueRangeOptions = computed(() => this.revenueRangeOptionsSignal());
+
+  // Revenue chart data
+  private readonly revenueChartLabelsSignal = signal<string[]>([]);
+  revenueChartLabels = computed(() => this.revenueChartLabelsSignal());
+
+  private readonly revenueChartDataSignal = signal<number[]>([]);
+  revenueChartData = computed(() => this.revenueChartDataSignal());
+
+  private readonly revenueChartTypeSignal = signal<ChartType>('line');
+  revenueChartType = computed(() => this.revenueChartTypeSignal());
+
+  revenueChartOptions: any = {
+    plugins: { legend: { display: false } },
+  };
+
+  // Metrics data
+  private readonly metricsSignal = signal({
+    revenue: { value: '0', currency: 'XAF', change: '0%' },
+    activeTrips: { value: '0', routes: '0 itinéraires' },
+    totalPassengers: { value: '0', description: "Manifestés aujourd'hui" },
+  });
+  metrics = computed(() => this.metricsSignal());
+
+  // Recent activity data
+  private readonly recentActivitySignal = signal<any[]>([]);
+  recentActivity = computed(() => this.recentActivitySignal());
+
+  private readonly isLoadingSignal = signal<boolean>(false);
+  isLoading = computed(() => this.isLoadingSignal());
 
   // Colonnes du tableau
   tripColumns: TableColumn[] = [
@@ -40,16 +96,235 @@ export class DashboardPage {
     },
   ];
 
-  // Notification exemple
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = 'Nouvelle réservation reçue pour le trajet Douala-Yaoundé';
+  private pendingLoadingRequests = 0;
 
-  constructor() {
-    // Afficher une notification après 2 secondes (simulation)
-    setTimeout(() => {
-      this.showNotification = true;
-    }, 2000);
+  constructor(
+    private partnerApiService: PartnerApiService,
+    public authService: AuthService,
+    private alertService: AlertService,
+  ) {}
+
+  private beginLoading(): void {
+    this.pendingLoadingRequests += 1;
+    this.isLoadingSignal.set(true);
+  }
+
+  private finishLoading(): void {
+    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
+    this.isLoadingSignal.set(this.pendingLoadingRequests > 0);
+  }
+
+  ngOnInit() {
+    this.partnerApiService.getDateRangeOptions().subscribe((options) => {
+      this.revenueRangeOptionsSignal.set(options);
+      if (!options.some((option) => option.value === this.selectedRevenueRangeSignal())) {
+        this.selectedRevenueRangeSignal.set(options[0]?.value || this.selectedRevenueRangeSignal());
+      }
+    });
+
+    this.loadDashboardData();
+    this.loadRecentActivity();
+    console.log(this.authService?.getUser());
+    console.log('User role:', this.authService?.getUser()?.role);
+  }
+
+  selectRevenueRange(value: string | null): void {
+    if (!value) {
+      return;
+    }
+    this.selectedRevenueRangeSignal.set(value);
+    this.updateRevenueChartData(value);
+  }
+
+  private updateRevenueChartData(range: string): void {
+    this.beginLoading();
+    if (range === '7') {
+      this.revenueChartTypeSignal.set('bar');
+    } else {
+      this.revenueChartTypeSignal.set('line');
+    }
+
+    this.partnerApiService
+      .getRevenue(this.getStartDate(range), this.getEndDate(range))
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (revenueData: any) => {
+          if (revenueData) {
+            this.revenueChartLabelsSignal.set(revenueData.labels ?? []);
+            this.revenueChartDataSignal.set(revenueData.data ?? []);
+            const m = this.metricsSignal();
+            m.revenue.value = this.formatCurrency(revenueData.totalRevenue ?? 0);
+            m.revenue.change = revenueData.change ?? m.revenue.change;
+            this.metricsSignal.set(m);
+          }
+        },
+        error: (error) => {
+          this.finishLoading();
+          console.error('Error loading revenue chart data:', error);
+          this.alertService.error('Erreur de chargement du graphique des revenus');
+        },
+      });
+  }
+
+  private getStartDate(range: string): string {
+    const today = new Date();
+    if (range === '7') {
+      const date = new Date(today);
+      date.setDate(date.getDate() - 6);
+      return date.toISOString().slice(0, 10);
+    }
+    if (range === 'year') {
+      return `${today.getFullYear()}-01-01`;
+    }
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+  }
+
+  private getEndDate(range: string): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  private formatCurrency(value: number | string): string {
+    const numericValue = typeof value === 'string' ? Number(value) : value;
+    if (Number.isNaN(numericValue)) {
+      return '0';
+    }
+    return numericValue.toLocaleString('fr-FR');
+  }
+
+  loadDashboardData() {
+    this.beginLoading();
+    // Charger les statistiques du partenaire
+    this.partnerApiService
+      .getPartnerStats()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (stats: any) => {
+          this.metricsSignal.set({
+            revenue: {
+              value: this.formatCurrency(stats.revenue ?? 0),
+              currency: 'XAF',
+              change: stats.revenueChange || '0%',
+            },
+            activeTrips: {
+              value: stats.activeTrips?.toString() || '0',
+              routes: `${stats.totalRoutes || 0} itinéraires`,
+            },
+            totalPassengers: {
+              value: stats.totalPassengers?.toString() || '0',
+              description: "Manifestés aujourd'hui",
+            },
+          });
+        },
+        error: (error) => {
+          console.error('Error loading stats:', error);
+          this.alertService.error('Erreur de chargement des statistiques du tableau de bord');
+        },
+      });
+
+    // Charger les trajets à venir
+    this.partnerApiService
+      .getTodaysTrips()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (trips: any[]) => {
+          this.upcomingTripsSignal.set(
+            trips.map((trip) => ({
+              id: trip.busNumber || trip.id,
+              route: `${
+                trip.departureCity ||
+                trip.boardingPoints?.[0]?.name ||
+                trip.departurePoint?.name ||
+                'N/A'
+              } → ${
+                trip.arrivalCity ||
+                trip.deboardingPoints?.[0]?.name ||
+                trip.arrivalPoint?.name ||
+                'N/A'
+              }`,
+              time: trip.departureTime || trip.departure_time || 'N/A',
+              status: trip.status || 'Programmé',
+            })),
+          );
+        },
+        error: (error) => {
+          console.error('Error loading trips:', error);
+          this.alertService.error('Erreur de chargement des trajets à venir');
+        },
+      });
+  }
+
+  loadRecentActivity() {
+    this.beginLoading();
+    // Charger les notifications récentes comme activité
+    this.partnerApiService
+      .getNotifications()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (notifications: any[]) => {
+          this.recentActivitySignal.set(
+            notifications.slice(0, 4).map((notif) => ({
+              icon: this.getIconForNotification(notif.type),
+              colorClass: this.getColorClassForNotification(notif.type),
+              title: notif.title,
+              time: this.formatTime(notif.createdAt),
+            })),
+          );
+        },
+        error: (error) => {
+          console.error('Error loading notifications:', error);
+          this.alertService.error("Erreur de chargement de l'activité récente");
+        },
+      });
+  }
+
+  getColorClassForNotification(type: string): string {
+    const classes: Record<string, string> = {
+      BOOKING: 'bg-primary-container text-on-primary-container',
+      PAYMENT: 'bg-warning-gold/20 text-tertiary-container',
+      TICKET: 'bg-success-green/20 text-success-green',
+      ALERT: 'bg-surface-container-high text-on-surface-variant',
+      INFO: 'bg-surface-container-high text-on-surface-variant',
+    };
+    return classes[type] || 'bg-surface-container-high text-on-surface-variant';
+  }
+
+  getIconForNotification(type: string): string {
+    const icons: Record<string, string> = {
+      BOOKING: 'add_circle',
+      PAYMENT: 'account_balance_wallet',
+      TICKET: 'check_circle',
+      ALERT: 'warning',
+      INFO: 'info',
+    };
+    return icons[type] || 'info';
+  }
+
+  getTypeForNotification(type: string): 'success' | 'warning' | 'info' {
+    const types: Record<string, 'success' | 'warning' | 'info'> = {
+      BOOKING: 'success',
+      PAYMENT: 'warning',
+      TICKET: 'success',
+      ALERT: 'warning',
+      INFO: 'info',
+    };
+    return types[type] || 'info';
+  }
+
+  formatTime(dateString: string): string {
+    if (!dateString) return 'il y a quelques instants';
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+
+    if (minutes < 1) return 'il y a quelques instants';
+    if (minutes < 60) return `il y a ${minutes} mins`;
+    if (hours < 24) return `il y a ${hours} heures`;
+
+    return date.toLocaleDateString('fr-FR');
   }
 
   viewTripDetails(trip: any): void {
@@ -63,45 +338,6 @@ export class DashboardPage {
   }
 
   onNotificationClosed(): void {
-    this.showNotification = false;
+    this.showNotificationSignal.set(false);
   }
-
-  // Metrics data
-  metrics = {
-    revenue: { value: '1,250,000', currency: 'XAF', change: '+12%' },
-    activeTrips: { value: '12', routes: '5 itinéraires' },
-    totalPassengers: { value: '345', description: "Manifestés aujourd'hui" },
-  };
-
-  // Recent activity data
-  recentActivity = [
-    {
-      icon: 'add_circle',
-      type: 'success',
-      title: 'Nouvelle réservation',
-      description: 'trajet Douala',
-      time: 'il y a 2 mins',
-    },
-    {
-      icon: 'account_balance_wallet',
-      type: 'warning',
-      title: 'Paiement demandé',
-      description: '500,000 XAF',
-      time: 'il y a 15 mins',
-    },
-    {
-      icon: 'check_circle',
-      type: 'success',
-      title: 'Trajet TR-8902 arrivé',
-      description: '',
-      time: 'il y a 1 heure',
-    },
-    {
-      icon: 'build',
-      type: 'info',
-      title: 'Maintenance Bus BX-102',
-      description: '',
-      time: 'il y a 3 heures',
-    },
-  ];
 }

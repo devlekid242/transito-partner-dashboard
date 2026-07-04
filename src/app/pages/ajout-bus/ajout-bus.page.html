@@ -1,6 +1,4 @@
-<main
-  class="p-4 min-h-screen px-container-margin max-w-desktop-max-width mx-auto"
->
+<main class="p-4 min-h-screen px-container-margin max-w-desktop-max-width mx-auto">
   <!-- Header Section -->
   <div class="mb-8">
     <nav
@@ -9,12 +7,14 @@
     >
       <ol class="inline-flex items-center space-x-1 md:space-x-2">
         <li class="inline-flex items-center">
-          <a class="hover:text-primary transition-colors" href="#">Fleet</a>
+          <a class="hover:text-primary transition-colors cursor-pointer" (click)="cancel()"
+            >Fleet</a
+          >
         </li>
         <li>
           <div class="flex items-center">
             <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
-            <span class="text-primary font-bold">Ajouter un Bus</span>
+            <span class="text-primary font-bold">{{ pageTitle }}</span>
           </div>
         </li>
       </ol>
@@ -24,32 +24,45 @@
         <h2
           class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface"
         >
-          Ajouter un Nouveau Bus
+          {{ pageTitle }}
         </h2>
         <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-          Saisissez les informations du véhicule pour l'enregistrer dans la flotte.
+          {{ pageDescription }}
         </p>
       </div>
       <div class="flex gap-3">
         <button
+          type="button"
+          (click)="cancel()"
           class="px-4 py-2 border border-primary text-primary bg-transparent rounded-lg font-label-sm text-label-sm hover:bg-surface-container transition-colors"
         >
           Annuler
         </button>
         <button
-          class="px-4 py-2 bg-primary text-on-primary rounded-lg font-label-sm text-label-sm hover:bg-surface-tint transition-colors flex items-center gap-2"
+          form="addEditForm"
+          type="submit"
+          [disabled]="isSubmitting || !busForm.valid"
+          class="px-4 py-2 cursor-pointer bg-primary text-on-primary rounded-lg font-label-sm text-label-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
         >
-          <span class="material-symbols-outlined text-[18px]">save</span>
-          Enregistrer le Bus
+          <span class="material-symbols-outlined text-[18px]">{{
+            isSubmitting ? 'sync' : 'save'
+          }}</span>
+          {{ isSubmitting ? 'Enregistrement...' : 'Enregistrer le Bus' }}
         </button>
       </div>
     </div>
   </div>
+
   <!-- Form Bento Layout -->
-  <form class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap">
+  <form
+    id="addEditForm"
+    [formGroup]="busForm"
+    (ngSubmit)="onSubmit()"
+    class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap"
+  >
     <!-- Left Column: Specs -->
     <div class="xl:col-span-2 space-y-widget-gap">
-      <!-- Info Card -->
+      <!-- General Info Card -->
       <div
         class="bg-card-bg rounded-xl shadow-sm border border-border-subtle p-6 relative overflow-hidden"
       >
@@ -59,9 +72,9 @@
           Informations Générales
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Field -->
+          <!-- Registration Number -->
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="plate"
+            <label class="font-label-sm text-label-sm text-on-surface" for="registrationNumber"
               >Plaque d'immatriculation <span class="text-danger-red">*</span></label
             >
             <div class="relative">
@@ -70,29 +83,81 @@
               </span>
               <input
                 class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-mono-data text-mono-data text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                id="plate"
-                name="plate"
+                id="registrationNumber"
+                formControlName="registrationNumber"
                 placeholder="ex: AB-123-CD"
-                required=""
                 type="text"
               />
             </div>
+            <p
+              *ngIf="
+                busForm.get('registrationNumber')?.errors?.['required'] &&
+                busForm.get('registrationNumber')?.touched
+              "
+              class="text-danger-red text-xs"
+            >
+              Plaque d'immatriculation obligatoire
+            </p>
           </div>
-          <!-- Field -->
+
+          <!-- Brand -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="brand"
+              >Marque <span class="text-danger-red">*</span></label
+            >
+            <input
+              class="w-full px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+              id="brand"
+              formControlName="brand"
+              placeholder="ex: Mercedes-Benz"
+              type="text"
+            />
+            <p
+              *ngIf="busForm.get('brand')?.errors?.['required'] && busForm.get('brand')?.touched"
+              class="text-danger-red text-xs"
+            >
+              Marque obligatoire
+            </p>
+          </div>
+
+          <!-- Model -->
           <div class="space-y-2">
             <label class="font-label-sm text-label-sm text-on-surface" for="model"
-              >Modèle &amp; Marque <span class="text-danger-red">*</span></label
+              >Modèle <span class="text-danger-red">*</span></label
             >
             <input
               class="w-full px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
               id="model"
-              name="model"
-              placeholder="ex: Mercedes-Benz Tourismo"
-              required=""
+              formControlName="model"
+              placeholder="ex: Tourismo"
               type="text"
             />
+            <p
+              *ngIf="busForm.get('model')?.errors?.['required'] && busForm.get('model')?.touched"
+              class="text-danger-red text-xs"
+            >
+              Modèle obligatoire
+            </p>
           </div>
-          <!-- Field -->
+
+          <!-- Color -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="color">Couleur</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">palette</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="color"
+                formControlName="color"
+                placeholder="ex: Blanc"
+                type="text"
+              />
+            </div>
+          </div>
+
+          <!-- Capacity -->
           <div class="space-y-2">
             <label class="font-label-sm text-label-sm text-on-surface" for="capacity"
               >Capacité (Sièges) <span class="text-danger-red">*</span></label
@@ -104,31 +169,62 @@
               <input
                 class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
                 id="capacity"
-                max="100"
+                formControlName="capacity"
                 min="1"
-                name="capacity"
+                max="100"
                 placeholder="50"
-                required=""
                 type="number"
               />
             </div>
+            <p
+              *ngIf="busForm.get('capacity')?.errors && busForm.get('capacity')?.touched"
+              class="text-danger-red text-xs"
+            >
+              <span *ngIf="busForm.get('capacity')?.errors?.['required']"
+                >Capacité obligatoire</span
+              >
+              <span *ngIf="busForm.get('capacity')?.errors?.['min']">Minimum 1 siège</span>
+              <span *ngIf="busForm.get('capacity')?.errors?.['max']">Maximum 100 sièges</span>
+            </p>
           </div>
-          <!-- Field -->
+
+          <!-- Category -->
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="type"
-              >Type de Bus <span class="text-danger-red">*</span></label
+            <label class="font-label-sm text-label-sm text-on-surface" for="category"
+              >Catégorie <span class="text-danger-red">*</span></label
             >
             <div class="relative">
               <select
                 class="w-full appearance-none px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                id="type"
-                name="type"
+                id="category"
+                formControlName="category"
               >
-                <option disabled="" selected="" value="">Sélectionnez un type</option>
-                <option value="vip">VIP (Wi-Fi, Climatisation)</option>
-                <option value="standard">Standard</option>
-                <option value="economy">Économique</option>
-                <option value="minibus">Minibus</option>
+                <option *ngFor="let cat of busCategories" [value]="cat.value">
+                  {{ cat.label }}
+                </option>
+              </select>
+              <span
+                class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline"
+              >
+                <span class="material-symbols-outlined">expand_more</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="status"
+              >Statut <span class="text-danger-red">*</span></label
+            >
+            <div class="relative">
+              <select
+                class="w-full appearance-none px-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="status"
+                formControlName="status"
+              >
+                <option *ngFor="let status of busStatuses" [value]="status.value">
+                  {{ status.label }}
+                </option>
               </select>
               <span
                 class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-outline"
@@ -139,42 +235,77 @@
           </div>
         </div>
       </div>
-      <!-- Status Card (Glassmorphism inspired light structural) -->
+
+      <!-- Maintenance & History Card -->
       <div
-        class="bg-gradient-to-br from-surface-container-low to-surface-bg rounded-xl shadow-sm border border-border-subtle p-6"
+        class="bg-card-bg rounded-xl shadow-sm border border-border-subtle p-6 relative overflow-hidden"
       >
-        <h3 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
-          <span class="material-symbols-outlined text-secondary">verified_user</span>
-          Statut d'Opération
+        <div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">build</span>
+          Historique & Maintenance
         </h3>
-        <div class="flex items-center gap-4 p-4 bg-card-bg rounded-lg border border-border-subtle">
-          <div class="flex items-center h-5">
-            <input
-              checked=""
-              class="w-4 h-4 text-primary bg-surface-bg border-outline rounded focus:ring-primary focus:ring-2"
-              id="active_status"
-              type="checkbox"
-              value=""
-            />
-          </div>
-          <div class="ml-2 text-sm">
-            <label class="font-label-sm text-label-sm text-on-surface" for="active_status"
-              >Activer immédiatement</label
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Acquisition Date -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="acquisitionDate"
+              >Date d'acquisition</label
             >
-            <p class="text-xs font-normal text-on-surface-variant" id="helper-checkbox-text">
-              Le bus sera disponible pour l'assignation des trajets dès l'enregistrement.
-            </p>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="acquisitionDate"
+                formControlName="acquisitionDate"
+                type="date"
+              />
+            </div>
           </div>
-          <div class="ml-auto">
-            <span
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E5F9ED] text-success-green border border-success-green"
+
+          <!-- Last Maintenance Date -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="lastMaintenanceDate"
+              >Dernière maintenance</label
             >
-              Prêt à l'emploi
-            </span>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">calendar_today</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="lastMaintenanceDate"
+                formControlName="lastMaintenanceDate"
+                type="date"
+              />
+            </div>
+          </div>
+
+          <!-- Mileage -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="mileage"
+              >Kilométrage</label
+            >
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-outline">
+                <span class="material-symbols-outlined text-[18px]">speed</span>
+              </span>
+              <input
+                class="w-full pl-10 pr-4 py-2 bg-surface-bg border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                id="mileage"
+                formControlName="mileage"
+                placeholder="0"
+                type="number"
+                min="0"
+              />
+            </div>
+            <p class="text-outline text-xs">en kilomètres</p>
           </div>
         </div>
       </div>
     </div>
+
     <!-- Right Column: Media & Extras -->
     <div class="space-y-widget-gap">
       <!-- Image Upload Card -->
@@ -190,10 +321,11 @@
         >
           <input
             accept="image/*"
+            (change)="onFileSelected($event)"
             class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             type="file"
           />
-          <div class="space-y-3 z-0">
+          <div class="space-y-3 z-0" *ngIf="!selectedFile">
             <div
               class="w-16 h-16 rounded-full bg-surface-container mx-auto flex items-center justify-center group-hover:scale-110 transition-transform"
             >
@@ -207,17 +339,20 @@
             </div>
             <p class="text-[10px] text-outline font-mono-data">PNG, JPG, WEBP (Max. 5MB)</p>
           </div>
-          <!-- Visual representation of an uploaded state (hidden by default, shown for design completeness) -->
-          <div class="hidden absolute inset-0 rounded-xl overflow-hidden z-20 bg-surface-bg">
+          <!-- Image preview -->
+          <div
+            class="absolute inset-0 rounded-xl overflow-hidden z-20 bg-surface-bg"
+            *ngIf="selectedFile"
+          >
             <img
-              alt="Preview"
-              class="w-full h-full object-cover opacity-90 mix-blend-multiply"
-              data-alt="A highly detailed, professional UI design placeholder image showing a modern, luxury commercial passenger bus driving on a clean highway under bright daylight. The lighting is crisp and corporate, emphasizing operational efficiency and reliable transportation. The color palette incorporates sleek metallics and subtle blue tones, perfectly matching a modern fleet management dashboard aesthetic. The image conveys a sense of motion, stability, and high-end logistics."
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuArT12nB8YdpDAWf8W4WGeOQj-VxWHEWxz0kaiIPkU88wflbzUaj_31IHIFMvoSVOI9bQgX9HIjYm6fxlTwMVt8vbVWIPLLa9Rdv2mTaCkGZlihNIljHXPI7Bp7Uo1o77v6lGaVR20UNVLpz8prGL_TykQWYTtHnmEbuL5EZeczBcNjQ2vZrn5Z94P9kfBIcjnR_1yXWhreDdke-0qXFeUA1UDnSZ5DETUUmfJ1ampggrmaQSgPti61LBaK3wOfZvmuDKGAV81vyx0"
+              alt="Bus preview"
+              class="w-full h-full object-cover opacity-90"
+              [src]="previewImageUrl"
             />
             <button
               class="absolute top-2 right-2 p-1 bg-surface-container-lowest text-danger-red rounded-full hover:bg-error-container shadow-sm"
               type="button"
+              (click)="selectedFile = null; previewImageUrl = ''"
             >
               <span class="material-symbols-outlined text-[18px]">close</span>
             </button>
@@ -231,6 +366,51 @@
             Une photo claire de l'avant du bus aide les chauffeurs à identifier leur véhicule
             assigné rapidement sur le parc.
           </p>
+        </div>
+      </div>
+
+      <!-- Summary Card -->
+      <div
+        class="bg-gradient-to-br from-surface-container-low to-surface-bg rounded-xl shadow-sm border border-border-subtle p-6"
+      >
+        <h3 class="font-headline-md text-headline-md text-on-surface mb-4 flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary">summary</span>
+          Résumé
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b border-border-subtle">
+            <span class="text-on-surface-variant text-sm">Plaque:</span>
+            <span class="font-semibold text-on-surface">{{
+              busForm.get('registrationNumber')?.value || '—'
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-border-subtle">
+            <span class="text-on-surface-variant text-sm">Modèle:</span>
+            <span class="font-semibold text-on-surface">
+              {{ (busForm.get('brand')?.value || '—') + ' ' + (busForm.get('model')?.value || '') }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-border-subtle">
+            <span class="text-on-surface-variant text-sm">Catégorie:</span>
+            <span class="font-semibold text-on-surface">{{
+              busForm.get('category')?.value || '—'
+            }}</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b border-border-subtle">
+            <span class="text-on-surface-variant text-sm">Statut:</span>
+            <span
+              [ngClass]="
+                busForm.get('status')?.value === 'disponible'
+                  ? 'text-success-green'
+                  : busForm.get('status')?.value === 'maintenance'
+                    ? 'text-warning-gold'
+                    : 'text-danger-red'
+              "
+              class="font-semibold"
+            >
+              {{ busForm.get('status')?.value || '—' }}
+            </span>
+          </div>
         </div>
       </div>
     </div>

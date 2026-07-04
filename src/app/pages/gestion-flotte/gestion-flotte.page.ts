@@ -1,8 +1,21 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, signal, computed, effect } from '@angular/core';
+import { Router } from '@angular/router';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
 import { CommonModule } from '@angular/common';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { Bus } from '../../models/partner.model';
+import { AlertService } from '../../services/alert.service';
+import { finalize } from 'rxjs/operators';
+
+interface BusStats {
+  totalFleet: number;
+  available: number;
+  inMaintenance: number;
+  outOfService: number;
+  utilizationRate: number;
+}
 
 @Component({
   selector: 'app-gestion-flotte',
@@ -10,52 +23,67 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./gestion-flotte.page.css'],
   imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule],
 })
-export class GestionFlottePage {
-  // Données pour le tableau des véhicules
-  vehicles = [
-    {
-      id: 'LT-1024-AB',
-      model: 'Volvo 9900 Coach',
-      seats: 55,
-      mileage: '142,500 km',
-      status: 'Active',
-    },
-    {
-      id: 'CE-8831-XY',
-      model: 'Scania Touring HD',
-      seats: 50,
-      mileage: '89,200 km',
-      status: 'Active',
-    },
-    {
-      id: 'NW-4402-QZ',
-      model: 'Mercedes Tourismo',
-      seats: 60,
-      mileage: '185,300 km',
-      status: 'Maintenance',
-    },
-    {
-      id: 'SW-7719-OP',
-      model: 'Yutong ZK6122',
-      seats: 48,
-      mileage: '210,800 km',
-      status: 'Active',
-    },
-    {
-      id: 'OU-9012-CE',
-      model: 'Toyota Coaster',
-      seats: 30,
-      mileage: '95,600 km',
-      status: 'Active',
-    },
-  ];
+export class GestionFlottePage implements OnInit {
+  // Véhicules (signals)
+  private readonly vehiclesSignal = signal<Bus[]>([]);
+  vehicles = computed(() => this.vehiclesSignal());
+
+  private readonly vehiclesMaintenanceSignal = signal<Bus[]>([]);
+  vehiclesMaintenance = computed(() => this.vehiclesMaintenanceSignal());
+
+  // Stats
+  private readonly busStatsSignal = signal<BusStats>({
+    totalFleet: 0,
+    available: 0,
+    inMaintenance: 0,
+    outOfService: 0,
+    utilizationRate: 0,
+  });
+  busStats = computed(() => this.busStatsSignal());
+
+  // Loading state
+  private readonly isLoadingSignal = signal<boolean>(false);
+  isLoading = computed(() => this.isLoadingSignal());
+
+  private readonly deletingVehicleIdSignal = signal<number | null>(null);
+  deletingVehicleId = computed(() => this.deletingVehicleIdSignal());
+
+  // Modal state
+  private readonly isModalOpenSignal = signal<boolean>(false);
+  isModalOpen = computed(() => this.isModalOpenSignal());
+
+  private readonly selectedVehicleSignal = signal<Bus | null>(null);
+  selectedVehicle = computed(() => this.selectedVehicleSignal());
+
+  // Maintenance
+  private readonly maintenanceScheduleSignal = signal<
+    Array<{
+      title: string;
+      vehicle: string;
+      scheduledAt: string;
+      description: string;
+    }>
+  >([]);
+  maintenanceSchedule = computed(() => this.maintenanceScheduleSignal());
+
+  // Notification state
+  private readonly showNotificationSignal = signal<boolean>(false);
+  showNotification = computed(() => this.showNotificationSignal());
+
+  private readonly notificationTypeSignal = signal<'success' | 'error' | 'warning' | 'info'>(
+    'info',
+  );
+  notificationType = computed(() => this.notificationTypeSignal());
+
+  private readonly notificationMessageSignal = signal<string>('');
+  notificationMessage = computed(() => this.notificationMessageSignal());
 
   // Colonnes du tableau
   vehicleColumns: TableColumn[] = [
-    { key: 'id', title: 'Plaque', sortable: true },
-    { key: 'model', title: 'Modèle', sortable: true },
-    { key: 'seats', title: 'Sièges' },
-    { key: 'mileage', title: 'Kilométrage' },
+    { key: 'registrationNumber', title: 'Plaque', sortable: true },
+    { key: 'model', title: 'Modèle' },
+    { key: 'capacity', title: 'Sièges' },
+    { key: 'category', title: 'Catégorie', sortable: true },
     { key: 'status', title: 'Statut', sortable: true },
   ];
 
@@ -78,47 +106,189 @@ export class GestionFlottePage {
     },
   ];
 
-  // Modal state
-  isModalOpen = false;
-  selectedVehicle: any = null;
+  private pendingLoadingRequests = 0;
 
-  // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-
-  viewVehicleDetails(vehicle: any): void {
-    this.selectedVehicle = vehicle;
-    this.isModalOpen = true;
+  constructor(
+    private partnerApiService: PartnerApiService,
+    private router: Router,
+    private alertService: AlertService,
+  ) {
+    effect(() => {
+      this.isLoading();
+    });
   }
 
-  editVehicle(vehicle: any): void {
-    console.log('Modifier véhicule:', vehicle);
-    this.showToastNotification('info', `Modification du véhicule ${vehicle.id} en cours...`);
+  ngOnInit() {
+    this.loadvehiclesMaintenance();
+    this.loadVehicles();
   }
 
-  deleteVehicle(vehicle: any): void {
-    console.log('Supprimer véhicule:', vehicle);
-    this.showToastNotification('warning', `Véhicule ${vehicle.id} marqué pour suppression`);
+  private beginLoading(): void {
+    this.pendingLoadingRequests += 1;
+    this.isLoadingSignal.set(true);
   }
 
+  private finishLoading(): void {
+    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
+    this.isLoadingSignal.set(this.pendingLoadingRequests > 0);
+  }
+
+  loadvehiclesMaintenance() {
+    this.beginLoading();
+    this.partnerApiService
+      .getMaintenanceSchedule()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (buses: Bus[]) => {
+          this.vehiclesMaintenanceSignal.set(buses);
+          this.buildMaintenanceSchedule();
+          console.log('Véhicules chargés:', this.vehiclesMaintenanceSignal());
+        },
+        error: (error) => {
+          console.error('Erreur de chargement des véhicules:', error);
+          this.showToastNotification('error', 'Erreur de chargement des véhicules');
+        },
+      });
+  }
+
+  loadVehicles() {
+    this.beginLoading();
+    this.partnerApiService
+      .getBuses()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (buses: any) => {
+          this.vehiclesSignal.set(buses ?? []);
+          this.calculateStats();
+          console.log('Véhicules chargés:', this.vehiclesSignal());
+        },
+        error: (error) => {
+          console.error('Erreur de chargement des véhicules:', error);
+          this.showToastNotification('error', 'Erreur de chargement des véhicules');
+        },
+      });
+  }
+
+  private buildMaintenanceSchedule(): void {
+    const schedule = this.vehiclesMaintenanceSignal()
+      .filter((bus) => bus.status === 'maintenance' || bus.lastMaintenanceDate)
+      .map((bus) => ({
+        title: bus.status === 'maintenance' ? 'Entretien planifié' : 'Dernière maintenance',
+        vehicle: bus.registrationNumber,
+        scheduledAt: bus.lastMaintenanceDate
+          ? bus.lastMaintenanceDate.substring(0, 10)
+          : bus.acquisitionDate
+            ? bus.acquisitionDate.substring(0, 10)
+            : 'Date inconnue',
+        description:
+          bus.brand && bus.model ? `${bus.brand} ${bus.model}` : `Bus ${bus.registrationNumber}`,
+      }))
+      .slice(0, 5);
+    this.maintenanceScheduleSignal.set(schedule);
+  }
+
+  /**
+   * Calcule les stats dynamiquement à partir des véhicules chargés
+   */
+  calculateStats(): void {
+    const vehicles = this.vehiclesSignal();
+    const stats: BusStats = {
+      totalFleet: vehicles.length,
+      available: vehicles.filter((v) => v.status === 'disponible').length,
+      inMaintenance: vehicles.filter((v) => v.status === 'maintenance').length,
+      outOfService: vehicles.filter((v) => v.status === 'hors_service').length,
+      utilizationRate: 0,
+    };
+
+    // Taux d'utilisation: (véhicules disponibles / total) * 100
+    stats.utilizationRate =
+      stats.totalFleet > 0 ? Math.round((stats.available / stats.totalFleet) * 100) : 0;
+    this.busStatsSignal.set(stats);
+  }
+
+  /**
+   * Affiche les détails du véhicule dans une modal
+   */
+  viewVehicleDetails(vehicle: Bus): void {
+    this.selectedVehicleSignal.set(vehicle);
+    this.isModalOpenSignal.set(true);
+  }
+
+  /**
+   * Navigue vers la page d'édition du véhicule
+   */
+  editVehicle(vehicle: Bus | null): void {
+    if (vehicle) {
+      this.router.navigate(['/ajout-bus', vehicle.id]);
+    }
+  }
+
+  /**
+   * Supprime un véhicule après confirmation
+   */
+  async deleteVehicle(vehicle: Bus | null): Promise<void> {
+    if (!vehicle) {
+      return;
+    }
+
+    const confirmed = await this.alertService.confirm(
+      'Supprimer le véhicule',
+      `Êtes-vous sûr de vouloir supprimer le véhicule ${vehicle.registrationNumber}?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingVehicleIdSignal.set(vehicle.id);
+    this.partnerApiService.deleteBus(vehicle.id).subscribe({
+      next: (response) => {
+        this.deletingVehicleIdSignal.set(null);
+        const updated = this.vehiclesSignal().filter((v) => v.id !== vehicle.id);
+        this.vehiclesSignal.set(updated);
+        this.calculateStats();
+        this.alertService.success(`Véhicule ${vehicle.registrationNumber} supprimé avec succès`);
+      },
+      error: (error) => {
+        this.deletingVehicleIdSignal.set(null);
+        console.error('Erreur de suppression:', error);
+        this.alertService.error('Erreur lors de la suppression du véhicule');
+      },
+    });
+  }
+
+  /**
+   * Ferme la modal des détails
+   */
   closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedVehicle = null;
+    this.isModalOpenSignal.set(false);
+    this.selectedVehicleSignal.set(null);
   }
 
+  /**
+   * Affiche une notification toast
+   */
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
+    this.notificationTypeSignal.set(type);
+    this.notificationMessageSignal.set(message);
+    this.showNotificationSignal.set(true);
 
+    // Auto-hide après 5 secondes
     setTimeout(() => {
-      this.showNotification = false;
+      this.showNotificationSignal.set(false);
     }, 5000);
   }
 
-  onSortChange(event: { key: string; direction: 'asc' | 'desc' }): void {
-    console.log('Tri changé:', event);
-    // Logique de tri à implémenter
+  /**
+   * Navigue vers la page d'ajout de bus
+   */
+  navigateToAddBus(): void {
+    this.router.navigate(['/ajout-bus']);
+  }
+
+  /**
+   * Gère le tri du tableau
+   */
+  onSortChange(event: any): void {
+    console.log('Tri:', event);
   }
 }

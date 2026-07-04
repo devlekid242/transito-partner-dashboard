@@ -1,16 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormComponent, FormField } from '../../components/form/form.component';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { Router } from '@angular/router';
+import { AlertService } from '../../services/alert.service';
 
 @Component({
   selector: 'app-ajout-user',
   templateUrl: './ajout-user.page.html',
   styleUrls: ['./ajout-user.page.css'],
-  imports: [ TableComponent, ModalComponent, NotificationComponent, CommonModule, FormsModule],
+  standalone: true,
+  imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule, FormsModule],
 })
 export class AjoutUserPage {
   // Form fields for user invitation
@@ -75,6 +79,19 @@ export class AjoutUserPage {
   // Selected role
   selectedRole: 'admin' | 'manager' | 'staff' = 'manager';
 
+  // Form model
+  fullName = '';
+  email = '';
+  phone = '';
+  password = '';
+  createAsAgent = false;
+  agentRole: 'agent_quai' | 'admin_agence' = 'agent_quai';
+  selectedAgencyId: number | null = null;
+  agencies: any[] = [];
+
+  // Role options
+  roleOptions: any[] = [];
+
   // Permissions state
   permissions = {
     fleetManagement: true,
@@ -91,22 +108,58 @@ export class AjoutUserPage {
   showNotification = false;
   notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
   notificationMessage = '';
+  isSubmitting = false;
 
-  constructor() {}
+  constructor(
+    private partnerApiService: PartnerApiService,
+    private router: Router,
+    private alertService: AlertService,
+  ) {
+    this.partnerApiService.getRoleOptions().subscribe((options) => {
+      this.roleOptions = options;
+    });
+
+    // load agencies for agent assignment
+    this.partnerApiService.getAgencies().subscribe((list) => {
+      this.agencies = Array.isArray(list) ? list : [];
+    });
+  }
 
   onFormSubmit(formData: any): void {
-    console.log('Form submitted:', formData);
-    this.showToastNotification('success', `Invitation sent to ${formData.email} successfully!`);
+    if (this.isSubmitting) {
+      return;
+    }
 
-    // Add to recent invitations
-    this.recentInvitations.unshift({
-      id: this.recentInvitations.length + 1,
-      name: formData.email.split('@')[0],
-      email: formData.email,
-      status: 'Pending',
-      role: this.getRoleLabel(this.selectedRole),
-      invitedDate: new Date().toISOString().split('T')[0],
-    });
+    this.isSubmitting = true;
+
+    // Build payload for backend register endpoint
+    const payload: any = {
+      fullName: this.fullName || formData.email?.split('@')[0] || '',
+      email: this.email || null,
+      phoneNumber: this.phone || '',
+      password: this.password || undefined,
+    };
+
+    if (this.createAsAgent) {
+      payload.agent = {
+        agencyId: this.selectedAgencyId,
+        agentRole: this.agentRole,
+        status: 'active',
+      };
+    }
+
+    this.partnerApiService.registerUser(payload).subscribe(
+      (res) => {
+        this.isSubmitting = false;
+        this.alertService.success(`Utilisateur ${payload.fullName} créé.`);
+        this.router.navigate(['/gestion-du-staff']).catch(() => {});
+      },
+      (err) => {
+        this.isSubmitting = false;
+        console.error('Registration error', err);
+        this.alertService.error("Impossible de créer l'utilisateur.");
+      },
+    );
   }
 
   getRoleLabel(role: string): string {
@@ -122,10 +175,12 @@ export class AjoutUserPage {
     }
   }
 
-  setRole(role: 'admin' | 'manager' | 'staff'): void {
-    this.selectedRole = role;
+  setRole(role: string): void {
+    const normalizedRole =
+      role === 'admin' || role === 'manager' || role === 'staff' ? role : 'staff';
+    this.selectedRole = normalizedRole;
     // Update permissions based on role
-    this.updatePermissionsForRole(role);
+    this.updatePermissionsForRole(normalizedRole);
   }
 
   updatePermissionsForRole(role: 'admin' | 'manager' | 'staff'): void {

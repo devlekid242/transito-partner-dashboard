@@ -1,11 +1,31 @@
 <main class="flex-1 p-4 min-h-screen flex flex-col">
-  <!-- Header Section -->
-  <div class="px-standard-padding md:px-container-margin py-8">
-    <h1 class="font-display-lg text-display-lg text-on-surface">Ajouter un Point de Vente</h1>
-    <p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-2xl">
-      Enregistrez un nouveau point de vente pour étendre votre réseau de distribution et assigner un
-      gestionnaire responsable.
-    </p>
+  <div class="mb-8">
+    <nav
+      aria-label="Breadcrumb"
+      class="flex text-on-surface-variant font-label-sm text-label-sm mb-2"
+    >
+      <ol class="inline-flex items-center space-x-1 md:space-x-2">
+        <li class="inline-flex items-center">
+          <a class="hover:text-primary transition-colors cursor-pointer" (click)="cancel()"
+            >point d'embarquement</a
+          >
+        </li>
+        <li>
+          <div class="flex items-center">
+            <span class="material-symbols-outlined text-[16px] mx-1">chevron_right</span>
+            <span class="text-primary font-bold">{{ pageTitle }}</span>
+          </div>
+        </li>
+      </ol>
+    </nav>
+    <!-- Header Section -->
+    <div class="px-standard-padding md:px-container-margin py-8">
+      <h1 class="font-display-lg text-display-lg text-on-surface">Ajouter un Point de Vente</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant mt-1 max-w-2xl">
+        Enregistrez un nouveau point de vente pour étendre votre réseau de distribution et assigner
+        un gestionnaire responsable.
+      </p>
+    </div>
   </div>
   <!-- Form Canvas -->
   <div class="flex-1 p-standard-padding md:p-container-margin bg-surface-bg">
@@ -26,6 +46,13 @@
           </div>
 
           <!-- Utilisation du composant FormComponent -->
+          <div
+            *ngIf="isSubmitting"
+            class="mb-4 flex items-center gap-2 text-primary text-sm font-medium"
+          >
+            <span class="material-symbols-outlined animate-spin">progress_activity</span>
+            Enregistrement en cours...
+          </div>
           <app-form
             [fields]="salesPointFormFields"
             [submitLabel]="'Enregistrer le Point'"

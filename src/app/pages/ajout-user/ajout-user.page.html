@@ -16,7 +16,11 @@
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-widget-gap">
     <!-- Form Card -->
     <div class="lg:col-span-8 bg-card-bg rounded-xl shadow-sm border border-subtle p-6">
-      <form class="space-y-6">
+      <form class="space-y-6" (ngSubmit)="onFormSubmit($event)">
+        <div *ngIf="isSubmitting" class="flex items-center gap-2 text-primary text-sm font-medium">
+          <span class="material-symbols-outlined animate-spin">progress_activity</span>
+          Création de l’utilisateur en cours...
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Email Field -->
           <div class="space-y-2">
@@ -31,6 +35,8 @@
               <input
                 class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 id="email"
+                name="email"
+                [(ngModel)]="email"
                 placeholder="nom@entreprise.com"
                 type="email"
               />
@@ -49,10 +55,38 @@
               <input
                 class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 id="phone"
+                name="phone"
+                [(ngModel)]="phone"
                 placeholder="+237 6XX XXX XXX"
                 type="tel"
               />
             </div>
+          </div>
+        </div>
+        <!-- Full name & password -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="fullName"
+              >Nom complet</label
+            >
+            <input
+              id="fullName"
+              name="fullName"
+              [(ngModel)]="fullName"
+              class="w-full pl-3 pr-3 py-2.5 bg-surface border border-subtle rounded-lg"
+            />
+          </div>
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="password"
+              >Mot de passe (optionnel)</label
+            >
+            <input
+              id="password"
+              name="password"
+              [(ngModel)]="password"
+              type="password"
+              class="w-full pl-3 pr-3 py-2.5 bg-surface border border-subtle rounded-lg"
+            />
           </div>
         </div>
         <!-- Role Selection -->
@@ -61,70 +95,31 @@
             >Rôle de l'Utilisateur <span class="text-danger-red">*</span></label
           >
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <!-- Admin Role -->
-            <label class="relative cursor-pointer">
-              <input
-                class="peer sr-only"
-                name="role"
-                type="radio"
-                value="admin"
-                (change)="setRole('admin')"
-              />
-              <div
-                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
-              >
-                <span class="material-symbols-outlined text-primary text-[32px] mb-1"
-                  >admin_panel_settings</span
+            <ng-container *ngFor="let role of roleOptions">
+              <label class="relative cursor-pointer">
+                <input
+                  class="peer sr-only"
+                  name="role"
+                  type="radio"
+                  [value]="role.value"
+                  [checked]="selectedRole === role.value"
+                  (change)="setRole(role.value)"
+                />
+                <div
+                  class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
                 >
-                <span class="font-headline-md text-headline-md text-on-surface">Admin</span>
-                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
-                  >Accès total au système</span
-                >
-              </div>
-            </label>
-            <!-- Manager Role -->
-            <label class="relative cursor-pointer">
-              <input
-                checked=""
-                class="peer sr-only"
-                name="role"
-                type="radio"
-                value="manager"
-                (change)="setRole('manager')"
-              />
-              <div
-                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2 ring-2 ring-primary"
-              >
-                <span
-                  class="material-symbols-outlined text-primary text-[32px] mb-1"
-                  style="font-variation-settings: 'FILL' 1"
-                  >manage_accounts</span
-                >
-                <span class="font-headline-md text-headline-md text-on-surface">Manager</span>
-                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
-                  >Gestion flotte et trajets</span
-                >
-              </div>
-            </label>
-            <!-- Staff Role -->
-            <label class="relative cursor-pointer">
-              <input
-                class="peer sr-only"
-                name="role"
-                type="radio"
-                value="staff"
-                (change)="setRole('staff')"
-              />
-              <div
-                class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
-              >
-                <span class="material-symbols-outlined text-primary text-[32px] mb-1">person</span>
-                <span class="font-headline-md text-headline-md text-on-surface">Staff</span>
-                <span class="font-body-md text-body-md text-on-surface-variant text-xs"
-                  >Accès limité (lecture)</span
-                >
-              </div>
-            </label>
+                  <span class="material-symbols-outlined text-primary text-[32px] mb-1">{{
+                    role.icon || 'person'
+                  }}</span>
+                  <span class="font-headline-md text-headline-md text-on-surface">{{
+                    role.label
+                  }}</span>
+                  <span class="font-body-md text-body-md text-on-surface-variant text-xs">
+                    {{ role.description || 'Accès utilisateur' }}
+                  </span>
+                </div>
+              </label>
+            </ng-container>
           </div>
         </div>
         <!-- Permissions Matrix -->
@@ -212,6 +207,40 @@
                   class="w-11 h-6 bg-outline-variant rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-outline after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"
                 ></div>
               </label>
+            </div>
+          </div>
+        </div>
+        <!-- Agent creation options -->
+        <div class="pt-4">
+          <label class="inline-flex items-center gap-3">
+            <input
+              type="checkbox"
+              [(ngModel)]="createAsAgent"
+              name="createAsAgent"
+              class="sr-only peer"
+            />
+            <span class="checkbox visual"></span>
+            <span>Créer également comme agent de l'agence</span>
+          </label>
+
+          <div *ngIf="createAsAgent" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="font-label-sm">Rôle agent</label>
+              <select [(ngModel)]="agentRole" name="agentRole" class="w-full p-2 border rounded">
+                <option value="agent_quai">Agent de quai</option>
+                <option value="admin_agence">Admin d'agence</option>
+              </select>
+            </div>
+            <div>
+              <label class="font-label-sm">Agence</label>
+              <select
+                [(ngModel)]="selectedAgencyId"
+                name="selectedAgencyId"
+                class="w-full p-2 border rounded"
+              >
+                <option [ngValue]="null">Sélectionnez une agence (optionnel)</option>
+                <option *ngFor="let a of agencies" [ngValue]="a.id">{{ a.name }}</option>
+              </select>
             </div>
           </div>
         </div>

@@ -42,7 +42,7 @@
       <div class="flex items-end gap-4 mb-4">
         <span
           class="font-display-lg text-display-lg text-on-surface font-mono-data tracking-tight"
-          >{{ balance.available }}</span
+          >{{ balance().available }}</span
         >
         <span class="font-headline-md text-headline-md text-on-surface-variant mb-1">XAF</span>
       </div>
@@ -67,12 +67,12 @@
       <div>
         <div class="flex items-end gap-2 mb-1">
           <span class="font-stats-metric text-stats-metric text-on-surface font-mono-data">{{
-            balance.pending
+            balance().pending
           }}</span>
           <span class="font-body-md text-body-md text-on-surface-variant pb-1">XAF</span>
         </div>
         <p class="font-body-md text-body-md text-on-surface-variant text-sm">
-          {{ balance.pendingTransactions }} transactions en cours
+          {{ balance().pendingTransactions }} transactions en cours
         </p>
       </div>
     </div>
@@ -84,9 +84,16 @@
         <h3 class="font-headline-md text-headline-md text-on-surface">Revenus Mensuels</h3>
         <select
           class="bg-surface border border-outline-variant text-on-surface font-body-md text-body-md rounded-lg px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+          #withdrawalRangeSelect
+          (change)="selectWithdrawalRange(withdrawalRangeSelect.value)"
         >
-          <option>Cette année</option>
-          <option>Année dernière</option>
+          <option
+            *ngFor="let option of withdrawalRangeOptions"
+            [value]="option.value"
+            [selected]="selectedWithdrawalRange() === option.value"
+          >
+            {{ option.label }}
+          </option>
         </select>
       </div>
       <!-- Mock Chart Area -->
@@ -180,9 +187,9 @@
           </thead>
           <tbody class="font-body-md text-body-md">
             <tr
-              *ngFor="let transaction of recentTransactions"
+              *ngFor="let transaction of recentTransactions()"
               class="border-b border-outline-variant hover:bg-surface-container-low transition-colors"
-              [class.bg-surface-bg/30]="transaction.status !== 'Complété'"
+              [class.bg-surface-bg]="transaction.status !== 'Complété'"
             >
               <td class="p-4 text-on-surface">{{ transaction.date }}</td>
               <td class="p-4 text-on-surface">{{ transaction.description }}</td>
@@ -210,7 +217,7 @@
 
 <!-- Withdrawal Modal -->
 <app-modal
-  [isOpen]="isWithdrawalModalOpen"
+  [isOpen]="isWithdrawalModalOpen()"
   [title]="'Demande de Retrait de Fonds'"
   [size]="'md'"
   (close)="closeWithdrawalModal()"
@@ -231,15 +238,20 @@
           <p
             class="font-headline-md text-headline-md text-on-surface font-mono-data font-bold tracking-tight"
           >
-            {{ balance.available }}
+            {{ balance().available }}
           </p>
         </div>
       </div>
     </div>
 
+    <div *ngIf="isSubmitting" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
+      <span class="material-symbols-outlined animate-spin">progress_activity</span>
+      Traitement de la demande...
+    </div>
+
     <!-- Utilisation du composant FormComponent pour le retrait -->
     <app-form
-      [fields]="withdrawalFormFields"
+      [fields]="withdrawalFormFields()"
       [submitLabel]="'Confirmer le Retrait'"
       (submit)="onFormSubmit($event)"
     >
@@ -258,9 +270,9 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>

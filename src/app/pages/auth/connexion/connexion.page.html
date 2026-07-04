@@ -6,7 +6,7 @@
     <img
       alt="Logistics Fleet"
       class="absolute inset-0 w-full h-full object-cover"
-      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCLr4hUtFFBChq9SMrRj3rm8IrImPxqSgBdS_k14kk6Ht48qUHL-Nfz9RwBcvQ7aRIjw-nt-NwwNpNVEgilJ-xwK8UMQwWTFQVa216zg0F1nzUbHp2kZcMxeN0smoHxkU-tTFaGSb30GsmST3d7wVsAyKwTSKtHfiL2YqLROmjbeC4xvsfxsJmVaPl-S8hhWRUSwfaZKC0IMLZ_Z6K-CS4QbYGYFs-nW3zahpGJQEMnhxjCQumV36ac61FwxiUrr0nFdOgjrvvUZu4"
+      [src]="heroImage"
     />
     <div
       class="absolute inset-0 bg-gradient-to-t from-on-surface via-on-surface/40 to-transparent opacity-90"
@@ -59,6 +59,7 @@
         <app-form
           [fields]="loginFormFields"
           [submitLabel]="'Connexion'"
+          [IsSubmit]="isSubmitting"
           (submit)="onFormSubmit($event)"
         >
           <div class="flex items-center mt-4">

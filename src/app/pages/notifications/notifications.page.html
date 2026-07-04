@@ -29,59 +29,64 @@
   <div class="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide border-b border-border-subtle">
     <button
       class="px-4 py-2 font-label-sm text-label-sm border-b-2"
-      [class.border-primary]="activeFilter === 'all'"
-      [class.text-primary]="activeFilter === 'all'"
-      [class.border-transparent]="activeFilter !== 'all'"
-      [class.text-on-surface-variant]="activeFilter !== 'all'"
+      [class.border-primary]="activeFilter() === 'all'"
+      [class.text-primary]="activeFilter() === 'all'"
+      [class.border-transparent]="activeFilter() !== 'all'"
+      [class.text-on-surface-variant]="activeFilter() !== 'all'"
       (click)="setFilter('all')"
     >
       Toutes ({{ getNotificationCount() }})
     </button>
     <button
       class="px-4 py-2 font-label-sm text-label-sm border-b-2"
-      [class.border-primary]="activeFilter === 'unread'"
-      [class.text-primary]="activeFilter === 'unread'"
-      [class.border-transparent]="activeFilter !== 'unread'"
-      [class.text-on-surface-variant]="activeFilter !== 'unread'"
+      [class.border-primary]="activeFilter() === 'unread'"
+      [class.text-primary]="activeFilter() === 'unread'"
+      [class.border-transparent]="activeFilter() !== 'unread'"
+      [class.text-on-surface-variant]="activeFilter() !== 'unread'"
       (click)="setFilter('unread')"
     >
-      Non lues ({{ unreadCount }})
+      Non lues ({{ unreadCount() }})
     </button>
     <button
       class="px-4 py-2 font-label-sm text-label-sm border-b-2"
-      [class.border-primary]="activeFilter === 'operations'"
-      [class.text-primary]="activeFilter === 'operations'"
-      [class.border-transparent]="activeFilter !== 'operations'"
-      [class.text-on-surface-variant]="activeFilter !== 'operations'"
+      [class.border-primary]="activeFilter() === 'operations'"
+      [class.text-primary]="activeFilter() === 'operations'"
+      [class.border-transparent]="activeFilter() !== 'operations'"
+      [class.text-on-surface-variant]="activeFilter() !== 'operations'"
       (click)="setFilter('operations')"
     >
       Opérations
     </button>
     <button
       class="px-4 py-2 font-label-sm text-label-sm border-b-2"
-      [class.border-primary]="activeFilter === 'finances'"
-      [class.text-primary]="activeFilter === 'finances'"
-      [class.border-transparent]="activeFilter !== 'finances'"
-      [class.text-on-surface-variant]="activeFilter !== 'finances'"
+      [class.border-primary]="activeFilter() === 'finances'"
+      [class.text-primary]="activeFilter() === 'finances'"
+      [class.border-transparent]="activeFilter() !== 'finances'"
+      [class.text-on-surface-variant]="activeFilter() !== 'finances'"
       (click)="setFilter('finances')"
     >
       Finances
     </button>
     <button
       class="px-4 py-2 font-label-sm text-label-sm border-b-2"
-      [class.border-primary]="activeFilter === 'system'"
-      [class.text-primary]="activeFilter === 'system'"
-      [class.border-transparent]="activeFilter !== 'system'"
-      [class.text-on-surface-variant]="activeFilter !== 'system'"
+      [class.border-primary]="activeFilter() === 'system'"
+      [class.text-primary]="activeFilter() === 'system'"
+      [class.border-transparent]="activeFilter() !== 'system'"
+      [class.text-on-surface-variant]="activeFilter() !== 'system'"
       (click)="setFilter('system')"
     >
       Système
     </button>
   </div>
 
+  <div *ngIf="isLoading()" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
+    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+    Chargement des notifications...
+  </div>
+
   <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
   <app-table
-    [data]="filteredNotifications"
+    [data]="filteredNotifications()"
     [columns]="notificationColumns"
     [actions]="notificationActions"
     [pageSize]="10"
@@ -147,35 +152,35 @@
 
 <!-- Modal pour les détails de la notification -->
 <app-modal
-  [isOpen]="isModalOpen"
+  [isOpen]="isModalOpen()"
   [title]="'Détails de la Notification'"
   [size]="'md'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedNotification" class="space-y-4">
+  <div *ngIf="selectedNotification()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">Type</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedNotification.type }}
+          {{ selectedNotification()?.type }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Catégorie</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedNotification.category }}
+          {{ selectedNotification()?.category }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Titre</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedNotification.title }}
+          {{ selectedNotification()?.title }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Heure</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedNotification.time }}
+          {{ selectedNotification()?.time }}
         </p>
       </div>
     </div>
@@ -183,7 +188,7 @@
     <div class="mt-4">
       <p class="text-label-sm text-label-sm text-outline">Message</p>
       <p class="text-body-md text-body-md text-on-surface mt-1">
-        {{ selectedNotification.message }}
+        {{ selectedNotification()?.message }}
       </p>
     </div>
 
@@ -200,9 +205,9 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>

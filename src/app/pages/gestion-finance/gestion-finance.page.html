@@ -6,6 +6,10 @@
       Aperçu de vos revenus et paiements.
     </p>
   </div>
+  <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
+    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+    Chargement des informations financières...
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-12 gap-widget-gap">
     <!-- Balance Summary Widget -->
     <div
@@ -16,14 +20,22 @@
           <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">
             Current Balance
           </p>
-          <h3 class="font-stats-metric text-stats-metric text-on-background">3,450,000 XAF</h3>
+          <h3 class="font-stats-metric text-stats-metric text-on-background">
+            {{ currentBalance | number: '1.0-0' }} XAF
+          </h3>
         </div>
         <div class="bg-success-green/10 px-3 py-1 rounded-full flex items-center gap-1">
           <span class="material-symbols-outlined text-success-green text-sm">trending_up</span>
           <span class="font-label-sm text-label-sm text-success-green">+12.5%</span>
         </div>
       </div>
-      <app-revenue-chart></app-revenue-chart>
+      <app-revenue-chart
+        [chartType]="financeChartType"
+        [chartTitle]="'Balance Overview'"
+        [labels]="financeChartLabels"
+        [dataPoints]="financeChartData"
+        [chartOptions]="financeChartOptions"
+      ></app-revenue-chart>
       <div
         class="flex flex-col sm:flex-row justify-between items-end gap-4 border-t border-border-subtle pt-4"
       >
@@ -31,7 +43,9 @@
           <p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">
             Available for Payout
           </p>
-          <h4 class="font-headline-md text-headline-md text-primary">2,950,000 XAF</h4>
+          <h4 class="font-headline-md text-headline-md text-primary">
+            {{ availableForPayout | number: '1.0-0' }} XAF
+          </h4>
         </div>
         <button
           class="bg-primary hover:bg-surface-tint text-on-primary font-label-sm text-label-sm uppercase tracking-wider px-6 py-3 rounded-lg shadow-sm transition-colors w-full sm:w-auto"
@@ -47,7 +61,13 @@
     >
       <h3 class="font-headline-md text-headline-md text-on-background mb-4">Revenue Breakdown</h3>
       <div class="relative w-full h-48 flex-1 flex items-center justify-center">
-        <app-revenue-chart></app-revenue-chart>
+        <app-revenue-chart
+          [chartType]="financeBreakdownChartType"
+          [chartTitle]="'Revenue Breakdown'"
+          [labels]="financeBreakdownLabels"
+          [dataPoints]="financeBreakdownData"
+          [chartOptions]="financeChartOptions"
+        ></app-revenue-chart>
       </div>
     </div>
     <!-- Transactions Table Widget -->
@@ -61,11 +81,16 @@
         <div class="flex gap-2 w-full sm:w-auto">
           <select
             class="form-select w-full sm:w-auto rounded-lg border-border-subtle focus:border-primary focus:ring-primary font-body-md text-body-md py-2 pl-3 pr-10"
+            #transactionTypeSelect
+            (change)="selectTransactionType(transactionTypeSelect.value)"
           >
-            <option>All Types</option>
-            <option>Revenue</option>
-            <option>Payout</option>
-            <option>Fee</option>
+            <option
+              *ngFor="let option of transactionTypeOptions"
+              [value]="option.value"
+              [selected]="selectedTransactionType === option.value"
+            >
+              {{ option.label }}
+            </option>
           </select>
           <input
             class="form-input w-full sm:w-auto rounded-lg border-border-subtle focus:border-primary focus:ring-primary font-body-md text-body-md py-2 px-3"
@@ -76,7 +101,7 @@
 
       <!-- Utilisation du composant TableComponent -->
       <app-table
-        [data]="transactions"
+        [data]="filteredTransactions"
         [columns]="transactionColumns"
         [actions]="transactionActions"
         [pageSize]="10"

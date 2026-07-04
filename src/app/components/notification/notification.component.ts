@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, OnDestroy } from '@angular/core';
 
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
 
@@ -7,20 +7,27 @@ export type NotificationType = 'success' | 'error' | 'warning' | 'info';
   selector: 'app-notification',
   templateUrl: './notification.component.html',
   styleUrls: ['./notification.component.css'],
-  imports: [ CommonModule ]
+  imports: [CommonModule],
 })
-export class NotificationComponent {
+export class NotificationComponent implements OnChanges, OnDestroy {
   @Input() type: NotificationType = 'info';
   @Input() message: string = '';
   @Input() duration: number = 5000;
   @Input() show: boolean = false;
 
-  ngOnInit(): void {
-    if (this.show) {
-      setTimeout(() => {
+  private hideTimeout: any = null;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['show'] && this.show) {
+      if (this.hideTimeout) clearTimeout(this.hideTimeout);
+      this.hideTimeout = setTimeout(() => {
         this.show = false;
       }, this.duration);
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this.hideTimeout) clearTimeout(this.hideTimeout);
   }
 
   get typeClasses(): string {

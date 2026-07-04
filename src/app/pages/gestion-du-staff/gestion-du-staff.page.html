@@ -25,7 +25,7 @@
       >
         <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Role Distribution</h3>
         <div class="space-y-4">
-          <div *ngFor="let roleData of roleDistribution">
+          <div *ngFor="let roleData of roleDistribution()">
             <div class="flex justify-between items-end mb-1">
               <span class="font-label-sm text-label-sm text-on-surface-variant">{{
                 roleData.role
@@ -48,6 +48,10 @@
       <div
         class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright"
       >
+        <div *ngIf="isLoading()" class="flex items-center gap-2 text-primary text-sm font-medium">
+          <span class="material-symbols-outlined animate-spin">progress_activity</span>
+          Chargement du personnel...
+        </div>
         <h3 class="font-headline-md text-headline-md text-on-surface">Active Personnel</h3>
         <div class="flex gap-2">
           <button
@@ -60,7 +64,7 @@
 
       <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
       <app-table
-        [data]="staffMembers"
+        [data]="staffMembers()"
         [columns]="staffColumns"
         [actions]="staffActions"
         [pageSize]="10"
@@ -72,7 +76,7 @@
               <div
                 class="w-8 h-8 rounded-full bg-primary-container text-primary font-bold flex items-center justify-center text-xs"
               >
-                {{getInitials(item.name)}}
+                {{ getInitials(item.name) }}
               </div>
               <div>
                 <div class="font-semibold text-on-surface">{{ item.name }}</div>
@@ -123,7 +127,7 @@
         class="p-3 border-t border-border-subtle bg-surface-bright flex justify-between items-center text-xs text-on-surface-variant"
       >
         <span class=""
-          >Showing 1 to {{ staffMembers.length }} of {{ staffMembers.length }} users</span
+          >Showing 1 to {{ staffMembers().length }} of {{ staffMembers().length }} users</span
         >
         <div class="flex gap-1">
           <button class="p-1 rounded hover:bg-surface-container-highest disabled:opacity-50">
@@ -140,41 +144,41 @@
 
 <!-- Modal pour les détails du membre du personnel -->
 <app-modal
-  [isOpen]="isModalOpen"
+  [isOpen]="isModalOpen()"
   [title]="'Staff Member Details'"
   [size]="'md'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedStaffMember" class="space-y-4">
+  <div *ngIf="selectedStaffMember()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">Full Name</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedStaffMember.name }}
+          {{ selectedStaffMember()?.name }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Email</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
-          {{ selectedStaffMember.email }}
+          {{ selectedStaffMember()?.email }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Phone</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedStaffMember.phone || 'N/A' }}
+          {{ selectedStaffMember()?.phone || 'N/A' }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Role</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedStaffMember.role }}
+          {{ selectedStaffMember()?.role }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Status</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedStaffMember.status }}
+          {{ selectedStaffMember()?.status }}
         </p>
       </div>
     </div>
@@ -192,14 +196,14 @@
 
 <!-- Modal pour le formulaire de membre du personnel -->
 <app-modal
-  [isOpen]="isFormModalOpen"
-  [title]="selectedStaffMember?.id ? 'Edit Staff Member' : 'Invite New User'"
+  [isOpen]="isFormModalOpen()"
+  [title]="selectedStaffMember()?.id ? 'Edit Staff Member' : 'Invite New User'"
   [size]="'md'"
   (close)="closeModal()"
 >
   <app-form
-    [fields]="staffFormFields"
-    [submitLabel]="selectedStaffMember?.id ? 'Update User' : 'Send Invitation'"
+    [fields]="staffFormFields()"
+    [submitLabel]="selectedStaffMember()?.id ? 'Update User' : 'Send Invitation'"
     (submit)="onFormSubmit($event)"
   >
   </app-form>
@@ -207,9 +211,9 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>

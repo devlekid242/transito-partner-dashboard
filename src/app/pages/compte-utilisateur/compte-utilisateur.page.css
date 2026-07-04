@@ -1,11 +1,62 @@
-.toggle-checkbox:checked {
-  right: 0;
-  border-color: #0056c4;
+:host {
+  display: block;
 }
-.toggle-checkbox:checked + .toggle-label {
-  background-color: #0056c4;
+
+.account-shell {
+  animation: fade-in 220ms ease-out;
 }
-.toggle-checkbox:checked + .toggle-label:after {
-  transform: translateX(100%);
-  border-color: white;
+
+.account-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.account-hero::after {
+  content: '';
+  position: absolute;
+  inset: auto -20px -40px auto;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(0, 86, 196, 0.16), transparent 70%);
+  pointer-events: none;
+}
+
+.account-hero-badge {
+  backdrop-filter: blur(8px);
+}
+
+.account-tabs {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+}
+
+.account-tab {
+  color: var(--on-surface-variant, #5f6b7a);
+}
+
+.account-tab.active {
+  background: linear-gradient(135deg, rgba(0, 86, 196, 0.14), rgba(0, 86, 196, 0.08));
+  color: var(--primary, #0056c4);
+  box-shadow: 0 6px 16px rgba(0, 86, 196, 0.12);
+}
+
+.account-card {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.account-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

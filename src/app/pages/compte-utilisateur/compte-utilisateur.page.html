@@ -1,173 +1,179 @@
-<div class="p-4 p-container-margin max-w-desktop-max-width mx-auto w-full">
-  <!-- Page Header -->
-  <div class="mb-8">
-    <h1 class="text-headline-lg text-headline-lg text-on-surface mb-2">Paramètres du Compte</h1>
-    <p class="text-body-md text-body-md text-on-surface-variant">
-      Gérez les préférences de votre compte et les paramètres de sécurité.
-    </p>
-  </div>
-  <!-- Tabs -->
-  <div class="flex border-b border-outline-variant mb-8 overflow-x-auto">
+<div class="account-shell p-4 p-container-margin max-w-desktop-max-width mx-auto w-full">
+  <section
+    class="account-hero mb-6 rounded-3xl border border-surface-variant bg-gradient-to-br from-primary/10 via-surface to-surface-container p-6 shadow-sm"
+  >
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <div class="max-w-2xl">
+        <div
+          class="account-hero-badge mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-semibold text-primary"
+        >
+          <span class="material-symbols-outlined text-base">shield_person</span>
+          Compte sécurisé
+        </div>
+        <h1 class="text-headline-lg text-on-surface mb-2">Paramètres du compte</h1>
+        <p class="text-body-md text-on-surface-variant">
+          Gérez votre profil, votre sécurité et vos préférences depuis un espace clair et
+          centralisé.
+        </p>
+      </div>
+      <div
+        class="rounded-2xl border border-outline-variant bg-card-bg/80 px-4 py-3 backdrop-blur-sm"
+      >
+        <p class="text-label-sm text-on-surface-variant">Profil actuel</p>
+        <p class="text-body-lg font-semibold text-on-surface">
+          {{ user.fullName || 'Utilisateur' }}
+        </p>
+        <p class="text-sm text-primary">{{ user.role || 'Compte partenaire' }}</p>
+      </div>
+    </div>
+  </section>
+
+  <div
+    class="account-tabs mb-6 flex flex-wrap gap-2 rounded-2xl border border-outline-variant bg-surface-container p-2"
+  >
     <button
-      class="px-6 py-3 text-body-md font-body-md font-bold text-primary border-b-2 border-primary whitespace-nowrap"
+      class="account-tab rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all"
+      [class.active]="activeTab === 'profile'"
       (click)="setActiveTab('profile')"
-      [class.border-primary]="activeTab === 'profile'"
-      [class.text-primary]="activeTab === 'profile'"
     >
+      <span class="mr-2 material-symbols-outlined text-base align-middle">person</span>
       Profil
     </button>
     <button
-      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+      class="account-tab rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all"
+      [class.active]="activeTab === 'security'"
       (click)="setActiveTab('security')"
-      [class.border-primary]="activeTab === 'security'"
-      [class.text-primary]="activeTab === 'security'"
     >
+      <span class="mr-2 material-symbols-outlined text-base align-middle">lock</span>
       Sécurité
     </button>
     <button
-      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+      class="account-tab rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all"
+      [class.active]="activeTab === 'notifications'"
       (click)="setActiveTab('notifications')"
-      [class.border-primary]="activeTab === 'notifications'"
-      [class.text-primary]="activeTab === 'notifications'"
     >
+      <span class="mr-2 material-symbols-outlined text-base align-middle">notifications</span>
       Notifications
     </button>
     <button
-      class="px-6 py-3 text-body-md font-body-md text-on-surface-variant hover:text-on-surface transition-colors whitespace-nowrap"
+      class="account-tab rounded-xl px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-all"
+      [class.active]="activeTab === 'preferences'"
       (click)="setActiveTab('preferences')"
-      [class.border-primary]="activeTab === 'preferences'"
-      [class.text-primary]="activeTab === 'preferences'"
     >
+      <span class="mr-2 material-symbols-outlined text-base align-middle">tune</span>
       Préférences
     </button>
   </div>
-  <!-- Bento Grid Layout for Settings -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-widget-gap">
-    <!-- Profile Information Column -->
-    <div class="lg:col-span-8 space-y-widget-gap">
-      <!-- Basic Info Card -->
-      <div class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6">
-        <h3 class="text-headline-md text-headline-md text-on-surface mb-6 flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">person</span>
-          Informations Personnelles
-        </h3>
 
-        <!-- Utilisation du composant FormComponent pour le profil -->
+  <div class="grid grid-cols-1 gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+    <div class="space-y-6">
+      <div class="account-card rounded-3xl border border-surface-variant bg-card-bg p-6 shadow-sm">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-headline-md text-on-surface">Informations de compte</h3>
+            <p class="text-body-md text-on-surface-variant">
+              Mettez à jour les détails de votre profil selon vos besoins.
+            </p>
+          </div>
+          <div
+            class="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary"
+          >
+            {{
+              activeTab === 'profile'
+                ? 'Profil'
+                : activeTab === 'security'
+                  ? 'Sécurité'
+                  : activeTab === 'notifications'
+                    ? 'Notifications'
+                    : 'Préférences'
+            }}
+          </div>
+        </div>
+
         <app-form
           *ngIf="activeTab === 'profile'"
           [fields]="profileFormFields"
           [submitLabel]="'Enregistrer les modifications'"
+          [IsSubmit]="isSubmitting"
           (submit)="onProfileSubmit($event)"
         >
         </app-form>
 
-        <!-- Utilisation du composant FormComponent pour la sécurité -->
         <app-form
           *ngIf="activeTab === 'security'"
           [fields]="securityFormFields"
           [submitLabel]="'Changer le mot de passe'"
+          [IsSubmit]="isSubmitting"
           (submit)="onSecuritySubmit($event)"
         >
         </app-form>
 
-        <!-- Utilisation du composant FormComponent pour les préférences -->
+        <app-form
+          *ngIf="activeTab === 'notifications'"
+          [fields]="notificationsFormFields"
+          [submitLabel]="'Enregistrer les notifications'"
+          [IsSubmit]="isSubmitting"
+          (submit)="onNotificationsSubmit($event)"
+        >
+        </app-form>
+
         <app-form
           *ngIf="activeTab === 'preferences'"
           [fields]="preferencesFormFields"
           [submitLabel]="'Enregistrer les préférences'"
+          [IsSubmit]="isSubmitting"
           (submit)="onPreferencesSubmit($event)"
         >
         </app-form>
       </div>
     </div>
-    <!-- Side Column -->
-    <div class="lg:col-span-4 space-y-widget-gap">
-      <!-- Profile Picture Card -->
+
+    <div class="space-y-6">
       <div
-        class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6 flex flex-col items-center text-center"
+        class="account-card rounded-3xl border border-surface-variant bg-card-bg p-6 shadow-sm text-center"
       >
-        <div class="relative w-32 h-32 mb-4 group cursor-pointer">
+        <div class="relative mx-auto mb-4 h-28 w-28 group cursor-pointer">
           <img
             alt="Profile Picture"
-            class="w-full h-full rounded-full object-cover border-4 border-surface-container"
-            [src]="user.avatar"
+            class="h-full w-full rounded-full border-4 border-surface-container object-cover shadow-md"
+            [src]="user.profilePhotoUrl || user.avatar || '/assets/default-avatar.png'"
           />
           <div
-            class="absolute inset-0 bg-on-background bg-opacity-50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            class="absolute inset-0 flex items-center justify-center rounded-full bg-surface-variant/80 opacity-0 transition-opacity group-hover:opacity-100"
           >
             <span class="material-symbols-outlined text-on-primary">photo_camera</span>
           </div>
         </div>
-        <h4 class="text-body-lg font-body-lg font-bold text-on-surface mb-1">Photo de Profil</h4>
-        <p class="text-label-sm font-label-sm text-on-surface-variant mb-4">
-          JPG, GIF ou PNG. Max 2MB.
-        </p>
+        <h4 class="text-body-lg font-semibold text-on-surface">Photo de profil</h4>
+        <p class="mb-4 text-sm text-on-surface-variant">JPG, GIF ou PNG. Max 2MB.</p>
+        <input
+          type="file"
+          accept="image/*"
+          hidden
+          (change)="onProfilePhotoSelected($event)"
+          #photoInput
+        />
         <button
-          class="w-full py-2 px-4 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-bold"
+          class="w-full rounded-xl border border-outline bg-surface-container px-4 py-2.5 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+          (click)="photoInput.click()"
+          type="button"
         >
           Changer la photo
         </button>
       </div>
-      <div class="bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6">
-        <h3 class="text-body-lg font-bold text-on-surface mb-4 flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">translate</span>Préférences
-        </h3>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
-              >Langue</label
-            >
-            <select
-              class="w-full bg-surface text-on-surface border border-border-subtle rounded-lg px-4 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary text-body-md font-body-md"
-            >
-              <option selected="">Français</option>
-              <option>English</option>
-              <option>Español</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-2"
-              >Thème</label
-            >
-            <div class="flex gap-2">
-              <button
-                class="flex-1 py-2 px-3 border border-primary bg-secondary-container text-on-secondary-container rounded-lg text-label-sm font-bold"
-              >
-                Clair</button
-              ><button
-                class="flex-1 py-2 px-3 border border-outline text-on-surface-variant rounded-lg text-label-sm font-bold hover:bg-surface-container"
-              >
-                Sombre
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
-  <!-- Save Action Banner -->
+
   <div
-    class="mt-8 bg-card-bg rounded-xl shadow-sm border border-surface-variant p-6 flex justify-between items-center sticky bottom-6 z-30"
+    class="mt-8 rounded-3xl border border-primary/20 bg-gradient-to-r from-primary/10 to-primary/5 p-5 shadow-sm"
   >
-    <div>
-      <h4 class="text-body-lg font-body-lg font-bold text-on-surface">
-        Modifications non enregistrées
-      </h4>
-      <p class="text-body-md font-body-md text-on-surface-variant">
-        N'oubliez pas de sauvegarder vos changements.
-      </p>
-    </div>
-    <div class="flex gap-4">
-      <button
-        class="px-6 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors text-body-md font-body-md font-bold"
-      >
-        Annuler
-      </button>
-      <button
-        class="px-6 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors text-body-md font-body-md font-bold shadow-sm"
-      >
-        Enregistrer
-      </button>
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h4 class="text-body-lg font-semibold text-on-surface">Modifications non enregistrées</h4>
+        <p class="text-body-md text-on-surface-variant">
+          N’oubliez pas de sauvegarder vos changements pour garder votre compte à jour.
+        </p>
+      </div>
     </div>
   </div>
 </div>

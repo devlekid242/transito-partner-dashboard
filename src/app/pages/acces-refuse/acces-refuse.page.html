@@ -1,0 +1,114 @@
+<!-- SideNavBar (The Anchor) -->
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col min-h-screen">
+  <!-- TopNavBar -->
+  <!-- Page Content: Error 403 -->
+  <div
+    class="flex-1 flex items-center justify-center p-container-margin bg-surface-bg relative overflow-hidden"
+  >
+    <!-- Atmospheric Background Element -->
+    <div
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-20 pointer-events-none"
+    ></div>
+    <!-- Error Card -->
+    <div
+      class="relative z-10 w-full max-w-2xl bg-card-bg rounded-xl p-12 text-center error-card-glow border border-border-subtle flex flex-col items-center"
+    >
+      <!-- Icon/Illustration Section -->
+      <div
+        class="w-32 h-32 mb-8 bg-surface-container rounded-full flex items-center justify-center text-primary relative animate-pulse-slow"
+      >
+        <i class="fa-solid fa-shield-halved text-6xl"></i>
+        <div
+          class="absolute -top-1 -right-1 bg-danger-red text-white rounded-full w-10 h-10 flex items-center justify-center border-4 border-card-bg"
+        >
+          <i class="fa-solid fa-lock text-sm"></i>
+        </div>
+      </div>
+      <div class="space-y-4 max-w-lg">
+        <h2 class="font-display-lg text-display-lg text-on-surface">Erreur 403</h2>
+        <h3 class="font-headline-lg text-headline-lg text-primary">Accès Non Autorisé</h3>
+        <p class="font-body-lg text-body-lg text-on-surface-variant">
+          Désolé, mais votre profil actuel ne dispose pas des privilèges nécessaires pour accéder à
+          cette section du portail Transito.
+        </p>
+        <p class="font-body-md text-body-md text-outline italic">
+          Si vous pensez qu'il s'agit d'une erreur de configuration, veuillez contacter votre
+          administrateur de flotte ou notre équipe de support technique.
+        </p>
+      </div>
+      <!-- CTA Actions -->
+      <div class="mt-12 flex flex-col sm:flex-row gap-4 w-full justify-center">
+        <a
+          class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-primary text-on-primary rounded-lg font-bold hover:bg-primary-container transition-all active:scale-[0.98] shadow-sm"
+          href="#"
+        >
+          <span class="material-symbols-outlined">dashboard</span>
+          Retour au Tableau de Bord
+        </a>
+        <a
+          class="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-primary text-primary rounded-lg font-bold hover:bg-surface-container-low transition-all active:scale-[0.98]"
+          href="#"
+        >
+          <span class="material-symbols-outlined">contact_support</span>
+          Contacter le Support
+        </a>
+      </div>
+      <!-- Debug Information (Subtle) -->
+      <div class="mt-12 pt-8 border-t border-border-subtle w-full flex flex-col items-center gap-2">
+        <div class="flex items-center gap-4 text-outline font-mono-data text-mono-data">
+          <span>REQ_ID: TR-9942-AX</span>
+          <span class="w-1 h-1 bg-outline rounded-full"></span>
+          <span>IP: 197.156.xx.xx</span>
+        </div>
+        <button
+          class="text-label-sm text-primary hover:underline font-bold"
+          onclick="toggleDetails()"
+        >
+          Afficher les détails techniques
+        </button>
+        <div
+          class="hidden mt-4 p-4 bg-surface-container-low rounded-lg w-full text-left font-mono-data text-mono-data text-on-surface-variant border border-outline-variant"
+          id="tech-details"
+        >
+          Error Code: ACCESS_DENIED_INSUFFICIENT_PERMISSIONS<br />
+          Resource: /api/v1/fleet/financial-reports/export<br />
+          User Role: Fleet_Operator (Level 2)<br />
+          Required Scope: finance_admin_read
+        </div>
+      </div>
+    </div>
+    <!-- Decorative Cards (Asymmetric Layout/Bento style hints) -->
+    <div
+      class="hidden xl:block absolute top-10 right-10 w-64 h-40 bg-card-bg/60 backdrop-blur-md rounded-xl border border-white/20 p-4 rotate-3 shadow-lg opacity-40"
+    >
+      <div class="flex items-center gap-2 mb-4">
+        <div
+          class="w-8 h-8 rounded-full bg-success-green/20 text-success-green flex items-center justify-center"
+        >
+          <span class="material-symbols-outlined text-sm">check_circle</span>
+        </div>
+        <div class="h-2 w-24 bg-border-subtle rounded"></div>
+      </div>
+      <div class="space-y-2">
+        <div class="h-2 w-full bg-border-subtle/50 rounded"></div>
+        <div class="h-2 w-2/3 bg-border-subtle/50 rounded"></div>
+      </div>
+    </div>
+    <div
+      class="hidden xl:block absolute bottom-10 left-10 w-72 h-48 bg-card-bg/60 backdrop-blur-md rounded-xl border border-white/20 p-6 -rotate-3 shadow-lg opacity-40"
+    >
+      <div class="flex justify-between items-center mb-6">
+        <div class="h-4 w-32 bg-primary/20 rounded"></div>
+        <div class="h-6 w-12 bg-primary/10 rounded-full"></div>
+      </div>
+      <div class="flex items-end gap-2 h-20">
+        <div class="flex-1 bg-primary/20 rounded-t" style="height: 40%"></div>
+        <div class="flex-1 bg-primary/30 rounded-t" style="height: 70%"></div>
+        <div class="flex-1 bg-primary/40 rounded-t" style="height: 55%"></div>
+        <div class="flex-1 bg-primary/20 rounded-t" style="height: 90%"></div>
+        <div class="flex-1 bg-primary/10 rounded-t" style="height: 30%"></div>
+      </div>
+    </div>
+  </div>
+</main>

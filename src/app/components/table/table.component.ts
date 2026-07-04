@@ -17,7 +17,7 @@ export interface TableAction {
   selector: 'app-table',
   templateUrl: './table.component.html',
   styleUrls: ['./table.component.css'],
-  imports: [ CommonModule ]
+  imports: [CommonModule],
 })
 export class TableComponent {
   @Input() data: any[] = [];
@@ -25,12 +25,17 @@ export class TableComponent {
   @Input() actions: TableAction[] = [];
   @Input() pageSize: number = 10;
   @Output() sort = new EventEmitter<{ key: string; direction: 'asc' | 'desc' }>();
-  
+
   @ContentChild('customCell') customCellTemplate: TemplateRef<any> | undefined;
 
   currentPage: number = 1;
   sortKey: string = '';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  get pages(): number[] {
+    const total = this.totalPages;
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
 
   get paginatedData(): any[] {
     const startIndex = (this.currentPage - 1) * this.pageSize;
@@ -63,5 +68,4 @@ export class TableComponent {
   getCellValue(item: any, column: TableColumn): any {
     return item[column.key];
   }
-
 }

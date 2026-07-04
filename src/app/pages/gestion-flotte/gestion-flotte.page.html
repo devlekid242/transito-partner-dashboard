@@ -6,6 +6,13 @@
     </div>
     <div class="flex gap-2">
       <button
+        (click)="navigateToAddBus()"
+        class="px-4 py-2 bg-primary text-on-primary rounded-lg text-label-sm font-label-sm font-bold hover:bg-primary/90 transition-colors flex items-center gap-2"
+      >
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Ajouter un bus
+      </button>
+      <button
         class="px-4 py-2 bg-card-bg border border-border-subtle rounded-lg text-label-sm font-label-sm font-bold text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2"
       >
         <span class="material-symbols-outlined text-[18px]">filter_list</span>
@@ -14,7 +21,7 @@
     </div>
   </div>
   <!-- Stats Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-widget-gap mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-widget-gap mb-8">
     <!-- Total Buses -->
     <div
       class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between"
@@ -30,11 +37,13 @@
         </div>
       </div>
       <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">15</div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">
+          {{ busStats().totalFleet }}
+        </div>
         <div class="text-label-sm font-label-sm text-outline mt-1">Total registered vehicles</div>
       </div>
     </div>
-    <!-- Active Buses -->
+    <!-- Available Buses -->
     <div
       class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between relative overflow-hidden"
     >
@@ -43,7 +52,7 @@
       ></div>
       <div class="flex justify-between items-start mb-2">
         <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
-          >Active</span
+          >Available</span
         >
         <div
           class="w-8 h-8 rounded-full bg-success-green/10 flex items-center justify-center text-success-green"
@@ -52,10 +61,12 @@
         </div>
       </div>
       <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">12</div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">
+          {{ busStats().available }}
+        </div>
         <div class="text-label-sm font-label-sm text-success-green flex items-center gap-1 mt-1">
           <span class="material-symbols-outlined text-[14px]">trending_up</span>
-          80% Utilization
+          {{ busStats().utilizationRate }}% Ready
         </div>
       </div>
     </div>
@@ -77,8 +88,34 @@
         </div>
       </div>
       <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">3</div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">
+          {{ busStats().inMaintenance }}
+        </div>
         <div class="text-label-sm font-label-sm text-outline mt-1">Scheduled service</div>
+      </div>
+    </div>
+    <!-- Out of Service -->
+    <div
+      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle flex flex-col justify-between relative overflow-hidden"
+    >
+      <div
+        class="absolute right-0 bottom-0 w-24 h-24 bg-danger-red opacity-[0.05] rounded-tl-full pointer-events-none"
+      ></div>
+      <div class="flex justify-between items-start mb-2">
+        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
+          >Out of Service</span
+        >
+        <div
+          class="w-8 h-8 rounded-full bg-danger-red/10 flex items-center justify-center text-danger-red"
+        >
+          <span class="material-symbols-outlined text-[18px]">warning</span>
+        </div>
+      </div>
+      <div>
+        <div class="text-stats-metric font-stats-metric text-on-surface">
+          {{ busStats().outOfService }}
+        </div>
+        <div class="text-label-sm font-label-sm text-outline mt-1">Needs attention</div>
       </div>
     </div>
   </div>
@@ -88,9 +125,17 @@
     <div class="lg:col-span-2 flex flex-col gap-4">
       <h2 class="text-headline-md font-headline-md text-on-surface mb-2">Vehicle Roster</h2>
 
+      <div
+        *ngIf="isLoading()"
+        class="mb-3 flex items-center gap-2 text-primary text-sm font-medium"
+      >
+        <span class="material-symbols-outlined animate-spin">progress_activity</span>
+        Chargement des véhicules...
+      </div>
+
       <!-- Utilisation du composant TableComponent -->
       <app-table
-        [data]="vehicles"
+        [data]="vehicles()"
         [columns]="vehicleColumns"
         [actions]="vehicleActions"
         [pageSize]="5"
@@ -113,50 +158,38 @@
         </div>
         <div class="p-standard-padding flex-1 overflow-y-auto">
           <div class="relative border-l-2 border-surface-container-high ml-3 space-y-6 pb-4">
-            <!-- Timeline Item 1 -->
-            <div class="relative pl-6">
-              <div
-                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-warning-gold"
-              ></div>
-              <div class="text-label-sm font-label-sm text-outline mb-1">Today, 09:00 AM</div>
-              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
-                <div class="font-bold text-body-md font-body-md text-on-surface">NW-4402-QZ</div>
-                <div class="text-label-sm font-label-sm text-outline">
-                  Brake pad replacement (Routine)
+            <ng-container *ngIf="maintenanceSchedule().length; else emptySchedule">
+              <div class="relative pl-6" *ngFor="let entry of maintenanceSchedule()">
+                <div
+                  class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-warning-gold"
+                ></div>
+                <div class="text-label-sm font-label-sm text-outline mb-1">
+                  {{ entry.scheduledAt }}
+                </div>
+                <div class="bg-surface p-3 rounded-lg border border-border-subtle">
+                  <div class="font-bold text-body-md font-body-md text-on-surface">
+                    {{ entry.vehicle }}
+                  </div>
+                  <div class="text-label-sm font-label-sm text-outline">
+                    {{ entry.description }}
+                  </div>
                 </div>
               </div>
-            </div>
-            <!-- Timeline Item 2 -->
-            <div class="relative pl-6">
-              <div
-                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-warning-gold"
-              ></div>
-              <div class="text-label-sm font-label-sm text-outline mb-1">Tomorrow, 14:00 PM</div>
-              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
-                <div class="font-bold text-body-md font-body-md text-on-surface">LT-1024-AB</div>
-                <div class="text-label-sm font-label-sm text-outline">
-                  Oil change &amp; 150k Inspection
-                </div>
+            </ng-container>
+            <ng-template #emptySchedule>
+              <div class="text-center text-label-sm font-label-sm text-outline py-12">
+                Aucune maintenance planifiée pour le moment.
               </div>
-            </div>
-            <!-- Timeline Item 3 -->
-            <div class="relative pl-6">
-              <div
-                class="absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 border-card-bg bg-surface-variant"
-              ></div>
-              <div class="text-label-sm font-label-sm text-outline mb-1">Oct 24, 08:00 AM</div>
-              <div class="bg-surface p-3 rounded-lg border border-border-subtle">
-                <div class="font-bold text-body-md font-body-md text-on-surface">SW-7719-OP</div>
-                <div class="text-label-sm font-label-sm text-outline">AC System Calibration</div>
-              </div>
-            </div>
+            </ng-template>
           </div>
         </div>
         <div class="p-standard-padding border-t border-border-subtle">
           <button
             class="w-full py-2 bg-primary-container text-on-primary-container rounded-lg text-label-sm font-label-sm font-bold hover:bg-primary hover:text-on-primary transition-colors"
+            type="button"
+            (click)="navigateToAddBus()"
           >
-            Schedule Service
+            Ajouter une maintenance
           </button>
         </div>
       </div>
@@ -166,41 +199,95 @@
 
 <!-- Modal pour les détails du véhicule -->
 <app-modal
-  [isOpen]="isModalOpen"
-  [title]="'Détails du Véhicule: ' + (selectedVehicle?.id || '')"
-  [size]="'md'"
+  [isOpen]="isModalOpen()"
+  [title]="'Détails du Véhicule: ' + (selectedVehicle()?.registrationNumber || '')"
+  [size]="'lg'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedVehicle" class="space-y-4">
+  <div *ngIf="selectedVehicle()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">Plaque d'immatriculation</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedVehicle.id }}
+          {{ selectedVehicle()?.registrationNumber }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Marque</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedVehicle()?.brand || 'N/A' }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Modèle</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedVehicle.model }}
+          {{ selectedVehicle()?.model || 'N/A' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Couleur</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedVehicle()?.color || 'N/A' }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Catégorie</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedVehicle()?.category }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Capacité</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedVehicle.seats }} sièges
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Kilométrage</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedVehicle.mileage }}
+          {{ selectedVehicle()?.capacity }} sièges
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedVehicle.status }}
+          <span
+            [ngClass]="
+              selectedVehicle()?.status === 'disponible'
+                ? 'text-success-green'
+                : selectedVehicle()?.status === 'maintenance'
+                  ? 'text-warning-gold'
+                  : 'text-danger-red'
+            "
+          >
+            {{ selectedVehicle()?.status }}
+          </span>
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Kilométrage</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedVehicle()?.mileage?.toLocaleString() || 'N/A' }} km
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Date d'acquisition</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{
+            selectedVehicle()?.acquisitionDate
+              ? (selectedVehicle()?.acquisitionDate | slice: 0 : 10)
+              : 'N/A'
+          }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Dernière maintenance</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{
+            selectedVehicle()?.lastMaintenanceDate
+              ? (selectedVehicle()?.lastMaintenanceDate | slice: 0 : 10)
+              : 'N/A'
+          }}
+        </p>
+      </div>
+      <div>
+        <p class="text-label-sm text-label-sm text-outline">Agence</p>
+        <p class="text-body-md text-body-md text-on-surface font-semibold">
+          {{ selectedVehicle()?.agency?.name || 'N/A' }}
         </p>
       </div>
     </div>
@@ -213,8 +300,8 @@
         Fermer
       </button>
       <button
-        class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
-        (click)="editVehicle(selectedVehicle)"
+        class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary/90 transition-colors"
+        (click)="editVehicle(selectedVehicle()); closeModal()"
       >
         Modifier
       </button>
@@ -224,9 +311,9 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>

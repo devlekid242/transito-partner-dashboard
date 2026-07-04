@@ -1,67 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { FormComponent, FormField } from '../../components/form/form.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
 import { CommonModule } from '@angular/common';
+import { PartnerApiService } from '../../services/partner-api.service';
+import { BusPoint } from '../../models/partner.model';
+import { Router } from '@angular/router';
+import { AlertService } from '../../services/alert.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-gestion-point-embarquement',
   templateUrl: './gestion-point-embarquement.page.html',
   styleUrls: ['./gestion-point-embarquement.page.css'],
-  imports: [TableComponent, ModalComponent, FormComponent, NotificationComponent, CommonModule],
+  imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule],
 })
-export class GestionPointEmbarquementPage {
+export class GestionPointEmbarquementPage implements OnInit {
   // Données pour le tableau des points de vente
-  salesPoints = [
-    {
-      id: 1,
-      name: 'Gare Centrale - Yaoundé',
-      type: 'Agence Principale',
-      address: 'Bvd du 20 Mai, Yaoundé, Cameroun',
-      phone: '+237 6 99 00 11 22',
-      manager: 'Jean Dupont',
-      status: 'Ouvert',
-      dailySales: 145,
-    },
-    {
-      id: 2,
-      name: 'Akwa Douala - VIP',
-      type: 'Kiosque Premium',
-      address: 'Rue Sylvani, Akwa, Douala',
-      phone: '+237 6 77 88 99 00',
-      manager: 'Marie Kamga',
-      status: 'Ouvert',
-      dailySales: 89,
-    },
-    {
-      id: 3,
-      name: 'Bafoussam Centre',
-      type: 'Guichet Express',
-      address: 'Marché A, Bafoussam',
-      phone: '+237 6 55 44 33 22',
-      manager: 'Paul Etoga',
-      status: 'Fermé',
-      dailySales: 0,
-    },
-    {
-      id: 4,
-      name: "Gare Nord - N'Djamena",
-      type: 'Agence Transfrontalière',
-      address: "Avenue Charles de Gaulle, N'Djamena",
-      phone: '+235 66 77 88 99',
-      manager: 'Ahmat Saleh',
-      status: 'Maintenance',
-      dailySales: 12,
-    },
-  ];
+  salesPoints: Array<BusPoint & { statusLabel?: string }> = [];
 
   // Colonnes du tableau
   salesPointColumns: TableColumn[] = [
     { key: 'name', title: 'Nom', sortable: true },
-    { key: 'type', title: 'Type', sortable: true },
+    { key: 'city', title: 'Ville', sortable: true },
+    { key: 'quartier', title: 'Quartier' },
     { key: 'address', title: 'Adresse' },
-    { key: 'phone', title: 'Téléphone' },
+    { key: 'phoneNumber', title: 'Téléphone' },
+    { key: 'pointType', title: 'Type', sortable: true },
     { key: 'status', title: 'Statut', sortable: true },
   ];
 
@@ -84,126 +49,101 @@ export class GestionPointEmbarquementPage {
     },
   ];
 
-  // Form fields for adding/editing sales point
-  salesPointFormFields: FormField[] = [
-    {
-      key: 'name',
-      label: 'Nom du Point de Vente',
-      type: 'text',
-      required: true,
-      placeholder: 'Ex: Agence Centrale Douala',
-    },
-    {
-      key: 'address',
-      label: 'Emplacement / Adresse',
-      type: 'text',
-      required: true,
-      placeholder: 'Adresse complète ou repère',
-    },
-    {
-      key: 'phone',
-      label: 'Téléphone de Contact',
-      type: 'tel',
-      required: true,
-      placeholder: '+237 XXXXXXXX',
-    },
-    {
-      key: 'manager',
-      label: 'Gestionnaire Assigné',
-      type: 'select',
-      required: true,
-      options: [
-        { value: '1', label: 'Jean Dupont' },
-        { value: '2', label: 'Marie Curie' },
-        { value: '3', label: 'Paul Atreides' },
-      ],
-    },
-    {
-      key: 'type',
-      label: 'Type de Point',
-      type: 'select',
-      required: true,
-      options: [
-        { value: 'principal', label: 'Agence Principale' },
-        { value: 'premium', label: 'Kiosque Premium' },
-        { value: 'express', label: 'Guichet Express' },
-        { value: 'crossborder', label: 'Agence Transfrontalière' },
-      ],
-    },
-  ];
-
   // Modal state
   isModalOpen = false;
-  isFormModalOpen = false;
-  selectedSalesPoint: any = null;
+  selectedSalesPoint: BusPoint | null = null;
 
   // Notification state
   showNotification = false;
   notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
   notificationMessage = '';
+  isLoading = false;
+  deletingPointId: number | null = null;
+  private pendingLoadingRequests = 0;
 
-  constructor() {}
+  constructor(
+    private partnerApiService: PartnerApiService,
+    private router: Router,
+    private alertService: AlertService,
+  ) {}
 
-  viewSalesPointDetails(point: any): void {
+  ngOnInit() {
+    this.loadSalesPoints();
+  }
+
+  private beginLoading(): void {
+    this.pendingLoadingRequests += 1;
+    this.isLoading = true;
+  }
+
+  private finishLoading(): void {
+    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
+    this.isLoading = this.pendingLoadingRequests > 0;
+  }
+
+  loadSalesPoints() {
+    this.beginLoading();
+    this.partnerApiService
+      .getBusPoints()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe(
+        (points: BusPoint[]) => {
+          this.salesPoints = points.map((point) => ({
+            ...point,
+            statusLabel: point.status === 'active' ? 'Actif' : 'Inactif',
+          }));
+        },
+        (error) => {
+          console.error('Error loading sales points:', error);
+          this.alertService.error('Erreur de chargement des points de vente');
+        },
+      );
+  }
+
+  viewSalesPointDetails(point: BusPoint): void {
     this.selectedSalesPoint = point;
     this.isModalOpen = true;
   }
 
-  editSalesPoint(point: any): void {
-    this.selectedSalesPoint = { ...point };
-    this.isFormModalOpen = true;
+  editSalesPoint(point: BusPoint): void {
+    this.router.navigate(['/ajout-point-embarquement', point.id]);
   }
 
   addNewSalesPoint(): void {
-    this.selectedSalesPoint = {
-      id: null,
-      name: '',
-      type: 'express',
-      address: '',
-      phone: '',
-      manager: '1',
-      status: 'Ouvert',
-      dailySales: 0,
-    };
-    this.isFormModalOpen = true;
+    this.router.navigate(['/ajout-point-embarquement']);
   }
 
-  deleteSalesPoint(point: any): void {
-    console.log('Delete sales point:', point.id);
-    this.showToastNotification('warning', `Point de vente ${point.name} marqué pour suppression`);
+  async deleteSalesPoint(point: BusPoint): Promise<void> {
+    const confirmed = await this.alertService.confirm(
+      'Supprimer le point',
+      `Êtes-vous sûr de vouloir supprimer ${point.name}?`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    this.deletingPointId = point.id;
+    this.partnerApiService.deleteBusPoint(point.id).subscribe(
+      (response) => {
+        if (response.success) {
+          this.deletingPointId = null;
+          this.salesPoints = this.salesPoints.filter((p) => p.id !== point.id);
+          this.alertService.success(`Point de vente ${point.name} supprimé avec succès`);
+        } else {
+          this.showToastNotification('error', `Erreur lors de la suppression: ${response.message}`);
+        }
+      },
+      (error) => {
+        this.deletingPointId = null;
+        console.error('Error deleting sales point:', error);
+        this.alertService.error('Erreur lors de la suppression du point de vente');
+      },
+    );
   }
 
   closeModal(): void {
     this.isModalOpen = false;
-    this.isFormModalOpen = false;
     this.selectedSalesPoint = null;
-  }
-
-  onFormSubmit(formData: any): void {
-    console.log('Sales point form submitted:', formData);
-    if (this.selectedSalesPoint.id) {
-      // Update existing point
-      this.showToastNotification(
-        'success',
-        `Point de vente ${formData.name} mis à jour avec succès!`,
-      );
-    } else {
-      // Add new point
-      this.showToastNotification(
-        'success',
-        `Nouveau point de vente ${formData.name} ajouté avec succès!`,
-      );
-
-      // Add to the list
-      const newId = Math.max(...this.salesPoints.map((p) => p.id)) + 1;
-      this.salesPoints.push({
-        id: newId,
-        ...formData,
-        status: 'Ouvert',
-        dailySales: 0,
-      });
-    }
-    this.closeModal();
   }
 
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
@@ -219,12 +159,12 @@ export class GestionPointEmbarquementPage {
   // Get status badge class
   getStatusBadgeClass(status: string): string {
     switch (status) {
-      case 'Ouvert':
+      case 'active':
+      case 'Actif':
         return 'bg-[#e6f4ea] text-success-green border-[#cce8d6]';
-      case 'Fermé':
+      case 'inactive':
+      case 'Inactif':
         return 'bg-error-container text-danger-red border-[#f5c6c6]';
-      case 'Maintenance':
-        return 'bg-[#fff9e6] text-tertiary-container border-[#fce8b2]';
       default:
         return 'bg-surface-container text-on-surface border-border-subtle';
     }

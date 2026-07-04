@@ -9,13 +9,18 @@
         </p>
       </div>
       <button
-        class="bg-primary hover:bg-primary-container text-on-primary font-label-sm text-label-sm py-2 px-4 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors shrink-0"
+        class="bg-primary cursor-pointer hover:bg-primary-container text-on-primary font-label-sm text-label-sm py-2 px-4 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors shrink-0"
         (click)="addNewSalesPoint()"
       >
         <span class="material-symbols-outlined text-[18px]" data-icon="add_business"
           >add_business</span
         >Ajouter un point de vente
       </button>
+    </div>
+
+    <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
+      <span class="material-symbols-outlined animate-spin">progress_activity</span>
+      Chargement des points de vente...
     </div>
 
     <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
@@ -28,28 +33,25 @@
       <ng-template #customCell let-item let-column="column">
         <!-- Cellule personnalisée pour le nom avec badge de statut -->
         <div *ngIf="column.key === 'name'" class="p-3">
-          <div class="flex justify-between items-start">
+          <div class="flex flex-col justify-between items-start">
             <div>
               <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
                 {{ item.name }}
               </h3>
-              <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">
-                {{ item.type }}
-              </p>
             </div>
             <span
               [ngClass]="getStatusBadgeClass(item.status)"
               class="font-label-sm text-label-sm px-3 py-1 rounded-full border flex items-center gap-1"
             >
               <span class="w-2 h-2 rounded-full inline-block"></span>
-              {{ item.status }}
+              {{ item.statusLabel || (item.status === 'active' ? 'Actif' : 'Inactif') }}
             </span>
           </div>
         </div>
 
         <!-- Cellule personnalisée pour l'adresse -->
         <div *ngIf="column.key === 'address'" class="p-3">
-          <div class="flex items-center gap-2 text-on-surface-variant">
+          <div class="flex flex-col items-center gap-2 text-on-surface-variant">
             <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
               >location_on</span
             >
@@ -58,18 +60,18 @@
         </div>
 
         <!-- Cellule personnalisée pour le téléphone -->
-        <div *ngIf="column.key === 'phone'" class="p-3">
-          <div class="flex items-center gap-2 text-on-surface-variant">
+        <div *ngIf="column.key === 'phoneNumber'" class="p-3">
+          <div class="flex flex-col items-center gap-2 text-on-surface-variant">
             <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-mono-data text-mono-data text-[13px]"
-              >{{ item.phone }} ({{ item.manager }})</span
-            >
+            <span class="font-body-md text-body-md text-[13px]">{{
+              item.phoneNumber || 'N/A'
+            }}</span>
           </div>
         </div>
 
         <!-- Cellule par défaut pour les autres colonnes -->
         <div
-          *ngIf="column.key !== 'name' && column.key !== 'address' && column.key !== 'phone'"
+          *ngIf="column.key !== 'name' && column.key !== 'address' && column.key !== 'phoneNumber'"
           class="p-3 font-body-md text-body-md"
         >
           {{ item[column.key] }}
@@ -95,9 +97,9 @@
         </p>
       </div>
       <div>
-        <p class="text-label-sm text-label-sm text-outline">Type</p>
+        <p class="text-label-sm text-label-sm text-outline">Ville</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.type }}
+          {{ selectedSalesPoint.city }}
         </p>
       </div>
       <div>
@@ -109,13 +111,13 @@
       <div>
         <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.phone }}
+          {{ selectedSalesPoint.phoneNumber || 'N/A' }}
         </p>
       </div>
       <div>
-        <p class="text-label-sm text-label-sm text-outline">Gestionnaire</p>
+        <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.manager }}
+          {{ selectedSalesPoint.isActive ? 'Actif' : 'Inactif' }}
         </p>
       </div>
       <div>
@@ -135,21 +137,6 @@
       </button>
     </div>
   </div>
-</app-modal>
-
-<!-- Modal pour le formulaire de point de vente -->
-<app-modal
-  [isOpen]="isFormModalOpen"
-  [title]="selectedSalesPoint?.id ? 'Modifier le Point de Vente' : 'Ajouter un Point de Vente'"
-  [size]="'md'"
-  (close)="closeModal()"
->
-  <app-form
-    [fields]="salesPointFormFields"
-    [submitLabel]="selectedSalesPoint?.id ? 'Mettre à Jour' : 'Ajouter'"
-    (submit)="onFormSubmit($event)"
-  >
-  </app-form>
 </app-modal>
 
 <!-- Notification Component -->
