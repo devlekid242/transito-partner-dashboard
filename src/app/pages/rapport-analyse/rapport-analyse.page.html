@@ -1,4 +1,16 @@
-<main class="flex-1 h-full overflow-y-auto bg-surface-bg p-4 md:p-container-margin">
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+<main *ngIf="!isLoading()" class="flex-1 h-full overflow-y-auto bg-surface-bg p-4 md:p-container-margin">
   <!-- Header & Filters -->
   <div
     class="mb-widget-gap flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
@@ -17,9 +29,9 @@
           (change)="selectDateRange(reportRangeSelect.value)"
         >
           <option
-            *ngFor="let option of dateRangeOptions"
+            *ngFor="let option of dateRangeOptions()"
             [value]="option.value"
-            [selected]="selectedDateRange === option.value"
+            [selected]="selectedDateRange() === option.value"
           >
             {{ option.label }}
           </option>
@@ -36,9 +48,9 @@
           (change)="selectReportCategory(reportCategorySelect.value)"
         >
           <option
-            *ngFor="let option of reportCategoryOptions"
+            *ngFor="let option of reportCategoryOptions()"
             [value]="option.value"
-            [selected]="selectedReportCategory === option.value"
+            [selected]="selectedReportCategory() === option.value"
           >
             {{ option.label }}
           </option>
@@ -72,11 +84,11 @@
       </div>
       <div>
         <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics.revenue.value }}
+          {{ metrics().revenue.value }}
         </div>
         <div class="flex items-center gap-1 mt-1 text-success-green">
           <span class="material-symbols-outlined text-[16px]">trending_up</span>
-          <span class="text-label-sm font-label-sm">{{ metrics.revenue.change }}</span>
+          <span class="text-label-sm font-label-sm">{{ metrics().revenue.change }}</span>
         </div>
       </div>
     </div>
@@ -92,11 +104,11 @@
       </div>
       <div>
         <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics.trips.value }}
+          {{ metrics().trips.value }}
         </div>
         <div class="flex items-center gap-1 mt-1 text-success-green">
           <span class="material-symbols-outlined text-[16px]">trending_up</span>
-          <span class="text-label-sm font-label-sm">{{ metrics.trips.change }}</span>
+          <span class="text-label-sm font-label-sm">{{ metrics().trips.change }}</span>
         </div>
       </div>
     </div>
@@ -112,11 +124,11 @@
       </div>
       <div>
         <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics.occupancy.value }}
+          {{ metrics().occupancy.value }}
         </div>
         <div class="flex items-center gap-1 mt-1 text-danger-red">
           <span class="material-symbols-outlined text-[16px]">trending_down</span>
-          <span class="text-label-sm font-label-sm">{{ metrics.occupancy.change }}</span>
+          <span class="text-label-sm font-label-sm">{{ metrics().occupancy.change }}</span>
         </div>
       </div>
     </div>
@@ -132,11 +144,11 @@
       </div>
       <div>
         <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics.incidents.value }}
+          {{ metrics().incidents.value }}
         </div>
         <div class="flex items-center gap-1 mt-1 text-outline">
           <span class="material-symbols-outlined text-[16px]">horizontal_rule</span>
-          <span class="text-label-sm font-label-sm">{{ metrics.incidents.change }}</span>
+          <span class="text-label-sm font-label-sm">{{ metrics().incidents.change }}</span>
         </div>
       </div>
     </div>
@@ -157,11 +169,11 @@
       </div>
       <div class="flex-1 min-h-[300px] relative">
         <app-revenue-chart
-          [chartType]="reportChartType"
+          [chartType]="reportChartType()"
           [chartTitle]="'Analyse des Rapports'"
-          [labels]="reportChartLabels"
-          [dataPoints]="reportChartData"
-          [chartOptions]="reportChartOptions"
+          [labels]="reportChartLabels()"
+          [dataPoints]="reportChartData()"
+          [chartOptions]="reportChartOptions()"
         ></app-revenue-chart>
       </div>
     </div>
@@ -177,11 +189,11 @@
       </div>
       <div class="flex-1 min-h-[300px] relative flex justify-center items-center">
         <app-revenue-chart
-          [chartType]="reportBreakdownChartType"
+          [chartType]="reportBreakdownChartType()"
           [chartTitle]="'Synthèse Rapports'"
-          [labels]="reportBreakdownLabels"
-          [dataPoints]="reportBreakdownData"
-          [chartOptions]="reportChartOptions"
+          [labels]="reportBreakdownLabels()"
+          [dataPoints]="reportBreakdownData()"
+          [chartOptions]="reportChartOptions()"
         ></app-revenue-chart>
       </div>
     </div>
@@ -204,14 +216,14 @@
       </div>
       <app-table
         [data]="filteredReports"
-        [columns]="reportColumns"
-        [actions]="reportActions"
+        [columns]="reportColumns()"
+        [actions]="reportActions()"
         [pageSize]="5"
       >
         <ng-template #customCell let-item let-column="column">
           <div *ngIf="column.key === 'type'" class="p-3 font-body-md text-body-md">
             {{
-              reportCategoryOptions.find((option) => option.value === item.type)?.label || item.type
+              reportCategoryOptions().find((option) => option.value === item.type)?.label || item.type
             }}
           </div>
           <div *ngIf="column.key !== 'type'" class="p-3 font-body-md text-body-md">
@@ -233,9 +245,9 @@
 
       <!-- Utilisation du composant TableComponent -->
       <app-table
-        [data]="recentActivity"
-        [columns]="activityColumns"
-        [actions]="activityActions"
+        [data]="recentActivity()"
+        [columns]="activityColumns()"
+        [actions]="activityActions()"
         [pageSize]="5"
       >
         <ng-template #customCell let-item let-column="column">
@@ -265,41 +277,41 @@
 
 <!-- Modal pour les détails de l'activité -->
 <app-modal
-  [isOpen]="isModalOpen"
+  [isOpen]="isModalOpen()"
   [title]="'Détails de l\'Activité'"
   [size]="'md'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedActivity" class="space-y-4">
+  <div *ngIf="selectedActivity()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">ID Trajet</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity.id }}
+          {{ selectedActivity().id }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Route</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity.route }}
+          {{ selectedActivity().route }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Date</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity.date }}
+          {{ selectedActivity().date }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity.status }}
+          {{ selectedActivity().status }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Revenu</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
-          {{ selectedActivity.revenue }}
+          {{ selectedActivity().revenue }}
         </p>
       </div>
     </div>
@@ -316,9 +328,10 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>
+

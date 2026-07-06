@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RevenueChartComponent } from '../../components/revenue-chart/revenue-chart.component';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
@@ -22,69 +22,69 @@ import { finalize } from 'rxjs/operators';
 })
 export class RapportAnalysePage implements OnInit {
   // Données pour le tableau d'activité récente
-  recentActivity: any[] = [];
+  recentActivity = signal<any[]>([]);
 
   // Colonnes du tableau des activités
-  activityColumns: TableColumn[] = [
+  activityColumns = signal<TableColumn[]>([
     { key: 'id', title: 'ID' },
     { key: 'description', title: 'Description' },
     { key: 'amount', title: 'Montant' },
     { key: 'status', title: 'Statut' },
     { key: 'createdAt', title: 'Date' },
-  ];
+  ]);
 
   // Actions du tableau des activités
-  activityActions: TableAction[] = [
+  activityActions = signal<TableAction[]>([
     {
       icon: 'download',
       label: 'Exporter',
       action: (item) => this.exportActivityData(item),
     },
-  ];
+  ]);
 
   // Données pour les rapports sauvegardés
-  savedReports: any[] = [];
+  savedReports = signal<any[]>([]);
 
-  reportColumns: TableColumn[] = [
+  reportColumns = signal<TableColumn[]>([
     { key: 'id', title: 'ID' },
     { key: 'title', title: 'Titre' },
     { key: 'type', title: 'Catégorie' },
     { key: 'date', title: 'Date' },
     { key: 'status', title: 'Statut' },
-  ];
+  ]);
 
-  reportActions: TableAction[] = [
+  reportActions = signal<TableAction[]>([
     {
       icon: 'download',
       label: 'Télécharger',
       action: (item) => this.downloadReport(item),
     },
-  ];
+  ]);
 
   // Modal state
-  isModalOpen = false;
-  selectedActivity: any = null;
+  isModalOpen = signal<boolean>(false);
+  selectedActivity = signal<any>(null);
 
-  dateRangeOptions: { value: string; label: string }[] = [];
-  selectedDateRange = '30';
-  reportCategoryOptions: { value: string; label: string }[] = [];
-  selectedReportCategory = 'all';
+  dateRangeOptions = signal<{ value: string; label: string }[]>([]);
+  selectedDateRange = signal<string>('30');
+  reportCategoryOptions = signal<{ value: string; label: string }[]>([]);
+  selectedReportCategory = signal<string>('all');
 
-  reportChartLabels: string[] = [];
-  reportChartData: number[] = [];
-  reportChartType: 'line' | 'bar' = 'line';
-  reportChartOptions: any = {
+  reportChartLabels = signal<string[]>([]);
+  reportChartData = signal<number[]>([]);
+  reportChartType = signal<'line' | 'bar'>('line');
+  reportChartOptions = signal<any>({
     plugins: { legend: { display: false } },
-  };
-  reportBreakdownLabels: string[] = [];
-  reportBreakdownData: number[] = [];
-  reportBreakdownChartType: 'line' | 'bar' = 'bar';
+  });
+  reportBreakdownLabels = signal<string[]>([]);
+  reportBreakdownData = signal<number[]>([]);
+  reportBreakdownChartType = signal<'line' | 'bar'>('bar');
 
   // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-  isLoading = false;
+  showNotification = signal<boolean>(false);
+  notificationType = signal<'success' | 'error' | 'warning' | 'info'>('info');
+  notificationMessage = signal<string>('');
+  isLoading = signal<boolean>(false);
   private pendingLoadingRequests = 0;
 
   constructor(
@@ -94,27 +94,39 @@ export class RapportAnalysePage implements OnInit {
 
   private beginLoading(): void {
     this.pendingLoadingRequests += 1;
-    this.isLoading = true;
+    this.isLoading.set(true);
   }
 
   private finishLoading(): void {
     this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoading = this.pendingLoadingRequests > 0;
+    this.isLoading.set(this.pendingLoadingRequests > 0);
   }
 
   ngOnInit(): void {
-    this.partnerApiService.getDateRangeOptions().subscribe((options) => {
-      this.dateRangeOptions = options;
-      if (!options.some((option) => option.value === this.selectedDateRange)) {
-        this.selectedDateRange = options[0]?.value || this.selectedDateRange;
-      }
+    this.partnerApiService.getDateRangeOptions().subscribe({
+      next: (options) => {
+        this.dateRangeOptions.set(options);
+        if (!options.some((option) => option.value === this.selectedDateRange())) {
+          this.selectedDateRange.set(options[0]?.value || this.selectedDateRange());
+        }
+      },
+      error: (error) => {
+        console.error('Error loading date range options:', error);
+        this.alertService.error('Erreur de chargement des options de plage de dates');
+      },
     });
 
-    this.partnerApiService.getReportCategoryOptions().subscribe((options) => {
-      this.reportCategoryOptions = options;
-      if (!options.some((option) => option.value === this.selectedReportCategory)) {
-        this.selectedReportCategory = options[0]?.value || this.selectedReportCategory;
-      }
+    this.partnerApiService.getReportCategoryOptions().subscribe({
+      next: (options) => {
+        this.reportCategoryOptions.set(options);
+        if (!options.some((option) => option.value === this.selectedReportCategory())) {
+          this.selectedReportCategory.set(options[0]?.value || this.selectedReportCategory());
+        }
+      },
+      error: (error) => {
+        console.error('Error loading report category options:', error);
+        this.alertService.error('Erreur de chargement des options de catégorie de rapport');
+      },
     });
 
     this.loadReportData();
@@ -123,78 +135,77 @@ export class RapportAnalysePage implements OnInit {
 
   private loadReportData(): void {
     this.beginLoading();
-    this.partnerApiService
-      .getPartnerStats()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (stats: any) => {
-          if (stats) {
-            this.metrics = {
-              revenue: {
-                value: stats.revenue ?? this.metrics.revenue.value,
-                change: stats.revenueChange ?? this.metrics.revenue.change,
-                period: stats.revenuePeriod ?? this.metrics.revenue.period,
-              },
-              trips: {
-                value: stats.activeTrips ?? this.metrics.trips.value,
-                change: stats.tripChange ?? this.metrics.trips.change,
-                period: stats.tripPeriod ?? this.metrics.trips.period,
-              },
-              occupancy: {
-                value: stats.occupancy ?? this.metrics.occupancy.value,
-                change: stats.occupancyChange ?? this.metrics.occupancy.change,
-                period: stats.occupancyPeriod ?? this.metrics.occupancy.period,
-              },
-              incidents: {
-                value: stats.incidentCount ?? this.metrics.incidents.value,
-                change: stats.incidentChange ?? this.metrics.incidents.change,
-                period: stats.incidentPeriod ?? this.metrics.incidents.period,
-              },
-            };
+    this.partnerApiService.getPartnerStats().pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (stats: any) => {
+        if (stats) {
+          this.metrics.set({
+            revenue: {
+              value: stats.revenue ?? this.metrics().revenue.value,
+              change: stats.revenueChange ?? this.metrics().revenue.change,
+              period: stats.revenuePeriod ?? this.metrics().revenue.period,
+            },
+            trips: {
+              value: stats.activeTrips ?? this.metrics().trips.value,
+              change: stats.tripChange ?? this.metrics().trips.change,
+              period: stats.tripPeriod ?? this.metrics().trips.period,
+            },
+            occupancy: {
+              value: stats.occupancy ?? this.metrics().occupancy.value,
+              change: stats.occupancyChange ?? this.metrics().occupancy.change,
+              period: stats.occupancyPeriod ?? this.metrics().occupancy.period,
+            },
+            incidents: {
+              value: stats.incidentCount ?? this.metrics().incidents.value,
+              change: stats.incidentChange ?? this.metrics().incidents.change,
+              period: stats.incidentPeriod ?? this.metrics().incidents.period,
+            },
+          });
 
-            if (Array.isArray(stats.recentTransactions) && stats.recentTransactions.length) {
-              this.recentActivity = stats.recentTransactions;
-            }
-
-            this.reportChartLabels = stats.chartLabels ?? this.reportChartLabels;
-            this.reportChartData = stats.chartData ?? this.reportChartData;
-            this.reportBreakdownLabels = stats.breakdownLabels ?? this.reportBreakdownLabels;
-            this.reportBreakdownData = stats.breakdownData ?? this.reportBreakdownData;
-            this.updateReportChartData();
+          if (Array.isArray(stats.recentTransactions) && stats.recentTransactions.length) {
+            this.recentActivity.set(stats.recentTransactions);
           }
-        },
-        () => {
-          this.alertService.error('Erreur de chargement des rapports');
-        },
-      );
+
+          this.reportChartLabels.set(stats.chartLabels ?? this.reportChartLabels());
+          this.reportChartData.set(stats.chartData ?? this.reportChartData());
+          this.reportBreakdownLabels.set(stats.breakdownLabels ?? this.reportBreakdownLabels());
+          this.reportBreakdownData.set(stats.breakdownData ?? this.reportBreakdownData());
+    this.updateReportChartData();
+  }
+      },
+      error: (error) => {
+        console.error('Error loading partner stats:', error);
+        this.alertService.error('Erreur de chargement des rapports');
+      },
+    });
   }
 
   public loadSavedReports(): void {
     this.beginLoading();
-    this.partnerApiService
-      .getReports()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (reports) => {
-          this.savedReports = reports;
-        },
-        (error) => {
-          console.error('Error loading saved reports:', error);
-          this.alertService.error('Erreur de chargement des rapports sauvegardés');
-        },
-      );
-  }
+    this.partnerApiService.getReports().pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (reports) => {
+        this.savedReports.set(reports);
+      },
+      error: (error) => {
+        console.error('Error loading saved reports:', error);
+        this.alertService.error('Erreur de chargement des rapports sauvegardés');
+      },
+    });
+    }
 
   get filteredReports(): any[] {
-    if (this.selectedReportCategory === 'all') {
-      return this.savedReports;
+    if (this.selectedReportCategory() === 'all') {
+      return this.savedReports();
     }
-    return this.savedReports.filter((report) => report.type === this.selectedReportCategory);
+    return this.savedReports().filter((report) => report.type === this.selectedReportCategory());
   }
 
   viewActivityDetails(activity: any): void {
-    this.selectedActivity = activity;
-    this.isModalOpen = true;
+    this.selectedActivity.set(activity);
+    this.isModalOpen.set(true);
   }
 
   exportActivityData(activity: any): void {
@@ -232,8 +243,8 @@ export class RapportAnalysePage implements OnInit {
       return;
     }
 
-    this.partnerApiService.downloadReport(report.id).subscribe(
-      (blob) => {
+    this.partnerApiService.downloadReport(report.id).subscribe({
+      next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
@@ -242,21 +253,21 @@ export class RapportAnalysePage implements OnInit {
         window.URL.revokeObjectURL(url);
         this.showToastNotification('success', `Téléchargement du rapport ${report.title} lancé.`);
       },
-      (error) => {
+      error: (error) => {
         console.error('Error downloading report:', error);
         this.showToastNotification('error', `Impossible de télécharger ${report.title}.`);
       },
-    );
+    });
   }
 
   exportCurrentReport(): void {
     const payload = {
-      category: this.selectedReportCategory,
-      dateRange: this.selectedDateRange,
-    };
+      category: this.selectedReportCategory(),
+      dateRange: this.selectedDateRange(),
+  };
 
-    this.partnerApiService.generateReport(payload).subscribe(
-      (blob) => {
+    this.partnerApiService.generateReport(payload).subscribe({
+      next: (blob) => {
         const fileName = `rapport_${payload.category}_${payload.dateRange}.pdf`;
         const url = window.URL.createObjectURL(blob);
         const anchor = document.createElement('a');
@@ -266,59 +277,60 @@ export class RapportAnalysePage implements OnInit {
         window.URL.revokeObjectURL(url);
         this.showToastNotification('success', `Rapport généré et téléchargement lancé.`);
       },
-      (error) => {
+      error: (error) => {
         console.error('Error generating report:', error);
         this.showToastNotification('error', 'Impossible de générer le rapport.');
       },
-    );
-  }
+    });
+}
 
   closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedActivity = null;
+    this.isModalOpen.set(false);
+    this.selectedActivity.set(null);
   }
 
   selectDateRange(value: string): void {
-    this.selectedDateRange = value;
+    this.selectedDateRange.set(value);
     this.updateReportChartData();
   }
 
   selectReportCategory(value: string): void {
-    this.selectedReportCategory = value;
+    this.selectedReportCategory.set(value);
     this.updateReportChartData();
   }
 
   private updateReportChartData(): void {
-    if (!this.reportChartData.length || !this.reportBreakdownData.length) {
+    if (!this.reportChartData().length || !this.reportBreakdownData().length) {
       return;
     }
 
-    if (this.selectedDateRange === 'year') {
-      this.reportChartLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
-    } else if (this.selectedDateRange === 'month') {
-      this.reportChartLabels = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
-    } else if (this.selectedDateRange === 'quarter') {
-      this.reportChartLabels = ['Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep'];
+    if (this.selectedDateRange() === 'year') {
+      this.reportChartLabels.set(['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin']);
+    } else if (this.selectedDateRange() === 'month') {
+      this.reportChartLabels.set(['S1', 'S2', 'S3', 'S4', 'S5', 'S6']);
+    } else if (this.selectedDateRange() === 'quarter') {
+      this.reportChartLabels.set(['Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep']);
     } else {
-      this.reportChartLabels = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
+      this.reportChartLabels.set(['S1', 'S2', 'S3', 'S4', 'S5', 'S6']);
     }
   }
 
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
+    this.notificationType.set(type);
+    this.notificationMessage.set(message);
+    this.showNotification.set(true);
 
     setTimeout(() => {
-      this.showNotification = false;
+      this.showNotification.set(false);
     }, 5000);
   }
 
   // Metrics data
-  metrics = {
+  metrics = signal({
     revenue: { value: '', change: '', period: '' },
     trips: { value: '', change: '', period: '' },
     occupancy: { value: '', change: '', period: '' },
     incidents: { value: '', change: '', period: '' },
-  };
+  });
 }
+

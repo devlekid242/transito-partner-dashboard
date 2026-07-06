@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { RevenueChartComponent } from '../../components/revenue-chart/revenue-chart.component';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
@@ -23,18 +23,18 @@ import { finalize } from 'rxjs/operators';
 })
 export class GestionFinancePage implements OnInit {
   // Données pour le tableau des transactions — démarrent vides et sont remplies par l'API
-  transactions: any[] = [];
+  transactions = signal<any[]>([]);
 
   // Colonnes du tableau
-  transactionColumns: TableColumn[] = [
+  transactionColumns = signal<TableColumn[]>([
     { key: 'date', title: 'Date', sortable: true },
     { key: 'type', title: 'Type', sortable: true },
     { key: 'amount', title: 'Amount (XAF)', sortable: true },
     { key: 'status', title: 'Status', sortable: true },
-  ];
+  ]);
 
   // Actions du tableau
-  transactionActions: TableAction[] = [
+  transactionActions = signal<TableAction[]>([
     {
       icon: 'visibility',
       label: 'View Details',
@@ -45,33 +45,36 @@ export class GestionFinancePage implements OnInit {
       label: 'Generate Receipt',
       action: (item) => this.generateReceipt(item),
     },
-  ];
+  ]);
 
   // Modal state
-  isModalOpen = false;
-  selectedTransaction: any = null;
+  isModalOpen = signal<boolean>(false);
+  selectedTransaction = signal<any>(null);
 
-  transactionTypeOptions: { value: string; label: string }[] = [];
-  selectedTransactionType = 'all';
-  filteredTransactions: any[] = [];
+  transactionTypeOptions = signal<{ value: string; label: string }[]>([]);
+  selectedTransactionType = signal<string>('all');
+  filteredTransactions = signal<any[]>([]);
 
   // Start empty — will be populated from the API when available
-  financeChartLabels: string[] = [];
-  financeChartData: number[] = [];
-  financeBreakdownLabels: string[] = ['Revenue', 'Payout', 'Fee'];
-  financeBreakdownData: number[] = [];
-  financeChartType: 'line' | 'bar' = 'line';
-  financeBreakdownChartType: 'line' | 'bar' = 'bar';
-  financeChartOptions: any = {
+  financeChartLabels = signal<string[]>([]);
+  financeChartData = signal<number[]>([]);
+  financeBreakdownLabels = signal<string[]>(['Revenue', 'Payout', 'Fee']);
+  financeBreakdownData = signal<number[]>([]);
+  financeChartType = signal<'line' | 'bar'>('line');
+  financeBreakdownChartType = signal<'line' | 'bar'>('bar');
+  financeChartOptions = signal<any>({
     plugins: { legend: { display: false } },
-  };
-
+  });
   // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-  isLoading = false;
+  showNotification = signal<boolean>(false);
+  notificationType = signal<'success' | 'error' | 'warning' | 'info'>('info');
+  notificationMessage = signal<string>('');
+  isLoading = signal<boolean>(false);
   private pendingLoadingRequests = 0;
+
+  // Current balance and available payout values (numbers)
+  currentBalance = signal<number>(0);
+  availableForPayout = signal<number>(0);
 
   constructor(
     private partnerApiService: PartnerApiService,
@@ -83,30 +86,36 @@ export class GestionFinancePage implements OnInit {
 
   private beginLoading(): void {
     this.pendingLoadingRequests += 1;
-    this.isLoading = true;
+    this.isLoading.set(true);
   }
 
   private finishLoading(): void {
     this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoading = this.pendingLoadingRequests > 0;
+    this.isLoading.set(this.pendingLoadingRequests > 0);
   }
 
   ngOnInit() {
-    this.partnerApiService.getTransactionTypeOptions().subscribe((options) => {
-      this.transactionTypeOptions = options;
-      if (!options.some((option) => option.value === this.selectedTransactionType)) {
-        this.selectedTransactionType = options[0]?.value || this.selectedTransactionType;
-      }
+    this.partnerApiService.getTransactionTypeOptions().subscribe({
+      next: (options) => {
+        this.transactionTypeOptions.set(options);
+        if (!options.some((option) => option.value === this.selectedTransactionType())) {
+          this.selectedTransactionType.set(options[0]?.value || this.selectedTransactionType());
+        }
+      },
+      error: (error) => {
+        console.error('Error loading transaction type options:', error);
+        this.alertService.error('Erreur de chargement des types de transactions');
+      },
     });
 
     this.beginLoading();
     // Load dynamic finance data
-    this.partnerApiService
-      .getPartnerStats()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe((stats: any) => {
+    this.partnerApiService.getPartnerStats().pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (stats: any) => {
         if (stats?.recentTransactions) {
-          this.transactions = stats.recentTransactions.map((t: any) => ({
+          this.transactions.set(stats.recentTransactions.map((t: any) => ({
             date: t.createdAt ?? '',
             type: t.description ?? 'Transaction',
             amount: (t.amount
@@ -115,15 +124,20 @@ export class GestionFinancePage implements OnInit {
                 : `- ${Math.abs(t.amount)}`
               : '') as any,
             status: t.status ?? '',
-          }));
-          this.updateFilteredTransactions();
-        }
+          })));
+    this.updateFilteredTransactions();
+  }
         if (stats?.balance) {
-          this.financeBreakdownData = [stats.balance.available ?? 0, stats.balance.pending ?? 0, 0];
-          this.currentBalance = stats.totalRevenue ?? 0;
-          this.availableForPayout = stats.balance?.available ?? 0;
-        }
-      });
+          this.financeBreakdownData.set([stats.balance.available ?? 0, stats.balance.pending ?? 0, 0]);
+          this.currentBalance.set(stats.totalRevenue ?? 0);
+          this.availableForPayout.set(stats.balance?.available ?? 0);
+}
+      },
+      error: (error) => {
+        console.error('Error loading partner stats:', error);
+        this.alertService.error('Erreur de chargement des statistiques financières');
+      },
+    });
 
     // Load revenue timeseries for the last 30 days
     const today = new Date();
@@ -132,42 +146,38 @@ export class GestionFinancePage implements OnInit {
     const startStr = start.toISOString().slice(0, 10);
     const endStr = today.toISOString().slice(0, 10);
     this.beginLoading();
-    this.partnerApiService
-      .getRevenue(startStr, endStr)
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (r: any) => {
-          if (r?.labels && r?.data) {
-            this.financeChartLabels = r.labels;
-            this.financeChartData = r.data;
-          }
-          if (r?.totalRevenue !== undefined) {
-            this.currentBalance = r.totalRevenue;
-          }
-        },
-        () => {
-          this.alertService.error('Erreur de chargement du graphique financier');
-        },
-      );
+    this.partnerApiService.getRevenue(startStr, endStr).pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (r: any) => {
+        if (r?.labels && r?.data) {
+          this.financeChartLabels.set(r.labels);
+          this.financeChartData.set(r.data);
+        }
+        if (r?.totalRevenue !== undefined) {
+          this.currentBalance.set(r.totalRevenue);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading revenue data:', error);
+        this.alertService.error('Erreur de chargement du graphique financier');
+      },
+    });
   }
 
-  // Current balance and available payout values (numbers)
-  currentBalance: number = 0;
-  availableForPayout: number = 0;
-
   private updateFilteredTransactions(): void {
-    if (this.selectedTransactionType === 'all') {
-      this.filteredTransactions = [...this.transactions];
+    if (this.selectedTransactionType() === 'all') {
+      this.filteredTransactions.set([...this.transactions()]);
     } else {
-      this.filteredTransactions = this.transactions.filter((transaction) =>
-        transaction.type.toLowerCase().includes(this.selectedTransactionType),
-      );
+      this.filteredTransactions.set(this.transactions().filter((transaction) =>
+        transaction.type.toLowerCase().includes(this.selectedTransactionType())
+      ));
     }
   }
 
   viewTransactionDetails(transaction: any): void {
-    this.selectedTransaction = transaction;
-    this.isModalOpen = true;
+    this.selectedTransaction.set(transaction);
+    this.isModalOpen.set(true);
   }
 
   generateReceipt(transaction: any): void {
@@ -175,23 +185,23 @@ export class GestionFinancePage implements OnInit {
     const reservationId = transaction?.reservationId ?? transaction?.reservation?.id;
     const paymentId = transaction?.id;
     if (reservationId) {
-      this.partnerApiService.getReservationReceipt(Number(reservationId)).subscribe(
-        (blob) => this.downloadBlob(blob, `receipt_reservation_${reservationId}.pdf`),
-        (err) => {
+      this.partnerApiService.getReservationReceipt(Number(reservationId)).subscribe({
+        next: (blob) => this.downloadBlob(blob, `receipt_reservation_${reservationId}.pdf`),
+        error: (err) => {
           console.error('Failed to download reservation receipt', err);
           this.showToastNotification('error', 'Impossible de télécharger le reçu.');
         },
-      );
+      });
       return;
     }
     if (paymentId) {
-      this.partnerApiService.getPaymentReceipt(Number(paymentId)).subscribe(
-        (blob) => this.downloadBlob(blob, `receipt_payment_${paymentId}.pdf`),
-        (err) => {
+      this.partnerApiService.getPaymentReceipt(Number(paymentId)).subscribe({
+        next: (blob) => this.downloadBlob(blob, `receipt_payment_${paymentId}.pdf`),
+        error: (err) => {
           console.error('Failed to download payment receipt', err);
           this.showToastNotification('error', 'Impossible de télécharger le reçu.');
         },
-      );
+      });
       return;
     }
 
@@ -218,17 +228,17 @@ export class GestionFinancePage implements OnInit {
   }
 
   closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedTransaction = null;
+    this.isModalOpen.set(false);
+    this.selectedTransaction.set(null);
   }
 
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
+    this.notificationType.set(type);
+    this.notificationMessage.set(message);
+    this.showNotification.set(true);
 
     setTimeout(() => {
-      this.showNotification = false;
+      this.showNotification.set(false);
     }, 5000);
   }
 
@@ -241,7 +251,8 @@ export class GestionFinancePage implements OnInit {
     if (!value) {
       return;
     }
-    this.selectedTransactionType = value;
+    this.selectedTransactionType.set(value);
     this.updateFilteredTransactions();
   }
 }
+

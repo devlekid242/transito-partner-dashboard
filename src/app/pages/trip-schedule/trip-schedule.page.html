@@ -1,10 +1,21 @@
 <div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+
+<div
+  *ngIf="!isLoading()"
   class="p-container-margin flex-1 flex flex-col gap-widget-gap max-w-desktop-max-width mx-auto w-full"
 >
-  <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
-    <span class="material-symbols-outlined animate-spin">progress_activity</span>
-    Chargement du planning des trajets...
-  </div>
+
 
   <!-- Page Header & Controls -->
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
@@ -63,9 +74,9 @@
       <!-- Utilisation du composant TableComponent avec le même style que l'original -->
       <div class="overflow-x-auto">
         <app-table
-          [data]="todayDepartures"
-          [columns]="departureColumns"
-          [actions]="departureActions"
+          [data]="todayDepartures()"
+          [columns]="departureColumns()"
+          [actions]="departureActions()"
           [pageSize]="10"
         >
           <ng-template #customCell let-item let-column="column">
@@ -150,12 +161,12 @@
         </h3>
         <div class="mb-4">
           <div class="text-4xl font-display-lg text-display-lg font-bold text-primary mb-1">
-            {{ nextDeparture?.departureTime | date: 'HH:mm' }}
+            {{ nextDeparture()?.departureTime | date: 'HH:mm' }}
           </div>
           <div class="font-body-md text-body-md text-on-surface-variant">
             {{
-              nextDeparture
-                ? 'Départ ' + (nextDeparture.departureTime | date: 'mediumDate')
+              nextDeparture()
+                ? 'Départ ' + (nextDeparture().departureTime | date: 'mediumDate')
                 : 'Aucun départ prévu'
             }}
           </div>
@@ -163,15 +174,15 @@
         <div class="bg-card-bg/80 rounded-lg p-3 border border-white/50 backdrop-blur-sm">
           <div class="flex justify-between items-center mb-2">
             <span class="font-semibold text-on-surface">{{
-              nextDeparture?.route || 'Aucun trajet prévu'
+              nextDeparture()?.route || 'Aucun trajet prévu'
             }}</span>
             <span class="font-mono-data text-mono-data text-surface-tint">{{
-              nextDeparture?.bus || 'N/A'
+              nextDeparture()?.bus || 'N/A'
             }}</span>
           </div>
           <div class="flex items-center gap-2 text-sm text-on-surface-variant">
             <span class="material-symbols-outlined text-[16px]">person</span>
-            <span class="">Driver: {{ nextDeparture?.driverName || 'Non précisé' }}</span>
+            <span class="">Driver: {{ nextDeparture()?.driverName || 'Non précisé' }}</span>
           </div>
         </div>
       </div>
@@ -182,7 +193,7 @@
         <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Upcoming</h3>
         <div class="flex flex-col gap-4">
           <div
-            *ngFor="let upcoming of upcomingTrips"
+            *ngFor="let upcoming of upcomingTrips()"
             class="flex items-center justify-between p-3 rounded-lg border border-border-subtle hover:bg-surface-container-low transition-colors"
           >
             <div class="flex items-center gap-3">
@@ -208,3 +219,4 @@
     </div>
   </div>
 </div>
+

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { NotificationComponent } from '../../components/notification/notification.component';
@@ -17,10 +17,12 @@ import { finalize } from 'rxjs/operators';
 })
 export class GestionPointEmbarquementPage implements OnInit {
   // Données pour le tableau des points de vente
-  salesPoints: Array<BusPoint & { statusLabel?: string }> = [];
+
+  salesPoints = signal<Array<BusPoint & { statusLabel?: string }>>([]);
 
   // Colonnes du tableau
-  salesPointColumns: TableColumn[] = [
+
+  salesPointColumns = signal<TableColumn[]>([
     { key: 'name', title: 'Nom', sortable: true },
     { key: 'city', title: 'Ville', sortable: true },
     { key: 'quartier', title: 'Quartier' },
@@ -28,10 +30,12 @@ export class GestionPointEmbarquementPage implements OnInit {
     { key: 'phoneNumber', title: 'Téléphone' },
     { key: 'pointType', title: 'Type', sortable: true },
     { key: 'status', title: 'Statut', sortable: true },
-  ];
+
+  ]);
 
   // Actions du tableau
-  salesPointActions: TableAction[] = [
+
+  salesPointActions = signal<TableAction[]>([
     {
       icon: 'visibility',
       label: 'Voir détails',
@@ -47,18 +51,21 @@ export class GestionPointEmbarquementPage implements OnInit {
       label: 'Supprimer',
       action: (item) => this.deleteSalesPoint(item),
     },
-  ];
+
+  ]);
 
   // Modal state
-  isModalOpen = false;
-  selectedSalesPoint: BusPoint | null = null;
+
+  isModalOpen = signal<boolean>(false);
+  selectedSalesPoint = signal<BusPoint | null>(null);
 
   // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-  isLoading = false;
-  deletingPointId: number | null = null;
+
+  showNotification = signal<boolean>(false);
+  notificationType = signal<'success' | 'error' | 'warning' | 'info'>('info');
+  notificationMessage = signal<string>('');
+  isLoading = signal<boolean>(false);
+  deletingPointId = signal<number | null>(null);
   private pendingLoadingRequests = 0;
 
   constructor(
@@ -73,12 +80,14 @@ export class GestionPointEmbarquementPage implements OnInit {
 
   private beginLoading(): void {
     this.pendingLoadingRequests += 1;
-    this.isLoading = true;
+
+    this.isLoading.set(true);
   }
 
   private finishLoading(): void {
     this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoading = this.pendingLoadingRequests > 0;
+
+    this.isLoading.set(this.pendingLoadingRequests > 0);
   }
 
   loadSalesPoints() {
@@ -86,23 +95,29 @@ export class GestionPointEmbarquementPage implements OnInit {
     this.partnerApiService
       .getBusPoints()
       .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (points: BusPoint[]) => {
-          this.salesPoints = points.map((point) => ({
+      .subscribe({
+        next: (points: BusPoint[]) => {
+
+          this.salesPoints.set(
+            points.map((point) => ({
             ...point,
             statusLabel: point.status === 'active' ? 'Actif' : 'Inactif',
-          }));
+
+            }))
+          );
         },
-        (error) => {
+
+      error: (error) => {
+
           console.error('Error loading sales points:', error);
           this.alertService.error('Erreur de chargement des points de vente');
-        },
-      );
+      },
+    });
   }
 
   viewSalesPointDetails(point: BusPoint): void {
-    this.selectedSalesPoint = point;
-    this.isModalOpen = true;
+    this.selectedSalesPoint.set(point);
+    this.isModalOpen.set(true);
   }
 
   editSalesPoint(point: BusPoint): void {
@@ -121,38 +136,42 @@ export class GestionPointEmbarquementPage implements OnInit {
     if (!confirmed) {
       return;
     }
-
-    this.deletingPointId = point.id;
-    this.partnerApiService.deleteBusPoint(point.id).subscribe(
-      (response) => {
+    this.beginLoading();
+    this.deletingPointId.set(point.id);
+    this.partnerApiService.deleteBusPoint(point.id)
+    .pipe(finalize(() => this.finishLoading()))
+    .subscribe({
+      next: (response) => {
         if (response.success) {
-          this.deletingPointId = null;
-          this.salesPoints = this.salesPoints.filter((p) => p.id !== point.id);
+          this.deletingPointId.set(null);
+          this.salesPoints.update((points) => points.filter((p) => p.id !== point.id));
           this.alertService.success(`Point de vente ${point.name} supprimé avec succès`);
         } else {
           this.showToastNotification('error', `Erreur lors de la suppression: ${response.message}`);
         }
       },
-      (error) => {
-        this.deletingPointId = null;
+      error: (error) => {
+        this.deletingPointId.set(null);
         console.error('Error deleting sales point:', error);
         this.alertService.error('Erreur lors de la suppression du point de vente');
       },
-    );
+    });
   }
 
   closeModal(): void {
-    this.isModalOpen = false;
-    this.selectedSalesPoint = null;
+    this.isModalOpen.set(false);
+    this.selectedSalesPoint.set(null);
   }
 
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
+
+    this.notificationType.set(type);
+    this.notificationMessage.set(message);
+    this.showNotification.set(true);
 
     setTimeout(() => {
-      this.showNotification = false;
+
+      this.showNotification.set(false);
     }, 5000);
   }
 
@@ -170,3 +189,4 @@ export class GestionPointEmbarquementPage implements OnInit {
     }
   }
 }
+

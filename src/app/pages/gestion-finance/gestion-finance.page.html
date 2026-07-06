@@ -1,4 +1,16 @@
-<main class="flex-1 p-standard-padding lg:p-container-margin overflow-y-auto">
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+<main *ngIf="!isLoading()" class="flex-1 p-standard-padding lg:p-container-margin overflow-y-auto">
   <!-- Page Header -->
   <div class="mb-8">
     <h2 class="font-display-lg text-display-lg text-on-background mb-2">Gestion Financière</h2>
@@ -6,10 +18,7 @@
       Aperçu de vos revenus et paiements.
     </p>
   </div>
-  <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
-    <span class="material-symbols-outlined animate-spin">progress_activity</span>
-    Chargement des informations financières...
-  </div>
+
   <div class="grid grid-cols-1 md:grid-cols-12 gap-widget-gap">
     <!-- Balance Summary Widget -->
     <div
@@ -21,7 +30,7 @@
             Current Balance
           </p>
           <h3 class="font-stats-metric text-stats-metric text-on-background">
-            {{ currentBalance | number: '1.0-0' }} XAF
+            {{ currentBalance() | number: '1.0-0' }} XAF
           </h3>
         </div>
         <div class="bg-success-green/10 px-3 py-1 rounded-full flex items-center gap-1">
@@ -30,11 +39,11 @@
         </div>
       </div>
       <app-revenue-chart
-        [chartType]="financeChartType"
+        [chartType]="financeChartType()"
         [chartTitle]="'Balance Overview'"
-        [labels]="financeChartLabels"
-        [dataPoints]="financeChartData"
-        [chartOptions]="financeChartOptions"
+        [labels]="financeChartLabels()"
+        [dataPoints]="financeChartData()"
+        [chartOptions]="financeChartOptions()"
       ></app-revenue-chart>
       <div
         class="flex flex-col sm:flex-row justify-between items-end gap-4 border-t border-border-subtle pt-4"
@@ -44,7 +53,7 @@
             Available for Payout
           </p>
           <h4 class="font-headline-md text-headline-md text-primary">
-            {{ availableForPayout | number: '1.0-0' }} XAF
+            {{ availableForPayout() | number: '1.0-0' }} XAF
           </h4>
         </div>
         <button
@@ -62,11 +71,11 @@
       <h3 class="font-headline-md text-headline-md text-on-background mb-4">Revenue Breakdown</h3>
       <div class="relative w-full h-48 flex-1 flex items-center justify-center">
         <app-revenue-chart
-          [chartType]="financeBreakdownChartType"
+          [chartType]="financeBreakdownChartType()"
           [chartTitle]="'Revenue Breakdown'"
-          [labels]="financeBreakdownLabels"
-          [dataPoints]="financeBreakdownData"
-          [chartOptions]="financeChartOptions"
+          [labels]="financeBreakdownLabels()"
+          [dataPoints]="financeBreakdownData()"
+          [chartOptions]="financeChartOptions()"
         ></app-revenue-chart>
       </div>
     </div>
@@ -85,9 +94,9 @@
             (change)="selectTransactionType(transactionTypeSelect.value)"
           >
             <option
-              *ngFor="let option of transactionTypeOptions"
+              *ngFor="let option of transactionTypeOptions()"
               [value]="option.value"
-              [selected]="selectedTransactionType === option.value"
+              [selected]="selectedTransactionType() === option.value"
             >
               {{ option.label }}
             </option>
@@ -101,9 +110,9 @@
 
       <!-- Utilisation du composant TableComponent -->
       <app-table
-        [data]="filteredTransactions"
-        [columns]="transactionColumns"
-        [actions]="transactionActions"
+        [data]="filteredTransactions()"
+        [columns]="transactionColumns()"
+        [actions]="transactionActions()"
         [pageSize]="10"
         (sort)="onSortChange($event)"
       >
@@ -130,7 +139,8 @@
               [ngClass]="{
                 'bg-success-green/10 text-success-green': item.status === 'Completed',
                 'bg-warning-gold/10 text-tertiary-container': item.status === 'Pending',
-              }"
+                'bg-danger-red/10 text-danger-red': item.status === 'Failed'
+                }"
               class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green text-label-sm font-label-sm"
             >
               {{ item.status }}
@@ -161,35 +171,35 @@
 
 <!-- Modal pour les détails de la transaction -->
 <app-modal
-  [isOpen]="isModalOpen"
+  [isOpen]="isModalOpen()"
   [title]="'Transaction Details'"
   [size]="'md'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedTransaction" class="space-y-4">
+  <div *ngIf="selectedTransaction()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">Date</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedTransaction.date }}
+          {{ selectedTransaction().date }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Type</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedTransaction.type }}
+          {{ selectedTransaction().type }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Amount</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
-          {{ selectedTransaction.amount }}
+          {{ selectedTransaction().amount }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Status</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedTransaction.status }}
+          {{ selectedTransaction().status }}
         </p>
       </div>
     </div>
@@ -203,7 +213,7 @@
       </button>
       <button
         class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
-        (click)="generateReceipt(selectedTransaction)"
+        (click)="generateReceipt(selectedTransaction())"
       >
         Generate Receipt
       </button>
@@ -213,9 +223,10 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>
+

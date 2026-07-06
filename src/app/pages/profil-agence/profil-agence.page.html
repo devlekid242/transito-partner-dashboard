@@ -1,4 +1,16 @@
-<main class="p-4 md:px-container-margin max-w-desktop-max-width mx-auto">
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+<main *ngIf="!isLoading()" class="p-4 md:px-container-margin max-w-desktop-max-width mx-auto">
   <!-- Header Section -->
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
     <div>
@@ -22,18 +34,15 @@
         [disabled]="isSavingProfile()"
       >
         <span class="material-symbols-outlined text-[20px]">save</span>
-        <span *ngIf="!isSavingProfile">Enregistrer les modifications</span>
-        <span *ngIf="isSavingProfile" class="inline-flex items-center gap-2">
+        <span *ngIf="!isSavingProfile()">Enregistrer les modifications</span>
+        <span *ngIf="isSavingProfile()" class="inline-flex items-center gap-2">
           <span class="material-symbols-outlined animate-spin text-[20px]">autorenew</span>
           Enregistrement...
         </span>
       </button>
     </div>
   </div>
-  <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
-    <span class="material-symbols-outlined animate-spin">progress_activity</span>
-    Chargement du profil de l’agence...
-  </div>
+
 
   <!-- Banner & Logo -->
   <div class="bento-card mb-6 p-0 overflow-hidden relative group">
@@ -117,7 +126,7 @@
 
         <!-- Utilisation du composant FormComponent -->
         <app-form
-          [fields]="profileFormFields"
+          [fields]="profileFormFields()"
           [submitLabel]="'Enregistrer les modifications'"
           [IsSubmit]="isSavingProfile()"
           (submit)="onFormSubmit($event)"
@@ -179,7 +188,7 @@
             <div
               class="rounded-lg overflow-hidden border border-border-subtle bg-surface-container-highest"
             >
-              <ng-container *ngIf="mapEmbedUrl; else noMap">
+              <ng-container *ngIf="mapEmbedUrl(); else noMap">
                 <iframe
                   [src]="mapEmbedUrl()"
                   class="w-full h-64 border-0"
@@ -253,14 +262,9 @@
                 <div
                   *ngIf="doc.status"
                   class="mt-1 flex items-center gap-1 text-[10px] uppercase font-bold"
-                  [ngClass]="{
-                    'text-success-green': doc.status === 'Validé',
-                    'text-warning-gold': doc.status && doc.status !== 'Validé',
-                  }"
+                  [ngClass]="{'text-success-green': doc.status === 'Validé', 'text-warning-gold': doc.status && doc.status !== 'Validé'}"
                 >
-                  <span class="material-symbols-outlined text-[14px]">{{
-                    doc.status === 'Validé' ? 'check_circle' : 'warning'
-                  }}</span>
+                  <span class="material-symbols-outlined text-[14px]">{{ doc.status === 'Validé' ? 'check_circle' : 'warning' }}</span>
                   {{ doc.status }}
                 </div>
               </div>
@@ -403,9 +407,10 @@
         [disabled]="isUploadingDocument()"
       >
         <span class="material-symbols-outlined">upload_file</span>
-        <span *ngIf="!isUploadingDocument">Téléverser</span>
-        <span *ngIf="isUploadingDocument">Téléversement...</span>
+        <span *ngIf="!isUploadingDocument()">Téléverser</span>
+        <span *ngIf="isUploadingDocument()">Téléversement...</span>
       </button>
     </div>
   </div>
 </app-modal>
+

@@ -157,7 +157,7 @@ export class GestionDuStaffPage implements OnInit {
       .subscribe({
         next: (staff: any) => {
           this.staffMembersSignal.set(
-            staff.member.map((s: any) => ({
+            staff.map((s: any) => ({
               id: s.id,
               name: s.fullName ?? s.name ?? s.email,
               email: s.email,

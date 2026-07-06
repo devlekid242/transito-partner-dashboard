@@ -7,11 +7,12 @@ export const environment = {
   apiUrl: 'http://localhost:8000/api',
   baseApiUrl: 'http://localhost:8000',
   apiTimeout: 30000,
-  pusherKey: 'YOUR_PUSHER_APP_KEY',
+  pusherKey: '9fd9732315c0fe4be887',
   pusherCluster: 'mt1',
   pusherUseTLS: true,
   pusherAuthEndpoint: 'http://localhost:8000/api/user-notifications/pusher/auth',
 };
+
 
 /*
  * For easier debugging in development mode, you can import the following file

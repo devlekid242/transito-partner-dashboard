@@ -1,4 +1,16 @@
-<main class="p-4 h-full overflow-y-auto bg-surface-bg p-container-margin">
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+<main *ngIf="!isLoading()" class="p-4 h-full overflow-y-auto bg-surface-bg p-container-margin">
   <div class="max-w-desktop-max-width mx-auto">
     <!-- Page Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -18,16 +30,11 @@
       </button>
     </div>
 
-    <div *ngIf="isLoading" class="mb-4 flex items-center gap-2 text-primary text-sm font-medium">
-      <span class="material-symbols-outlined animate-spin">progress_activity</span>
-      Chargement des points de vente...
-    </div>
-
     <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
     <app-table
-      [data]="salesPoints"
-      [columns]="salesPointColumns"
-      [actions]="salesPointActions"
+      [data]="salesPoints()"
+      [columns]="salesPointColumns()"
+      [actions]="salesPointActions()"
       [pageSize]="10"
     >
       <ng-template #customCell let-item let-column="column">
@@ -63,12 +70,9 @@
         <div *ngIf="column.key === 'phoneNumber'" class="p-3">
           <div class="flex flex-col items-center gap-2 text-on-surface-variant">
             <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-body-md text-body-md text-[13px]">{{
-              item.phoneNumber || 'N/A'
-            }}</span>
+            <span class="font-body-md text-body-md text-[13px]">{{ item.phoneNumber || 'N/A' }}</span>
           </div>
         </div>
-
         <!-- Cellule par défaut pour les autres colonnes -->
         <div
           *ngIf="column.key !== 'name' && column.key !== 'address' && column.key !== 'phoneNumber'"
@@ -83,47 +87,47 @@
 
 <!-- Modal pour les détails du point de vente -->
 <app-modal
-  [isOpen]="isModalOpen"
+  [isOpen]="isModalOpen()"
   [title]="'Détails du Point de Vente'"
   [size]="'md'"
   (close)="closeModal()"
 >
-  <div *ngIf="selectedSalesPoint" class="space-y-4">
+  <div *ngIf="selectedSalesPoint()" class="space-y-4">
     <div class="grid grid-cols-2 gap-4">
       <div>
         <p class="text-label-sm text-label-sm text-outline">Nom</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.name }}
+          {{ selectedSalesPoint()?.name }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Ville</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.city }}
+          {{ selectedSalesPoint()?.city }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Adresse</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.address }}
+          {{ selectedSalesPoint()?.address }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.phoneNumber || 'N/A' }}
+          {{ selectedSalesPoint()?.phoneNumber || 'N/A' }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.isActive ? 'Actif' : 'Inactif' }}
+          {{ selectedSalesPoint()?.isActive ? 'Actif' : 'Inactif' }}
         </p>
       </div>
       <div>
         <p class="text-label-sm text-label-sm text-outline">Statut</p>
         <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint.status }}
+          {{ selectedSalesPoint()?.status }}
         </p>
       </div>
     </div>
@@ -141,9 +145,10 @@
 
 <!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>
+

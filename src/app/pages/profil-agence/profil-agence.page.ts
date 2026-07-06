@@ -12,6 +12,7 @@ import { PartnerProfile } from '../../models/partner.model';
 import { environment } from '../../../environments/environment';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from '../../services/alert.service';
+import { scales } from 'chart.js';
 
 @Component({
   selector: 'app-profil-agence',
@@ -22,7 +23,7 @@ import { AlertService } from '../../services/alert.service';
 export class ProfilAgencePage implements OnInit {
   ApiBaseUrl: string = environment.baseApiUrl; // Replace with your actual API
   // Form fields for agency profile
-  profileFormFields: FormField[] = [
+  profileFormFields = signal<FormField[]>([
     {
       key: 'agencyName',
       label: "Nom de l'Agence",
@@ -94,7 +95,7 @@ export class ProfilAgencePage implements OnInit {
       required: true,
       placeholder: 'Adresse complète',
     },
-  ];
+  ]);
 
   // Documents data
   private readonly documentsSignal = signal<any[]>([]);
@@ -162,6 +163,11 @@ export class ProfilAgencePage implements OnInit {
     { value: 'registration', label: 'Immatriculation' },
     { value: 'other', label: 'Autre' },
   ];
+  
+  agencyStats = {
+    activeSalesPoints: 0,
+    nationalCoverage: '',
+  };
 
   @ViewChild(FormComponent) profileForm?: FormComponent;
 
@@ -220,6 +226,20 @@ export class ProfilAgencePage implements OnInit {
           // Load partner stats if available
           this.beginLoading();
           this.partnerApiService
+            .getBusPoints(this.profileDataSignal().agencyId)
+            .pipe(finalize(() => this.finishLoading()))
+            .subscribe({
+              next: (point: any) => {
+                this.activeSalesPointsSignal.set(point.length);
+              },
+              error: () => {
+                // leave defaults if endpoint not available
+              },
+            });
+
+          // Update agency sales points and national coverage if available
+          this.beginLoading();
+          this.partnerApiService
             .getBusPoints()
             .pipe(finalize(() => this.finishLoading()))
             .subscribe({
@@ -241,10 +261,10 @@ export class ProfilAgencePage implements OnInit {
 
   updateFormFields() {
     const profileData = this.profileData();
-    this.profileFormFields = this.profileFormFields.map((field) => ({
+    this.profileFormFields.set(this.profileFormFields().map((field) => ({
       ...field,
       value: (profileData as any)[field.key] ?? field.value ?? '',
-    }));
+    })));
   }
 
   private getMapUrl(): string {
@@ -486,9 +506,5 @@ export class ProfilAgencePage implements OnInit {
     this.isModalOpenSignal.set(false);
   }
 
-  // Agency stats
-  agencyStats = {
-    activeSalesPoints: 0,
-    nationalCoverage: '',
-  };
 }
+

@@ -120,6 +120,16 @@ export interface Trip {
   arrivalTimeOfDay?: string;
   price: string | number;
   driverName?: string;
+  driverLicense?: string;
+  driverPhone?: string;
+  driverExperience?: string;
+  driverPhotoUrl?: string;
+
+  hostessName?: string;
+  hostessPhone?: string;
+  hostessPhotoUrl?: string;
+  passengers?: Passenger[];
+
   bus?: any;
   seatsReserved: number;
   status: 'planifie' | 'embarquement' | 'en_route' | 'termine' | 'annule';
@@ -127,6 +137,7 @@ export interface Trip {
   time?: string;
   date?: string;
   route?: string;
+  notes?: string;
 }
 
 export interface ManifestData {

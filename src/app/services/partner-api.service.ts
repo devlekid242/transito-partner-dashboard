@@ -4,6 +4,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AgencyDocument, BusPoint, ManifestData, Trip } from '../models/partner.model';
+import { unwrapCollection } from "../shared/rxjs-operators"
 
 export interface SelectOption {
   value: string;
@@ -196,7 +197,7 @@ export class PartnerApiService {
         params: new HttpParams().set('trip_id', String(tripId)),
       }),
     }).pipe(
-      map(({ trip, tickets }) => {
+      map(({ trip , tickets }) => {
         const processedPassengers = (tickets ?? []).map((t: any) => ({
           id: t.id,
           name: t.passengerName || t.name || 'Invité',

@@ -1,4 +1,16 @@
-<main class="flex-1 overflow-y-auto p-standard-padding md:p-container-margin">
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
+<main *ngIf="!isLoading()" class="flex-1 overflow-y-auto p-standard-padding md:p-container-margin">
   <div class="flex justify-between items-end mb-6">
     <div>
       <h1 class="text-display-lg font-display-lg text-on-surface">Fleet Inventory</h1>
@@ -124,14 +136,6 @@
     <!-- Bus Grid (Takes up 2 columns on large screens) -->
     <div class="lg:col-span-2 flex flex-col gap-4">
       <h2 class="text-headline-md font-headline-md text-on-surface mb-2">Vehicle Roster</h2>
-
-      <div
-        *ngIf="isLoading()"
-        class="mb-3 flex items-center gap-2 text-primary text-sm font-medium"
-      >
-        <span class="material-symbols-outlined animate-spin">progress_activity</span>
-        Chargement des véhicules...
-      </div>
 
       <!-- Utilisation du composant TableComponent -->
       <app-table

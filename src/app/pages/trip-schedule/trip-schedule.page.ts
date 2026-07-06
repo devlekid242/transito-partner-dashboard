@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
 import { PartnerApiService } from '../../services/partner-api.service';
@@ -14,28 +14,28 @@ import { finalize } from 'rxjs/operators';
   imports: [TableComponent, CommonModule],
 })
 export class TripSchedulePage implements OnInit {
-  todayDepartures: any[] = [];
-  upcomingTrips: any[] = [];
-  nextDeparture: any | null = null;
-  isLoading = false;
+  todayDepartures = signal<any[]>([]);
+  upcomingTrips = signal<any[]>([]);
+  nextDeparture = signal<any | null>(null);
+  isLoading = signal<boolean>(false);
   private pendingLoadingRequests = 0;
 
-  departureColumns: TableColumn[] = [
+  departureColumns = signal<TableColumn[]>([
     { key: 'departureTime', title: 'Time & Date', sortable: true },
     { key: 'route', title: 'Route', sortable: true },
     { key: 'bus', title: 'Assigned Bus', sortable: true },
     { key: 'status', title: 'Status', sortable: true },
-  ];
+  ]);
 
-  upcomingColumns: TableColumn[] = [
+  upcomingColumns = signal<TableColumn[]>([
     { key: 'id', title: 'ID' },
     { key: 'departureTime', title: 'Time' },
     { key: 'route', title: 'Route' },
     { key: 'bus', title: 'Bus' },
     { key: 'status', title: 'Status' },
-  ];
+  ]);
 
-  departureActions: TableAction[] = [
+  departureActions = signal<TableAction[]>([
     {
       icon: 'visibility',
       label: 'View Details',
@@ -46,7 +46,7 @@ export class TripSchedulePage implements OnInit {
       label: 'Manage',
       action: (item) => this.manageTrip(item),
     },
-  ];
+  ]);
 
   constructor(
     private partnerApiService: PartnerApiService,
@@ -56,12 +56,12 @@ export class TripSchedulePage implements OnInit {
 
   private beginLoading(): void {
     this.pendingLoadingRequests += 1;
-    this.isLoading = true;
+    this.isLoading.set(true);
   }
 
   private finishLoading(): void {
     this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoading = this.pendingLoadingRequests > 0;
+    this.isLoading.set(this.pendingLoadingRequests > 0);
   }
 
   ngOnInit() {
@@ -70,12 +70,11 @@ export class TripSchedulePage implements OnInit {
 
   loadTrips() {
     this.beginLoading();
-    this.partnerApiService
-      .getTodaysTrips()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (trips: Trip[]) => {
-          this.todayDepartures = trips.map((trip) => {
+    this.partnerApiService.getTodaysTrips().pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (trips: Trip[]) => {
+        this.todayDepartures.set(trips.map((trip) => {
             const anyTrip = trip as any;
             return {
               ...trip,
@@ -97,22 +96,20 @@ export class TripSchedulePage implements OnInit {
               status: trip.status,
               driverName: trip.driverName || 'Non précisé',
             };
-          });
-          this.nextDeparture = this.todayDepartures.length ? this.todayDepartures[0] : null;
+        }));
+        this.nextDeparture.set(this.todayDepartures().length ? this.todayDepartures()[0] : null);
         },
-        (error) => {
+      error: (error) => {
           console.error('Error loading today trips:', error);
           this.alertService.error('Erreur de chargement des départs du jour');
         },
-      );
-
+    });
     this.beginLoading();
-    this.partnerApiService
-      .getTrips()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe(
-        (trips: Trip[]) => {
-          this.upcomingTrips = trips.slice(0, 5).map((trip) => {
+    this.partnerApiService.getTrips().pipe(
+      finalize(() => this.finishLoading())
+    ).subscribe({
+      next: (trips: Trip[]) => {
+        this.upcomingTrips.set(trips.slice(0, 5).map((trip) => {
             const anyTrip = trip as any;
             return {
               id: trip.id?.toString() ?? '',
@@ -132,13 +129,13 @@ export class TripSchedulePage implements OnInit {
               bus: trip.bus?.registrationNumber || 'N/A',
               status: this.getStatusText(trip.status),
             };
-          });
+        }));
         },
-        (error) => {
+      error: (error) => {
           console.error('Error loading upcoming trips:', error);
           this.alertService.error('Erreur de chargement des trajets à venir');
         },
-      );
+    });
   }
 
   getStatusText(status: string): string {
@@ -168,3 +165,4 @@ export class TripSchedulePage implements OnInit {
     console.log('Sort changed:', event);
   }
 }
+
