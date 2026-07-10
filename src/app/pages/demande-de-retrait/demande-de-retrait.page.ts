@@ -162,6 +162,7 @@ export class DemandeDeRetraitPage {
             ...this.balanceSignal(),
             available: `${available.toLocaleString('fr-FR')} XAF`,
           });
+          
         } else {
           this.loadPartnerStats();
         }

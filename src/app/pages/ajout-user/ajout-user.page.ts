@@ -20,6 +20,13 @@ export class AjoutUserPage {
   // Form fields for user invitation
   userFormFields: FormField[] = [
     {
+      key: 'fullName',
+      label: 'Nom Complet',
+      type: 'text',
+      required: true,
+      placeholder: 'Nom et prénom',
+    },
+    {
       key: 'email',
       label: 'Adresse Email',
       type: 'email',
@@ -27,33 +34,37 @@ export class AjoutUserPage {
       placeholder: 'nom@entreprise.com',
     },
     {
-      key: 'phone',
+      key: 'phoneNumber',
       label: 'Numéro de Téléphone',
       type: 'tel',
-      required: false,
+      required: true,
       placeholder: '+237 6XX XXX XXX',
+    },
+    {
+      key: 'ville',
+      label: 'Ville de Résidence',
+      type: 'text',
+      required: true,
+      placeholder: 'Ex: Douala',
+    },
+    {
+      key: 'quartier',
+      label: 'Quartier',
+      type: 'text',
+      required: true,
+      placeholder: 'Ex: Akwa',
+    },
+    {
+      key: 'password',
+      label: 'Mot de passe (optionnel)',
+      type: 'password',
+      required: false,
+      placeholder: 'Laisser vide pour générer automatiquement',
     },
   ];
 
   // Recent invitations data
-  recentInvitations = [
-    {
-      id: 1,
-      name: 'Marc J.',
-      email: 'marc.j@example.com',
-      status: 'Pending',
-      role: 'Manager',
-      invitedDate: '2023-10-20',
-    },
-    {
-      id: 2,
-      name: 'Sarah L.',
-      email: 's.leclerc@example.com',
-      status: 'Accepted',
-      role: 'Staff',
-      invitedDate: '2023-10-18',
-    },
-  ];
+  recentInvitations = [];
 
   // Table columns for recent invitations
   invitationColumns: TableColumn[] = [
@@ -77,12 +88,14 @@ export class AjoutUserPage {
   ];
 
   // Selected role
-  selectedRole: 'admin' | 'manager' | 'staff' = 'manager';
+  selectedRole: 'agent_admin' | 'manager' | 'agent_quai' = 'agent_admin';
 
   // Form model
   fullName = '';
   email = '';
-  phone = '';
+  phoneNumber = '';
+  ville = '';
+  quartier = '';
   password = '';
   createAsAgent = false;
   agentRole: 'agent_quai' | 'admin_agence' = 'agent_quai';
@@ -134,10 +147,14 @@ export class AjoutUserPage {
 
     // Build payload for backend register endpoint
     const payload: any = {
-      fullName: this.fullName || formData.email?.split('@')[0] || '',
-      email: this.email || null,
-      phoneNumber: this.phone || '',
+      fullName: this.fullName,
+      email: this.email,
+      phoneNumber: this.phoneNumber,
+      ville: this.ville,
+      quartier: this.quartier,
       password: this.password || undefined,
+      agentRole: this.agentRole
+      
     };
 
     if (this.createAsAgent) {
@@ -177,13 +194,13 @@ export class AjoutUserPage {
 
   setRole(role: string): void {
     const normalizedRole =
-      role === 'admin' || role === 'manager' || role === 'staff' ? role : 'staff';
+      role === 'agent_admin' || role === 'manager' || role === 'agent_quai' ? role : 'agent_quai';
     this.selectedRole = normalizedRole;
     // Update permissions based on role
     this.updatePermissionsForRole(normalizedRole);
   }
 
-  updatePermissionsForRole(role: 'admin' | 'manager' | 'staff'): void {
+  updatePermissionsForRole(role: any): void {
     switch (role) {
       case 'admin':
         this.permissions = {
@@ -216,7 +233,7 @@ export class AjoutUserPage {
 
   cancelInvite(invitation: any): void {
     console.log('Cancel invite for:', invitation.email);
-    this.recentInvitations = this.recentInvitations.filter((inv) => inv.id !== invitation.id);
+    this.recentInvitations = this.recentInvitations.filter((inv :any ) => inv.id !== invitation.id);
     this.showToastNotification('warning', `Invitation for ${invitation.email} has been cancelled`);
   }
 

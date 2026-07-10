@@ -1,12 +1,11 @@
 <div
   class="bg-surface-bg min-h-screen flex w-full relative overflow-hidden font-body-md text-on-surface"
 >
-  <!-- Left Pane - Visual -->
   <div class="hidden lg:flex lg:w-1/2 relative bg-surface-container-high items-end pb-16 px-16">
     <img
       alt="Logistics Fleet"
       class="absolute inset-0 w-full h-full object-cover"
-      [src]="heroImage"
+      [src]="heroImage()"
     />
     <div
       class="absolute inset-0 bg-gradient-to-t from-on-surface via-on-surface/40 to-transparent opacity-90"
@@ -30,12 +29,10 @@
       </p>
     </div>
   </div>
-  <!-- Right Pane - Form -->
   <main
     class="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 lg:p-16 bg-surface-bg h-screen overflow-y-auto"
   >
     <div class="w-full max-w-[440px]">
-      <!-- Header Section -->
       <div class="text-center lg:text-left mb-10">
         <div
           class="lg:hidden inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-container text-on-primary-container mb-6 shadow-sm"
@@ -51,15 +48,13 @@
           Accédez à votre espace opérationnel sécurisé
         </p>
       </div>
-      <!-- Form Card -->
       <div
         class="bg-card-bg rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-surface-variant p-8"
       >
-        <!-- Utilisation du composant FormComponent -->
         <app-form
           [fields]="loginFormFields"
           [submitLabel]="'Connexion'"
-          [IsSubmit]="isSubmitting"
+          [IsSubmit]="isSubmitting()"
           (submit)="onFormSubmit($event)"
         >
           <div class="flex items-center mt-4">
@@ -78,7 +73,6 @@
           </div>
         </app-form>
       </div>
-      <!-- Footer Links -->
       <div class="mt-8 flex flex-col items-center space-y-4">
         <p class="font-label-sm text-label-sm text-on-surface-variant text-center">
           Problème d'accès ?
@@ -94,11 +88,10 @@
   </main>
 </div>
 
-<!-- Notification Component -->
 <app-notification
-  [show]="showNotification"
-  [type]="notificationType"
-  [message]="notificationMessage"
+  [show]="showNotification()"
+  [type]="notificationType()"
+  [message]="notificationMessage()"
   [duration]="5000"
 >
 </app-notification>

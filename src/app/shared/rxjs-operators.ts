@@ -1,4 +1,4 @@
-import { Observable } from 'rxjs';
+﻿import { Observable, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 /**
@@ -12,32 +12,58 @@ interface JsonLdCollection<T> {
   member: T[]; // La propriété cible à extraire
 }
 
-/**
- * Opérateur RxJS personnalisé qui extrait le tableau 'member' si présent,
- * ou retourne la réponse brute si c'est déjà un tableau ou un autre format.
- */
-export function unwrapCollection<T>() {
-  return (source: Observable<any>): Observable<T[]> => {
+export interface NormalizedCollection<T> {
+  data: T[];
+  total: number;
+}
+
+function normalizeCollectionPayload<T>(response: any): T[] {
+  if (!response) {
+    return [];
+  }
+
+  if (Array.isArray(response)) {
+    return response as T[];
+  }
+
+  if (typeof response === 'object' && response !== null) {
+    if (Array.isArray(response.member)) {
+      return response.member as T[];
+    }
+
+    if (Array.isArray(response['hydra:member'])) {
+      return response['hydra:member'] as T[];
+    }
+
+    if (Array.isArray(response.data)) {
+      return response.data as T[];
+    }
+  }
+
+  return [];
+}
+
+export function unwrapCollection<T>(): OperatorFunction<any, T[]>;
+export function unwrapCollection<T>(preserveMetadata: false): OperatorFunction<any, NormalizedCollection<T>>;
+export function unwrapCollection<T>(preserveMetadata = true) {
+  return (source: Observable<any>): Observable<T[] | NormalizedCollection<T>> => {
     return source.pipe(
-      map((response): T[] => {
-        // En cas de réponse vide ou nulle
-        if (!response) {
-          return [];
+      map((response) => {
+        const data = normalizeCollectionPayload<T>(response);
+
+        if (preserveMetadata === false) {
+          const total = typeof response === 'object' && response !== null
+            ? Number(response.totalItems ?? response['hydra:totalItems'] ?? data.length)
+            : data.length;
+
+          return {
+            data,
+            total,
+          } as NormalizedCollection<T>;
         }
 
-        // Cas 1 : Format API Platform / JSON-LD (contient la propriété 'member')
-        if (typeof response === 'object' && 'member' in response && Array.isArray(response.member)) {
-          return response.member as T[];
-        }
-
-        // Cas 2 : Format Tableau brut
-        if (Array.isArray(response)) {
-          return response as T[];
-        }
-
-        // Repli : Si la structure est inattendue mais qu'on attend un tableau
-        return typeof response === 'object' ? [response] : [];
-      })
+        return data as T[];
+      }),
     );
   };
 }

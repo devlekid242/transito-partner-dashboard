@@ -4,7 +4,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AgencyDocument, BusPoint, ManifestData, Trip } from '../models/partner.model';
-import { unwrapCollection } from "../shared/rxjs-operators"
+import { unwrapCollection } from '../shared/rxjs-operators';
 
 export interface SelectOption {
   value: string;
@@ -116,7 +116,7 @@ export class PartnerApiService {
     if (status) {
       params = params.set('status', status.toLowerCase());
     }
-    return this.http.get<any>(`${this.apiUrl}/trips`, { params }).pipe(map((r) => r.data ?? r));
+    return this.http.get<any>(`${this.apiUrl}/trips`, { params }).pipe(unwrapCollection<Trip>());
   }
 
   getTripDetails(tripId: number): Observable<Trip> {
@@ -196,9 +196,10 @@ export class PartnerApiService {
       tickets: this.http.get<any[]>(`${this.apiUrl}/tickets`, {
         params: new HttpParams().set('trip_id', String(tripId)),
       }),
-    }).pipe(
-      map(({ trip , tickets }) => {
-        const processedPassengers = (tickets ?? []).map((t: any) => ({
+    })
+    .pipe(
+      map(({ trip, tickets }) => {
+        const processedPassengers = (tickets).map((t: any) => ({
           id: t.id,
           name: t.passengerName || t.name || 'Invité',
           seatNumber: Number(t.seatNumber) || 0,
@@ -320,7 +321,9 @@ export class PartnerApiService {
   }
 
   getAgencyDocuments(): Observable<AgencyDocument[]> {
-    return this.http.get<AgencyDocument[]>(`${this.apiUrl}/agency-documents`);
+    return this.http
+      .get<any>(`${this.apiUrl}/agency-documents`)
+      .pipe(unwrapCollection<AgencyDocument>());
   }
 
   uploadAgencyDocument(
@@ -351,11 +354,13 @@ export class PartnerApiService {
   // ============= BUSES =============
 
   getBuses(): Observable<Bus[]> {
-    return this.http.get<Bus[]>(`${this.apiUrl}/buses/agency`);
+    return this.http.get<any>(`${this.apiUrl}/buses/agency`).pipe(unwrapCollection<Bus>());
   }
 
   getMaintenanceSchedule(): Observable<Bus[]> {
-    return this.http.get<Bus[]>(`${this.apiUrl}/buses/maintenance-schedule`);
+    return this.http
+      .get<any>(`${this.apiUrl}/buses/maintenance-schedule`)
+      .pipe(unwrapCollection<Bus>());
   }
 
   getBusDetails(busId: number): Observable<Bus> {
@@ -378,7 +383,9 @@ export class PartnerApiService {
   getBusPoints(agencyId?: number): Observable<BusPoint[]> {
     let params = new HttpParams();
     if (agencyId) params = params.set('agency_id', String(agencyId));
-    return this.http.get<BusPoint[]>(`${this.apiUrl}/agency-points`, { params });
+    return this.http
+      .get<any>(`${this.apiUrl}/agency-points`, { params })
+      .pipe(unwrapCollection<BusPoint>());
   }
 
   addBusPoint(pointData: Partial<BusPoint>): Observable<BusPoint> {
@@ -402,9 +409,9 @@ export class PartnerApiService {
   // ============= NOTIFICATIONS =============
   getNotifications(): Observable<Notification[]> {
     return this.http.get<any>(`${this.apiUrl}/user-notifications`).pipe(
-      map((r: any) => (r.data ?? r) as any[]),
+      unwrapCollection<any>(),
       map((notifications: any[]) =>
-        notifications.map((notification: any) => {
+        (notifications ?? []).map((notification: any) => {
           const category = (notification.category ?? notification.type ?? 'INFO').toUpperCase();
           return {
             id: notification.id,
@@ -449,7 +456,7 @@ export class PartnerApiService {
   }
 
   getReports(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/reports`);
+    return this.http.get<any>(`${this.apiUrl}/reports`).pipe(unwrapCollection<any>());
   }
 
   downloadReport(reportId: number): Observable<Blob> {
@@ -478,7 +485,7 @@ export class PartnerApiService {
   }
 
   getWithdrawals(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/partner/withdrawals`);
+    return this.http.get<any>(`${this.apiUrl}/partner/withdrawals`).pipe(unwrapCollection<any>());
   }
 
   getWithdrawal(withdrawalId: number): Observable<any> {
@@ -527,7 +534,7 @@ export class PartnerApiService {
     const today = new Date().toISOString().slice(0, 10);
     return this.http
       .get<any>(`${this.apiUrl}/trips`, { params: new HttpParams().set('trip_date', today) })
-      .pipe(map((r) => r.data ?? r));
+      .pipe(unwrapCollection<Trip>());
   }
 
   searchTrips(departure: string, arrival: string, date: string): Observable<Trip[]> {
@@ -535,15 +542,17 @@ export class PartnerApiService {
       .set('departure_city', departure)
       .set('arrival_city', arrival)
       .set('trip_date', date);
-    return this.http.get<any>(`${this.apiUrl}/trips`, { params }).pipe(map((r) => r.data ?? r));
+    return this.http.get<any>(`${this.apiUrl}/trips`, { params }).pipe(unwrapCollection<Trip>());
   }
 
   getCities(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/trips/cities/departure`);
+    return this.http
+      .get<any>(`${this.apiUrl}/trips/cities/departure`)
+      .pipe(unwrapCollection<string>());
   }
 
   getRecentBookings(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/bookings/recent`);
+    return this.http.get<any>(`${this.apiUrl}/bookings/recent`).pipe(unwrapCollection<any>());
   }
 
   /**
@@ -552,9 +561,7 @@ export class PartnerApiService {
    */
   getStaffMembers(agencyId?: number): Observable<any[]> {
     const params = agencyId ? new HttpParams().set('agency_id', String(agencyId)) : undefined;
-    return this.http
-      .get<any>(`${this.apiUrl}/users`, { params })
-      .pipe(map((r) => r.data ?? r ?? []));
+    return this.http.get<any>(`${this.apiUrl}/users/staff`, { params }).pipe(unwrapCollection<any>());
   }
 
   getBusTypes(): Observable<SelectOption[]> {
@@ -624,7 +631,7 @@ export class PartnerApiService {
 
   // ============= AGENCIES & USER REGISTRATION =============
   getAgencies(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/agencies`).pipe(map((r) => r ?? []));
+    return this.http.get<any>(`${this.apiUrl}/agencies`).pipe(unwrapCollection<any>());
   }
 
   registerUser(payload: {

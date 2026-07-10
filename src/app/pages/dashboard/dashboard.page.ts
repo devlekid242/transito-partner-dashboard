@@ -124,8 +124,7 @@ export class DashboardPage implements OnInit {
 
     this.loadDashboardData();
     this.loadRecentActivity();
-    console.log(this.authService?.getUser());
-    console.log('User role:', this.authService?.getUser()?.role);
+    this.updateRevenueChartData('30');
   }
 
   selectRevenueRange(value: string | null): void {

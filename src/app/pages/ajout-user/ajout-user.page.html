@@ -19,14 +19,35 @@
       <form class="space-y-6" (ngSubmit)="onFormSubmit($event)">
         <div *ngIf="isSubmitting" class="flex items-center gap-2 text-primary text-sm font-medium">
           <span class="material-symbols-outlined animate-spin">progress_activity</span>
-          Création de l’utilisateur en cours...
+          Création de l'utilisateur en cours...
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Full Name Field -->
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="fullName">
+              Nom Complet <span class="text-danger-red">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >person</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="fullName"
+                name="fullName"
+                [(ngModel)]="fullName"
+                placeholder="Nom et prénom"
+                type="text"
+                required
+              />
+            </div>
+          </div>
           <!-- Email Field -->
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="email"
-              >Adresse Email <span class="text-danger-red">*</span></label
-            >
+            <label class="font-label-sm text-label-sm text-on-surface" for="email">
+              Adresse Email <span class="text-danger-red">*</span>
+            </label>
             <div class="relative">
               <span
                 class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
@@ -39,14 +60,17 @@
                 [(ngModel)]="email"
                 placeholder="nom@entreprise.com"
                 type="email"
+                required
               />
             </div>
           </div>
-          <!-- Phone Field -->
+        </div>
+        <!-- Phone & Ville -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="phone"
-              >Numéro de Téléphone</label
-            >
+            <label class="font-label-sm text-label-sm text-on-surface" for="phoneNumber">
+              Numéro de Téléphone <span class="text-danger-red">*</span>
+            </label>
             <div class="relative">
               <span
                 class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
@@ -54,46 +78,83 @@
               >
               <input
                 class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                id="phone"
-                name="phone"
-                [(ngModel)]="phone"
+                id="phoneNumber"
+                name="phoneNumber"
+                [(ngModel)]="phoneNumber"
                 placeholder="+237 6XX XXX XXX"
                 type="tel"
+                required
+              />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="font-label-sm text-label-sm text-on-surface" for="ville">
+              Ville de Résidence <span class="text-danger-red">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >location_city</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="ville"
+                name="ville"
+                [(ngModel)]="ville"
+                placeholder="Ex: Douala"
+                type="text"
+                required
               />
             </div>
           </div>
         </div>
-        <!-- Full name & password -->
+        <!-- Quartier & Password -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="fullName"
-              >Nom complet</label
-            >
-            <input
-              id="fullName"
-              name="fullName"
-              [(ngModel)]="fullName"
-              class="w-full pl-3 pr-3 py-2.5 bg-surface border border-subtle rounded-lg"
-            />
+            <label class="font-label-sm text-label-sm text-on-surface" for="quartier">
+              Quartier <span class="text-danger-red">*</span>
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >apartment</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="quartier"
+                name="quartier"
+                [(ngModel)]="quartier"
+                placeholder="Ex: Akwa"
+                type="text"
+                required
+              />
+            </div>
           </div>
           <div class="space-y-2">
-            <label class="font-label-sm text-label-sm text-on-surface" for="password"
-              >Mot de passe (optionnel)</label
-            >
-            <input
-              id="password"
-              name="password"
-              [(ngModel)]="password"
-              type="password"
-              class="w-full pl-3 pr-3 py-2.5 bg-surface border border-subtle rounded-lg"
-            />
+            <label class="font-label-sm text-label-sm text-on-surface" for="password">
+              Mot de passe (optionnel)
+            </label>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
+                >lock</span
+              >
+              <input
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                id="password"
+                name="password"
+                [(ngModel)]="password"
+                placeholder="Laisser vide pour générer automatiquement"
+                type="password"
+              />
+            </div>
           </div>
         </div>
         <!-- Role Selection -->
         <div class="space-y-3">
-          <label class="font-label-sm text-label-sm text-on-surface block"
-            >Rôle de l'Utilisateur <span class="text-danger-red">*</span></label
-          >
+          <label class="font-label-sm text-label-sm text-on-surface block">
+            Rôle de l'Utilisateur <span class="text-danger-red">*</span>
+          </label>
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <ng-container *ngFor="let role of roleOptions">
               <label class="relative cursor-pointer">
@@ -108,12 +169,12 @@
                 <div
                   class="p-4 border border-subtle rounded-lg bg-surface peer-checked:border-primary peer-checked:bg-primary-fixed-dim/20 hover:border-outline transition-all flex flex-col items-center text-center gap-2"
                 >
-                  <span class="material-symbols-outlined text-primary text-[32px] mb-1">{{
-                    role.icon || 'person'
-                  }}</span>
-                  <span class="font-headline-md text-headline-md text-on-surface">{{
-                    role.label
-                  }}</span>
+                  <span class="material-symbols-outlined text-primary text-[32px] mb-1">
+                    {{ role.icon || 'person' }}
+                  </span>
+                  <span class="font-headline-md text-headline-md text-on-surface">
+                    {{ role.label }}
+                  </span>
                   <span class="font-body-md text-body-md text-on-surface-variant text-xs">
                     {{ role.description || 'Accès utilisateur' }}
                   </span>
@@ -124,9 +185,9 @@
         </div>
         <!-- Permissions Matrix -->
         <div class="space-y-4 pt-4 border-t border-subtle">
-          <label class="font-label-sm text-label-sm text-on-surface block"
-            >Permissions Spécifiques</label
-          >
+          <label class="font-label-sm text-label-sm text-on-surface block">
+            Permissions Spécifiques
+          </label>
           <div class="bg-surface rounded-lg border border-subtle overflow-hidden">
             <div
               class="flex items-center justify-between p-3 border-b border-subtle hover:bg-surface-container transition-colors"

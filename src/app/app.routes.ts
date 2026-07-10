@@ -132,7 +132,7 @@ export const routes: Routes = [
         canActivate: [AgentGuard],
       },
       {
-        path: 'trajet-manifeste',
+        path: 'trajet-manifeste/:id',
         loadComponent: () =>
           import('./pages/trajet-manifeste/trajet-manifeste.page').then(
             (m) => m.TrajetManifestePage,

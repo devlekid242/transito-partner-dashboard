@@ -150,7 +150,7 @@ export class TripSchedulePage implements OnInit {
   }
 
   viewTripDetails(trip: any): void {
-    this.router.navigate(['/ajout-trajet', trip.id]);
+    this.router.navigate(['/trajet-manifeste', trip.id]);
   }
 
   manageTrip(trip: any): void {
