@@ -195,7 +195,7 @@ export class PartnerApiService {
       trip: this.getTripDetails(tripId),
       tickets: this.http.get<any[]>(`${this.apiUrl}/tickets`, {
         params: new HttpParams().set('trip_id', String(tripId)),
-      }),
+      }).pipe(unwrapCollection<any>()),
     })
     .pipe(
       map(({ trip, tickets }) => {
