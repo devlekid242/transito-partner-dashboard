@@ -21,6 +21,7 @@
         [multiple]="field.multiple"
         class="w-full appearance-none px-4 py-2 bg-surface border border-border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
       >
+        <option [value]="">Aucun</option>
         <option *ngFor="let option of field.options" [value]="option.value">
           {{ option.label }}
         </option>
