@@ -8,6 +8,7 @@ import { AuthService } from '../../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { AlertService } from '../../services/alert.service';
 import { finalize } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -78,6 +79,7 @@ export class DashboardPage implements OnInit {
   tripColumns: TableColumn[] = [
     { key: 'id', title: 'Bus ID' },
     { key: 'route', title: 'Itinéraire' },
+    { key: 'date', title: 'Date' },
     { key: 'time', title: 'Heure' },
     { key: 'status', title: 'Statut' },
   ];
@@ -102,6 +104,7 @@ export class DashboardPage implements OnInit {
     private partnerApiService: PartnerApiService,
     public authService: AuthService,
     private alertService: AlertService,
+    private route: Router
   ) {}
 
   private beginLoading(): void {
@@ -228,7 +231,7 @@ export class DashboardPage implements OnInit {
         next: (trips: any[]) => {
           this.upcomingTripsSignal.set(
             trips.map((trip) => ({
-              id: trip.busNumber || trip.id,
+              id: trip?.bus?.registrationNumber || trip.id,
               route: `${
                 trip.departureCity ||
                 trip.boardingPoints?.[0]?.name ||
@@ -240,7 +243,8 @@ export class DashboardPage implements OnInit {
                 trip.arrivalPoint?.name ||
                 'N/A'
               }`,
-              time: trip.departureTime || trip.departure_time || 'N/A',
+              date: new Date(trip.departureTime).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })|| trip.departure_time || 'N/A',
+              time: new Date(trip.departureTime).toLocaleTimeString('fr-FR', { hour: '2-digit',  minute: '2-digit'}) || trip.departure_time || 'N/A',
               status: trip.status || 'Programmé',
             })),
           );
@@ -324,6 +328,10 @@ export class DashboardPage implements OnInit {
     if (hours < 24) return `il y a ${hours} heures`;
 
     return date.toLocaleDateString('fr-FR');
+  }
+
+  goTo(url : string): void {
+    this.route.navigate([url])
   }
 
   viewTripDetails(trip: any): void {

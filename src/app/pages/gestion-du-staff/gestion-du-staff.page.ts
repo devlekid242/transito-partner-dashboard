@@ -93,6 +93,9 @@ export class GestionDuStaffPage implements OnInit {
     { key: 'status', title: 'Status', sortable: true },
   ];
 
+    // Role distribution data
+  roleDistribution = signal([]);
+
   // Actions du tableau
   staffActions: TableAction[] = [
     {
@@ -161,7 +164,7 @@ export class GestionDuStaffPage implements OnInit {
               id: s.id,
               name: s.fullName ?? s.name ?? s.email,
               email: s.email,
-              role: s.role ?? s.roles?.[0] ?? 'Staff',
+              role: s.agentRole ?? s.roles?.[0] ?? 'Staff',
               status: s.status ?? 'Active',
               phone: s.phone ?? s.phoneNumber ?? '',
             })),
@@ -237,13 +240,6 @@ export class GestionDuStaffPage implements OnInit {
     console.log('Sort changed:', event);
     // Logique de tri à implémenter
   }
-
-  // Role distribution data
-  roleDistribution = signal([
-    { role: 'Admin', count: 2, percentage: 20 },
-    { role: 'Manager', count: 3, percentage: 30 },
-    { role: 'Staff', count: 5, percentage: 50 },
-  ]);
 
   getInitials(name: string): string {
     if (!name) return '';
