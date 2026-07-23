@@ -35,14 +35,29 @@
         <form
           class="bg-card-bg rounded-xl shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle p-6 md:p-8"
         >
-          <div class="mb-8 border-b border-border-subtle pb-4">
-            <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
-              <span class="material-symbols-outlined text-primary">storefront</span>
-              Informations du Point de Vente
-            </h2>
-            <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-              Détails principaux d'identification de la succursale.
-            </p>
+          <div
+            class="mb-8 border-b border-border-subtle pb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+          >
+            <div>
+              <h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">storefront</span>
+                Informations du Point de Vente
+              </h2>
+              <p class="font-body-md text-body-md text-on-surface-variant mt-1">
+                Détails principaux d'identification de la succursale.
+              </p>
+            </div>
+            <div class="flex gap-3">
+              <button
+                *ngIf="isEditMode"
+                type="button"
+                (click)="confirmDeletePoint()"
+                [disabled]="isSubmitting"
+                class="px-4 py-2 border border-danger-red text-danger-red rounded-lg font-label-sm text-label-sm hover:bg-danger-red/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Supprimer
+              </button>
+            </div>
           </div>
 
           <!-- Utilisation du composant FormComponent -->
@@ -55,7 +70,8 @@
           </div>
           <app-form
             [fields]="salesPointFormFields"
-            [submitLabel]="'Enregistrer le Point'"
+            [submitLabel]="isEditMode ? 'Mettre à jour' : 'Enregistrer le Point'"
+            [IsSubmit]="isSubmitting"
             (submit)="onFormSubmit($event)"
           >
           </app-form>
@@ -113,6 +129,21 @@
           </ul>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="isSubmitting"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <div
+      class="w-full max-w-sm rounded-3xl bg-surface p-6 text-center shadow-xl border border-border-subtle"
+    >
+      <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
+      <h2 class="mt-4 font-headline-md text-headline-md text-on-surface">Traitement en cours</h2>
+      <p class="mt-2 font-body-md text-body-md text-on-surface-variant">
+        Veuillez patienter pendant l'enregistrement du point.
+      </p>
     </div>
   </div>
 </main>

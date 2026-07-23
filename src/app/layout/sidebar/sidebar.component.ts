@@ -14,7 +14,7 @@ import { environment } from '../../../environments/environment';
 export class SidebarComponent implements OnInit {
   @Output() navigationClick = new EventEmitter<void>();
 
-  logoUrl: string = environment.baseApiUrl + '/assets/logo.png';
+  logoUrl: string = environment.baseApiUrl + '/assets/images/logo.png';
 
   constructor(
     public permissionService: PartnerPermissionService,
@@ -44,7 +44,6 @@ export class SidebarComponent implements OnInit {
   }
 
   onNavigation(): void {
-    // Émet un événement quand l'utilisateur clique sur une navigation
     this.navigationClick.emit();
   }
 }

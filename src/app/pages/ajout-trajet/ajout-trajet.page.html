@@ -17,8 +17,18 @@
       <app-form
         [fields]="tripFormFields"
         [submitLabel]="submitLabel"
+        [IsSubmit]="isSubmitting"
         (submit)="onFormSubmit($event)"
       ></app-form>
+      <button
+        *ngIf="selectedTripId"
+        type="button"
+        (click)="confirmDeleteTrip()"
+        [disabled]="isSubmitting"
+        class="mt-4 px-4 py-2 border border-danger-red text-danger-red rounded-lg font-label-sm text-label-sm hover:bg-danger-red/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        Supprimer le trajet
+      </button>
     </div>
 
     <div

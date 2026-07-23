@@ -142,7 +142,7 @@ export class RapportAnalysePage implements OnInit {
         if (stats) {
           this.metrics.set({
             revenue: {
-              value: stats.revenue ?? this.metrics().revenue.value,
+              value: stats.netRevenue ?? this.metrics().revenue.value,
               change: stats.revenueChange ?? this.metrics().revenue.change,
               period: stats.revenuePeriod ?? this.metrics().revenue.period,
             },

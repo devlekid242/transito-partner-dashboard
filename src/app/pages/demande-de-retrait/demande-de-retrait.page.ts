@@ -188,8 +188,8 @@ export class DemandeDeRetraitPage {
           bal.pending = `${(isNaN(pend) ? 0 : pend).toLocaleString('fr-FR')} XAF`;
           bal.pendingTransactions = stats.balance?.pendingTransactions ?? bal.pendingTransactions;
           this.balanceSignal.set(bal);
-          if (Array.isArray(stats.recentTransactions) && stats.recentTransactions.length) {
-            this.recentTransactionsSignal.set(stats.recentTransactions);
+          if (Array.isArray(stats.withdrawals) && stats.withdrawals.length) {
+            this.recentTransactionsSignal.set(stats.withdrawals);
           }
         }
       },

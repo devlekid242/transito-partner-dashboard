@@ -68,7 +68,11 @@ export class FormComponent implements OnInit, OnChanges {
       }
 
       const defaultValue =
-        field.type === 'select' && field.multiple ? (field.value ?? []) : (field.value ?? '');
+        field.type === 'select' && field.multiple
+          ? (field.value ?? [])
+          : field.type === 'checkbox'
+            ? (field.value ?? false)
+            : (field.value ?? '');
       controls[field.key] = this.fb.control(defaultValue, validators);
     });
 

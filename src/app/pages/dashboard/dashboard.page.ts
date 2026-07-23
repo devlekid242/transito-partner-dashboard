@@ -71,6 +71,10 @@ export class DashboardPage implements OnInit {
   private readonly recentActivitySignal = signal<any[]>([]);
   recentActivity = computed(() => this.recentActivitySignal());
 
+  // Recent bookings data
+  private readonly recentBookingsSignal = signal<any[]>([]);
+  recentBookings = computed(() => this.recentBookingsSignal());
+
   private readonly isLoadingSignal = signal<boolean>(false);
   isLoading = computed(() => this.isLoadingSignal());
 
@@ -94,6 +98,16 @@ export class DashboardPage implements OnInit {
       label: 'Modifier',
       action: (item) => this.editTrip(item),
     },
+  ];
+
+  bookingColumns: TableColumn[] = [
+    { key: 'id', title: 'Réservation' },
+    { key: 'passengerName', title: 'Passager' },
+    { key: 'route', title: 'Trajet' },
+    { key: 'paymentStatus', title: 'Paiement' },
+    { key: 'price', title: 'Montant' },
+    { key: 'createdAt', title: 'Date de Reservation' },
+
   ];
 
   private pendingLoadingRequests = 0;
@@ -124,6 +138,7 @@ export class DashboardPage implements OnInit {
 
     this.loadDashboardData();
     this.loadRecentActivity();
+    this.loadRecentBookings();
     this.updateRevenueChartData('30');
   }
 
@@ -200,7 +215,7 @@ export class DashboardPage implements OnInit {
         next: (stats: any) => {
           this.metricsSignal.set({
             revenue: {
-              value: this.formatCurrency(stats.revenue ?? 0),
+              value: stats.netRevenue || 0,
               currency: 'XAF',
               change: stats.revenueChange || '0%',
             },
@@ -228,7 +243,7 @@ export class DashboardPage implements OnInit {
         next: (trips: any[]) => {
           this.upcomingTripsSignal.set(
             trips.map((trip) => ({
-              id: trip.busNumber || trip.id,
+              id: trip.bus?.registrationNumber || trip.id,
               route: `${
                 trip.departureCity ||
                 trip.boardingPoints?.[0]?.name ||
@@ -240,7 +255,17 @@ export class DashboardPage implements OnInit {
                 trip.arrivalPoint?.name ||
                 'N/A'
               }`,
-              time: trip.departureTime || trip.departure_time || 'N/A',
+              time:
+                new Date(trip.departureTime).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }) ||
+                trip.departure_time ||
+                'N/A',
               status: trip.status || 'Programmé',
             })),
           );
@@ -272,6 +297,33 @@ export class DashboardPage implements OnInit {
         error: (error) => {
           console.error('Error loading notifications:', error);
           this.alertService.error("Erreur de chargement de l'activité récente");
+        },
+      });
+  }
+
+  loadRecentBookings() {
+    this.beginLoading();
+    this.partnerApiService
+      .getRecentBookings()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (bookings: any[]) => {
+          this.recentBookingsSignal.set(
+            (bookings ?? []).map((booking) => ({
+              id: booking.id,
+              passengerName: booking.passengerName || 'N/A',
+              route:
+                booking.route ||
+                `${booking.departureCity || 'N/A'} → ${booking.arrivalCity || 'N/A'}`,
+              price: booking.price ? this.formatCurrency(booking.price) : '0',
+              paymentStatus: booking.paymentStatus || 'N/A',
+              createdAt: new Date(booking.bookingDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', weekday: 'long'}) || booking.createdAt,
+            })),
+          );
+        },
+        error: (error) => {
+          console.error('Error loading recent bookings:', error);
+          this.alertService.error('Erreur de chargement des dernières réservations');
         },
       });
   }

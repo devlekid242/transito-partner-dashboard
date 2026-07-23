@@ -110,34 +110,41 @@ export class GestionFinancePage implements OnInit {
 
     this.beginLoading();
     // Load dynamic finance data
-    this.partnerApiService.getPartnerStats().pipe(
-      finalize(() => this.finishLoading())
-    ).subscribe({
-      next: (stats: any) => {
-        if (stats?.recentTransactions) {
-          this.transactions.set(stats.recentTransactions.map((t: any) => ({
-            date: t.createdAt ?? '',
-            type: t.description ?? 'Transaction',
-            amount: (t.amount
-              ? t.amount > 0
-                ? `+ ${t.amount}`
-                : `- ${Math.abs(t.amount)}`
-              : '') as any,
-            status: t.status ?? '',
-          })));
-    this.updateFilteredTransactions();
-  }
-        if (stats?.balance) {
-          this.financeBreakdownData.set([stats.balance.available ?? 0, stats.balance.pending ?? 0, 0]);
-          this.currentBalance.set(stats.totalRevenue ?? 0);
-          this.availableForPayout.set(stats.balance?.available ?? 0);
-}
-      },
-      error: (error) => {
-        console.error('Error loading partner stats:', error);
-        this.alertService.error('Erreur de chargement des statistiques financières');
-      },
-    });
+    this.partnerApiService
+      .getPartnerStats()
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (stats: any) => {
+          if (stats?.recentTransactions) {
+            this.transactions.set(
+              stats.recentTransactions.map((t: any) => ({
+                date: t.createdAt ?? '',
+                type: t.description ?? 'Transaction',
+                amount: (t.amount
+                  ? t.amount > 0
+                    ? `+ ${t.amount}`
+                    : `- ${Math.abs(t.amount)}`
+                  : '') as any,
+                status: t.status ?? '',
+              })),
+            );
+            this.updateFilteredTransactions();
+          }
+          if (stats?.balance) {
+            this.financeBreakdownData.set([
+              stats.balance.available ?? 0,
+              stats.balance.pending ?? 0,
+              stats.platformFees ?? 0,
+            ]);
+            this.currentBalance.set(stats.netRevenue ?? stats.revenue ?? 0);
+            this.availableForPayout.set(stats.balance?.available ?? 0);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading partner stats:', error);
+          this.alertService.error('Erreur de chargement des statistiques financières');
+        },
+      });
 
     // Load revenue timeseries for the last 30 days
     const today = new Date();
@@ -146,32 +153,32 @@ export class GestionFinancePage implements OnInit {
     const startStr = start.toISOString().slice(0, 10);
     const endStr = today.toISOString().slice(0, 10);
     this.beginLoading();
-    this.partnerApiService.getRevenue(startStr, endStr).pipe(
-      finalize(() => this.finishLoading())
-    ).subscribe({
-      next: (r: any) => {
-        if (r?.labels && r?.data) {
-          this.financeChartLabels.set(r.labels);
-          this.financeChartData.set(r.data);
-        }
-        if (r?.totalRevenue !== undefined) {
-          this.currentBalance.set(r.totalRevenue);
-        }
-      },
-      error: (error) => {
-        console.error('Error loading revenue data:', error);
-        this.alertService.error('Erreur de chargement du graphique financier');
-      },
-    });
+    this.partnerApiService
+      .getRevenue(startStr, endStr)
+      .pipe(finalize(() => this.finishLoading()))
+      .subscribe({
+        next: (r: any) => {
+          if (r?.labels && r?.data) {
+            this.financeChartLabels.set(r.labels);
+            this.financeChartData.set(r.data);
+          }
+        },
+        error: (error) => {
+          console.error('Error loading revenue data:', error);
+          this.alertService.error('Erreur de chargement du graphique financier');
+        },
+      });
   }
 
   private updateFilteredTransactions(): void {
     if (this.selectedTransactionType() === 'all') {
       this.filteredTransactions.set([...this.transactions()]);
     } else {
-      this.filteredTransactions.set(this.transactions().filter((transaction) =>
-        transaction.type.toLowerCase().includes(this.selectedTransactionType())
-      ));
+      this.filteredTransactions.set(
+        this.transactions().filter((transaction) =>
+          transaction.type.toLowerCase().includes(this.selectedTransactionType()),
+        ),
+      );
     }
   }
 
@@ -255,4 +262,3 @@ export class GestionFinancePage implements OnInit {
     this.updateFilteredTransactions();
   }
 }
-

@@ -43,7 +43,7 @@ export class RealtimeNotificationService {
     if (!user || user.id === undefined || user.id === null) {
       return null;
     }
-    return `private-user-${user.id}`;
+    return `private-agency-${user?.agent?.agency?.id}`;
   }
 
   private connectPusher(): void {

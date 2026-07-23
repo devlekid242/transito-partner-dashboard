@@ -8,6 +8,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BusPoint } from '../../models/partner.model';
 import { AlertService } from '../../services/alert.service';
 
+type AgencyPointPayload = Omit<BusPoint, 'isActive'> & {
+  isActive: number;
+  hasWifi?: number;
+  hasAc?: number;
+  hasVipLounge?: number;
+  hasParking?: number;
+};
+
 @Component({
   selector: 'app-ajout-point-embarquement',
   templateUrl: './ajout-point-embarquement.page.html',
@@ -61,6 +69,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
       type: 'number',
       required: false,
       placeholder: 'Ex: 4.0511',
+      step: 0.000001,
     },
     {
       key: 'longitude',
@@ -68,6 +77,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
       type: 'number',
       required: false,
       placeholder: 'Ex: 9.7679',
+      step: 0.000001,
     },
     {
       key: 'pointType',
@@ -82,6 +92,34 @@ export class AjoutPointEmbarquementPage implements OnInit {
       type: 'select',
       required: true,
       options: [],
+    },
+    {
+      key: 'hasWifi',
+      label: 'Wi-Fi disponible',
+      type: 'checkbox',
+      required: false,
+      value: false,
+    },
+    {
+      key: 'hasAc',
+      label: 'Climatisation',
+      type: 'checkbox',
+      required: false,
+      value: false,
+    },
+    {
+      key: 'hasVipLounge',
+      label: 'Salon VIP',
+      type: 'checkbox',
+      required: false,
+      value: false,
+    },
+    {
+      key: 'hasParking',
+      label: 'Parking disponible',
+      type: 'checkbox',
+      required: false,
+      value: false,
     },
   ];
 
@@ -125,6 +163,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
       if (id) {
         this.pointId = +id;
         this.isEditMode = true;
+        this.pageTitle = "Modifier le Point d'Embarquement";
         this.loadPointDetails();
       }
     });
@@ -138,10 +177,13 @@ export class AjoutPointEmbarquementPage implements OnInit {
     this.partnerApiService.getBusPointDetail(this.pointId).subscribe(
       (point: BusPoint) => {
         this.salesPointFormFields = this.salesPointFormFields.map((field) => {
+          const rawValue = point[field.key as keyof BusPoint];
           const value =
-            field.key === 'phoneNumber'
-              ? (point.phoneNumber ?? '')
-              : (point[field.key as keyof BusPoint] ?? '');
+            field.type === 'checkbox'
+              ? Boolean(rawValue)
+              : field.key === 'phoneNumber'
+                ? (rawValue ?? '')
+                : (rawValue ?? '');
           return {
             ...field,
             value,
@@ -162,7 +204,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
 
     this.isSubmitting = true;
 
-    const payload: Partial<BusPoint> = {
+    const payload: Partial<AgencyPointPayload> = {
       name: formData.name,
       city: formData.city,
       quartier: formData.quartier || undefined,
@@ -172,7 +214,11 @@ export class AjoutPointEmbarquementPage implements OnInit {
       longitude: formData.longitude ? Number(formData.longitude) : undefined,
       pointType: formData.pointType,
       status: formData.status,
-      isActive: formData.status === 'active',
+      isActive: formData.status === 'active' ? 1 : 0,
+      hasWifi: formData.hasWifi ? 1 : 0,
+      hasAc: formData.hasAc ? 1 : 0,
+      hasVipLounge: formData.hasVipLounge ? 1 : 0,
+      hasParking: formData.hasParking ? 1 : 0,
     };
 
     if (this.isEditMode && this.pointId) {
@@ -202,6 +248,39 @@ export class AjoutPointEmbarquementPage implements OnInit {
         },
       );
     }
+  }
+
+  confirmDeletePoint(): void {
+    if (!this.pointId || this.isSubmitting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer ce point d'embarquement ? Cette action est irréversible.",
+    );
+    if (confirmed) {
+      this.deletePoint();
+    }
+  }
+
+  deletePoint(): void {
+    if (!this.pointId) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.partnerApiService.deleteBusPoint(this.pointId).subscribe(
+      () => {
+        this.isSubmitting = false;
+        this.alertService.success('Point supprimé avec succès.');
+        this.router.navigate(['/gestion-point-embarquement']);
+      },
+      (error) => {
+        this.isSubmitting = false;
+        console.error('Erreur lors de la suppression du point :', error);
+        this.alertService.error('Impossible de supprimer le point.');
+      },
+    );
   }
 
   showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {

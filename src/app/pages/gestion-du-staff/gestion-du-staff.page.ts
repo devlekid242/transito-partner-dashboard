@@ -88,9 +88,9 @@ export class GestionDuStaffPage implements OnInit {
 
   // Colonnes du tableau
   staffColumns: TableColumn[] = [
-    { key: 'name', title: 'User', sortable: true },
-    { key: 'role', title: 'Role', sortable: true },
-    { key: 'status', title: 'Status', sortable: true },
+    { key: 'name', title: 'Utilisateur', sortable: true },
+    { key: 'agentRole', title: 'Roles', sortable: true },
+    { key: 'status', title: 'Statut', sortable: true },
   ];
 
   // Actions du tableau
@@ -164,6 +164,7 @@ export class GestionDuStaffPage implements OnInit {
               role: s.role ?? s.roles?.[0] ?? 'Staff',
               status: s.status ?? 'Active',
               phone: s.phone ?? s.phoneNumber ?? '',
+              agentRole: s.agentRole ?? 'Staff',
             })),
           );
         },
@@ -200,6 +201,7 @@ export class GestionDuStaffPage implements OnInit {
         role: 'Staff',
         status: 'Invited',
         phone: '',
+        agentRole: 'Staff',
       });
       this.isFormModalOpenSignal.set(true);
     });

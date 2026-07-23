@@ -39,6 +39,15 @@
           Annuler
         </button>
         <button
+          *ngIf="isEditMode"
+          type="button"
+          (click)="confirmDeleteBus()"
+          [disabled]="isSubmitting"
+          class="px-4 py-2 border border-danger-red text-danger-red bg-surface rounded-lg font-label-sm text-label-sm hover:bg-danger-red/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Supprimer
+        </button>
+        <button
           form="addEditForm"
           type="submit"
           [disabled]="isSubmitting || !busForm.valid"
@@ -415,4 +424,21 @@
       </div>
     </div>
   </form>
+
+  <div
+    *ngIf="isSubmitting"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+  >
+    <div
+      class="w-full max-w-sm rounded-3xl bg-surface p-6 text-center shadow-xl border border-border-subtle"
+    >
+      <span class="material-symbols-outlined text-5xl text-primary animate-spin">sync</span>
+      <h2 class="mt-4 font-headline-md text-headline-md text-on-surface">
+        Enregistrement en cours
+      </h2>
+      <p class="mt-2 font-body-md text-body-md text-on-surface-variant">
+        Merci de patienter pendant que nous enregistrons les informations du bus.
+      </p>
+    </div>
+  </div>
 </main>

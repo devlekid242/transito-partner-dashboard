@@ -552,7 +552,7 @@ export class PartnerApiService {
   }
 
   getRecentBookings(): Observable<any[]> {
-    return this.http.get<any>(`${this.apiUrl}/bookings/recent`).pipe(unwrapCollection<any>());
+    return this.http.get<any>(`${this.apiUrl}/agency/recent-bookings`).pipe(unwrapCollection<any>());
   }
 
   /**

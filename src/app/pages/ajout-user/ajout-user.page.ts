@@ -88,7 +88,7 @@ export class AjoutUserPage {
   ];
 
   // Selected role
-  selectedRole: 'agent_admin' | 'manager' | 'agent_quai' = 'agent_admin';
+  selectedRole: 'agent_admin' | 'agent_quai' = 'agent_admin';
 
   // Form model
   fullName = '';
@@ -157,14 +157,6 @@ export class AjoutUserPage {
       
     };
 
-    if (this.createAsAgent) {
-      payload.agent = {
-        agencyId: this.selectedAgencyId,
-        agentRole: this.agentRole,
-        status: 'active',
-      };
-    }
-
     this.partnerApiService.registerUser(payload).subscribe(
       (res) => {
         this.isSubmitting = false;
@@ -194,7 +186,7 @@ export class AjoutUserPage {
 
   setRole(role: string): void {
     const normalizedRole =
-      role === 'agent_admin' || role === 'manager' || role === 'agent_quai' ? role : 'agent_quai';
+      role === 'agent_admin' || role === 'agent_quai' ? role : 'agent_quai';
     this.selectedRole = normalizedRole;
     // Update permissions based on role
     this.updatePermissionsForRole(normalizedRole);
@@ -206,13 +198,6 @@ export class AjoutUserPage {
         this.permissions = {
           fleetManagement: true,
           financialAccess: true,
-          reportsAnalytics: true,
-        };
-        break;
-      case 'manager':
-        this.permissions = {
-          fleetManagement: true,
-          financialAccess: false,
           reportsAnalytics: true,
         };
         break;

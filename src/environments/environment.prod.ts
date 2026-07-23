@@ -10,7 +10,7 @@ export const environment = {
   pusherKey: 'YOUR_PUSHER_APP_KEY',
   pusherCluster: 'mt1',
   pusherUseTLS: true,
-  pusherAuthEndpoint: 'http://localhost:8000/api/user-notifications/pusher/auth',
+  pusherAuthEndpoint: 'http://localhost:8000/api/pusher/auth',
 };
 
 /*

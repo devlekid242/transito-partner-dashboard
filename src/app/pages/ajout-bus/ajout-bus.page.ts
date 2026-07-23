@@ -76,8 +76,8 @@ export class AjoutBusPage implements OnInit {
   private initializeForm(): void {
     this.busForm = this.fb.group({
       registrationNumber: ['', [Validators.required]],
-      brand: ['', [Validators.required]],
-      model: ['', [Validators.required]],
+      brand: [''],
+      model: [''],
       color: [''],
       capacity: ['', [Validators.required, Validators.min(1), Validators.max(100)]],
       category: ['Classique', [Validators.required]],
@@ -220,6 +220,39 @@ export class AjoutBusPage implements OnInit {
    */
   cancel(): void {
     this.router.navigate(['/gestion-flotte']);
+  }
+
+  confirmDeleteBus(): void {
+    if (!this.busId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Souhaitez-vous vraiment supprimer ce bus ? Cette action est irréversible.',
+    );
+    if (confirmed) {
+      this.deleteBus();
+    }
+  }
+
+  deleteBus(): void {
+    if (!this.busId || this.isSubmitting) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.partnerApiService.deleteBus(this.busId).subscribe(
+      () => {
+        this.isSubmitting = false;
+        this.alertService.success('Bus supprimé avec succès.');
+        this.router.navigate(['/gestion-flotte']);
+      },
+      (error) => {
+        this.isSubmitting = false;
+        console.error('Erreur lors de la suppression du bus :', error);
+        this.alertService.error('Impossible de supprimer le bus.');
+      },
+    );
   }
 
   /**

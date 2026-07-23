@@ -216,6 +216,20 @@
       </app-table>
     </div>
   </div>
+
+  <div
+    class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 mb-widget-gap"
+  >
+    <div
+      class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright mb-4"
+    >
+      <h3 class="font-headline-md text-headline-md text-on-surface">Réservations récentes</h3>
+      <button class="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">
+        Tout Voir
+      </button>
+    </div>
+    <app-table [data]="recentBookings()" [columns]="bookingColumns" [pageSize]="5"> </app-table>
+  </div>
 </main>
 
 <!-- Notification Component -->

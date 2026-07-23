@@ -15,114 +15,142 @@
       </p>
     </div>
   </div>
-  <ul class="flex-1 flex flex-col gap-2 overflow-y-auto">
-    <!-- Tableau de bord -->
-    <li *ngIf="permissionService.hasPermission('canViewDashboard')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/dashboard"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">dashboard</span>
-        Tableau de bord
-      </a>
-    </li>
+  <div class="flex-1 flex flex-col overflow-y-auto space-y-6">
+    <!-- Section Vue générale -->
+    <section class="space-y-3">
+      <div class="px-4">
+        <span
+          class="text-label-sm font-semibold uppercase tracking-[0.18em] text-on-surface-variant"
+        >
+          Vue générale
+        </span>
+      </div>
+      <ul class="flex flex-col gap-2">
+        <li *ngIf="permissionService.hasPermission('canViewDashboard')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/dashboard"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">dashboard</span>
+            Tableau de bord
+          </a>
+        </li>
+      </ul>
+    </section>
 
-    <!-- Gestion de la Flotte -->
-    <li *ngIf="permissionService.hasPermission('canManageFleet')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/gestion-flotte"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">directions_bus</span>
-        Gestion de la Flotte
-      </a>
-    </li>
+    <!-- Section Opérations -->
+    <section class="space-y-3">
+      <div class="px-4">
+        <span
+          class="text-label-sm font-semibold uppercase tracking-[0.18em] text-on-surface-variant"
+        >
+          Opérations
+        </span>
+      </div>
+      <ul class="flex flex-col gap-2">
+        <li *ngIf="permissionService.hasPermission('canManageFleet')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/gestion-flotte"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">directions_bus</span>
+            Gestion de la Flotte
+          </a>
+        </li>
+        <li *ngIf="permissionService.hasPermission('canAddPoint')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/gestion-point-embarquement"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">home</span>
+            Points d'embarquement
+          </a>
+        </li>
+        <li *ngIf="permissionService.hasPermission('canViewTrips')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/trip-schedule"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">route</span>
+            Planning des Trajets
+          </a>
+        </li>
+        <li *ngIf="permissionService.hasPermission('canManageFinance')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/gestion-finance"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">account_balance_wallet</span>
+            Gestion Financière
+          </a>
+        </li>
+      </ul>
+    </section>
 
-    <!-- Gestion point d'embarquement -->
-    <li *ngIf="permissionService.hasPermission('canAddPoint')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/gestion-point-embarquement"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">home</span>
-        Gestion point d'embarquement
-      </a>
-    </li>
+    <!-- Section Administration -->
+    <section class="space-y-3">
+      <div class="px-4">
+        <span
+          class="text-label-sm font-semibold uppercase tracking-[0.18em] text-on-surface-variant"
+        >
+          Administration
+        </span>
+      </div>
+      <ul class="flex flex-col gap-2">
+        <li *ngIf="permissionService.hasPermission('canManageStaff')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/gestion-du-staff"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">badge</span>
+            Gestion du Personnel
+          </a>
+        </li>
+        <li *ngIf="permissionService.hasPermission('canViewReports')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/rapport-analyse"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">analytics</span>
+            Rapports &amp; Analyses
+          </a>
+        </li>
+        <li *ngIf="permissionService.hasPermission('canViewProfile')">
+          <a
+            class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
+            routerLink="/profil-agence"
+            routerLinkActive="bg-primary-container text-on-primary-container"
+            (click)="onNavigation()"
+          >
+            <span class="material-symbols-outlined">settings</span>
+            Profil Agence
+          </a>
+        </li>
+      </ul>
+    </section>
+  </div>
 
-    <!-- Planning des Trajets -->
-    <li *ngIf="permissionService.hasPermission('canViewTrips')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/trip-schedule"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">route</span>
-        Planning des Trajets
-      </a>
-    </li>
-
-    <!-- Gestion Financière -->
-    <li *ngIf="permissionService.hasPermission('canManageFinance')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/gestion-finance"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">account_balance_wallet</span>
-        Gestion Financière
-      </a>
-    </li>
-
-    <!-- Gestion du Personnel -->
-    <li *ngIf="permissionService.hasPermission('canManageStaff')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/gestion-du-staff"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">badge</span>
-        Gestion du Personnel
-      </a>
-    </li>
-
-    <!-- Rapports & Analyses -->
-    <li *ngIf="permissionService.hasPermission('canViewReports')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/rapport-analyse"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">analytics</span>
-        Rapports &amp; Analyses
-      </a>
-    </li>
-
-    <!-- Profil agence -->
-    <li *ngIf="permissionService.hasPermission('canViewProfile')">
-      <a
-        class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
-        routerLink="/profil-agence"
-        routerLinkActive="bg-primary-container text-on-primary-container"
-        (click)="onNavigation()"
-      >
-        <span class="material-symbols-outlined">settings</span>
-        Profil agence
-      </a>
-    </li>
-  </ul>
-  <div class="mt-auto border-t border-border-subtle pt-4">
+  <div class="mt-6 border-t border-border-subtle pt-4">
+    <div class="px-4 mb-3">
+      <span class="text-label-sm font-semibold uppercase tracking-[0.18em] text-on-surface-variant">
+        Assistance
+      </span>
+    </div>
     <ul class="flex flex-col gap-2">
-      <!-- Support -->
       <li>
         <a
           class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"
@@ -134,7 +162,6 @@
           Support
         </a>
       </li>
-      <!-- Déconnexion -->
       <li>
         <a
           class="flex items-center gap-3 px-4 py-3 rounded-lg font-label-sm text-label-sm uppercase tracking-wider active:scale-95 transform transition-transform cursor-pointer active:opacity-80 hover:bg-primary-container/90 transition-all duration-200"

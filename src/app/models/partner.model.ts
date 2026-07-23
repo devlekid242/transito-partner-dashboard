@@ -97,7 +97,7 @@ export interface BusPoint {
   longitude?: number;
   pointType?: 'principal' | 'premium' | 'express' | 'crossborder';
   status: 'active' | 'inactive';
-  isActive: boolean;
+  isActive: number;
   hasVipLounge?: number;
   hasWifi?: number;
   hasAc?: number;

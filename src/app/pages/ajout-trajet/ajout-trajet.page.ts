@@ -89,6 +89,15 @@ export class AjoutTrajetPage implements OnInit {
       placeholder: 'Ex: Jean Michel',
     },
     {
+      key: 'seatsReserved',
+      label: 'Places Réservées',
+      type: 'number',
+      required: false,
+      placeholder: '0',
+      min: 0,
+      step: 1,
+    },
+    {
       key: 'status',
       label: 'Statut du Trajet',
       type: 'select',
@@ -186,6 +195,7 @@ export class AjoutTrajetPage implements OnInit {
             busId: tripData.bus?.id,
             price: tripData.price,
             driverName: tripData.driverName || '',
+            seatsReserved: tripData.seatsReserved ?? 0,
             status: tripData.status || 'planifie',
           };
           return {
@@ -224,6 +234,7 @@ export class AjoutTrajetPage implements OnInit {
       arrivalTimeOfDay: formData.arrivalTimeOfDay || null,
       price: Number(formData.price),
       driverName: formData.driverName || null,
+      seatsReserved: formData.seatsReserved ? Number(formData.seatsReserved) : 0,
       status: formData.status,
     };
 
@@ -241,6 +252,39 @@ export class AjoutTrajetPage implements OnInit {
         this.isSubmitting = false;
         console.error('Error saving trip', error);
         this.alertService.error("Erreur lors de l'enregistrement du trajet.");
+      },
+    );
+  }
+
+  confirmDeleteTrip(): void {
+    if (!this.selectedTripId || this.isSubmitting) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      'Souhaitez-vous vraiment supprimer ce trajet ? Cette action est irréversible.',
+    );
+    if (confirmed) {
+      this.deleteTrip();
+    }
+  }
+
+  deleteTrip(): void {
+    if (!this.selectedTripId) {
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.partnerApiService.deleteTrip(this.selectedTripId).subscribe(
+      () => {
+        this.isSubmitting = false;
+        this.alertService.success('Trajet supprimé avec succès.');
+        this.router.navigate(['/trip-schedule']);
+      },
+      (error) => {
+        this.isSubmitting = false;
+        console.error('Erreur lors de la suppression du trajet :', error);
+        this.alertService.error('Impossible de supprimer le trajet.');
       },
     );
   }
