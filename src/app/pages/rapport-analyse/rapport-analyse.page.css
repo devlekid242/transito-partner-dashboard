@@ -1,1 +1,27 @@
-/* Styles spécifiques pour la page Rapport Analyse */
+.hero-card {
+  background: linear-gradient(135deg, rgba(56, 128, 255, 0.08), rgba(255, 255, 255, 0.95));
+}
+
+.hero-summary {
+  gap: 0.75rem;
+}
+
+.text-success-green {
+  color: #16a34a;
+}
+
+.text-warning-gold {
+  color: #d97706;
+}
+
+.text-danger-red {
+  color: #dc2626;
+}
+
+.text-outline {
+  color: #64748b;
+}
+
+.text-on-surface {
+  color: #0f172a;
+}

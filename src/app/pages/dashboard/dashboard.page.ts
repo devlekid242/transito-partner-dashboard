@@ -106,7 +106,8 @@ export class DashboardPage implements OnInit {
     { key: 'id', title: 'Réservation' },
     { key: 'passengerName', title: 'Passager' },
     { key: 'route', title: 'Trajet' },
-    { key: 'paymentStatus', title: 'Paiement' },
+    { key: 'ticketStatus', title: 'Status du Billet' },
+    { key: 'paymentStatus', title: 'Status du Paiement' },
     { key: 'price', title: 'Montant' },
     { key: 'createdAt', title: 'Date de Reservation' },
 
@@ -246,11 +247,7 @@ export class DashboardPage implements OnInit {
         next: (trips: any[]) => {
           this.upcomingTripsSignal.set(
             trips.map((trip) => ({
-<<<<<<< HEAD
               id: trip.bus?.registrationNumber || trip.id,
-=======
-              id: trip?.bus?.registrationNumber || trip.id,
->>>>>>> c4f5e0eb019d2a3c7a5e9b5721b0c61c530dbe26
               route: `${
                 trip.departureCity ||
                 trip.boardingPoints?.[0]?.name ||
@@ -262,7 +259,6 @@ export class DashboardPage implements OnInit {
                 trip.arrivalPoint?.name ||
                 'N/A'
               }`,
-<<<<<<< HEAD
               time:
                 new Date(trip.departureTime).toLocaleDateString('fr-FR', {
                   weekday: 'long',
@@ -274,10 +270,6 @@ export class DashboardPage implements OnInit {
                 }) ||
                 trip.departure_time ||
                 'N/A',
-=======
-              date: new Date(trip.departureTime).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })|| trip.departure_time || 'N/A',
-              time: new Date(trip.departureTime).toLocaleTimeString('fr-FR', { hour: '2-digit',  minute: '2-digit'}) || trip.departure_time || 'N/A',
->>>>>>> c4f5e0eb019d2a3c7a5e9b5721b0c61c530dbe26
               status: trip.status || 'Programmé',
             })),
           );
@@ -329,6 +321,7 @@ export class DashboardPage implements OnInit {
                 `${booking.departureCity || 'N/A'} → ${booking.arrivalCity || 'N/A'}`,
               price: booking.price ? this.formatCurrency(booking.price) : '0',
               paymentStatus: booking.paymentStatus || 'N/A',
+              ticketStatus: booking.ticketStatus || 'N/A',
               createdAt: new Date(booking.bookingDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', weekday: 'long'}) || booking.createdAt,
             })),
           );

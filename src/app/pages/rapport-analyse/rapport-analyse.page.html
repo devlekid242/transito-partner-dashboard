@@ -10,15 +10,19 @@
   </div>
 </div>
 
-<main *ngIf="!isLoading()" class="flex-1 h-full overflow-y-auto bg-surface-bg p-4 md:p-container-margin">
-  <!-- Header & Filters -->
+<main
+  *ngIf="!isLoading()"
+  class="flex-1 h-full overflow-y-auto bg-surface-bg p-4 md:p-container-margin"
+>
   <div
     class="mb-widget-gap flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4"
   >
     <div>
-      <h1 class="text-headline-lg font-headline-lg text-on-surface">Rapports &amp; Analyses</h1>
+      <h1 class="text-headline-lg font-headline-lg text-on-surface">
+        Analyse financière & opérationnelle
+      </h1>
       <p class="text-body-md font-body-md text-outline">
-        Analyse des performances de la flotte et données financières.
+        Vue d’ensemble alimentée par la réponse de l’API et adaptée aux indicateurs reçus.
       </p>
     </div>
     <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
@@ -70,142 +74,280 @@
       </button>
     </div>
   </div>
-  <!-- Key Metrics (Bento Grid Style) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-widget-gap mb-widget-gap">
-    <!-- Metric 1 -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+
+  <div class="grid grid-cols-1 xl:grid-cols-[1.4fr_0.9fr] gap-widget-gap mb-widget-gap">
+    <section
+      class="hero-card rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
     >
-      <div class="flex justify-between items-start">
-        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
-          >Revenu Total</span
+      <div class="flex flex-col gap-4 md:flex-row md:justify-between md:items-start">
+        <div>
+          <p class="text-label-sm font-label-sm uppercase tracking-[0.24em] text-primary">
+            Vue d’ensemble
+          </p>
+          <h2 class="text-headline-lg font-headline-lg text-on-surface mt-2">
+            Performance financière en temps réel
+          </h2>
+          <p class="text-body-md font-body-md text-outline mt-2">
+            Les indicateurs ci-dessous reflètent directement les données envoyées par l’API.
+          </p>
+        </div>
+        <div
+          class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-2 text-label-sm font-label-sm text-primary"
         >
-        <span class="material-symbols-outlined text-outline">payments</span>
-      </div>
-      <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics().revenue.value }}
-        </div>
-        <div class="flex items-center gap-1 mt-1 text-success-green">
-          <span class="material-symbols-outlined text-[16px]">trending_up</span>
-          <span class="text-label-sm font-label-sm">{{ metrics().revenue.change }}</span>
+          <span class="material-symbols-outlined text-[16px]">sync</span>
+          Données synchronisées
         </div>
       </div>
-    </div>
-    <!-- Metric 2 -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
+      <div class="hero-summary mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="rounded-xl border border-border-subtle bg-surface-bright p-4">
+          <p class="text-label-sm text-outline">Revenu net</p>
+          <p class="text-headline-md font-headline-md text-on-surface mt-1">
+            {{ kpiCards()[0]?.value || 0 }}
+          </p>
+          <p class="text-label-sm text-success-green mt-1">{{ kpiCards()[0]?.subtitle }}</p>
+        </div>
+        <div class="rounded-xl border border-border-subtle bg-surface-bright p-4">
+          <p class="text-label-sm text-outline">Solde disponible</p>
+          <p class="text-headline-md font-headline-md text-on-surface mt-1">
+            {{ balanceSummary()[0]?.value }}
+          </p>
+          <p class="text-label-sm text-outline mt-1">{{ balanceSummary()[0]?.subtitle }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
     >
-      <div class="flex justify-between items-start">
-        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
-          >Trajets Complétés</span
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-label-sm font-label-sm uppercase tracking-[0.24em] text-outline">
+            Répartition
+          </p>
+          <h3 class="text-headline-md font-headline-md text-on-surface mt-1">
+            Statuts des réservations
+          </h3>
+        </div>
+        <span class="material-symbols-outlined text-outline">inventory_2</span>
+      </div>
+      <div class="mt-4 space-y-3">
+        <div
+          *ngFor="let item of statusSummary()"
+          class="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-bright px-3 py-3"
         >
-        <span class="material-symbols-outlined text-outline">route</span>
-      </div>
-      <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics().trips.value }}
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-[18px]" [ngClass]="item.color">{{
+              item.icon
+            }}</span>
+            <span class="text-body-md font-body-md text-on-surface">{{ item.label }}</span>
+          </div>
+          <span class="text-label-sm font-label-sm text-outline">{{ item.value }}</span>
         </div>
-        <div class="flex items-center gap-1 mt-1 text-success-green">
-          <span class="material-symbols-outlined text-[16px]">trending_up</span>
-          <span class="text-label-sm font-label-sm">{{ metrics().trips.change }}</span>
-        </div>
-      </div>
-    </div>
-    <!-- Metric 3 -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
-          >Taux de Remplissage</span
+        <div
+          *ngIf="!statusSummary().length"
+          class="rounded-xl border border-dashed border-border-subtle p-4 text-center text-outline"
         >
-        <span class="material-symbols-outlined text-outline">groups</span>
-      </div>
-      <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics().occupancy.value }}
-        </div>
-        <div class="flex items-center gap-1 mt-1 text-danger-red">
-          <span class="material-symbols-outlined text-[16px]">trending_down</span>
-          <span class="text-label-sm font-label-sm">{{ metrics().occupancy.change }}</span>
+          Aucune réservation n’a encore été réceptionnée.
         </div>
       </div>
-    </div>
-    <!-- Metric 4 -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col justify-between h-32 transition-shadow"
-    >
-      <div class="flex justify-between items-start">
-        <span class="text-label-sm font-label-sm text-outline uppercase tracking-wider"
-          >Incidents signalés</span
-        >
-        <span class="material-symbols-outlined text-outline">warning</span>
-      </div>
-      <div>
-        <div class="text-stats-metric font-stats-metric text-on-surface">
-          {{ metrics().incidents.value }}
-        </div>
-        <div class="flex items-center gap-1 mt-1 text-outline">
-          <span class="material-symbols-outlined text-[16px]">horizontal_rule</span>
-          <span class="text-label-sm font-label-sm">{{ metrics().incidents.change }}</span>
-        </div>
-      </div>
-    </div>
+    </section>
   </div>
-  <!-- Charts Area (Asymmetric Layout) -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap mb-widget-gap">
-    <!-- Main Chart (Takes 2/3 width) -->
-    <div
-      class="lg:col-span-2 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col transition-shadow"
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-widget-gap mb-widget-gap">
+    <article
+      *ngFor="let card of kpiCards()"
+      class="rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm flex flex-col gap-3"
     >
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-headline-md font-headline-md text-on-surface">
-          Performance des Trajets &amp; Revenus
-        </h3>
-        <button class="text-outline hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">more_vert</span>
-        </button>
+      <div class="flex items-start justify-between">
+        <span class="text-label-sm font-label-sm uppercase tracking-wider text-outline">{{
+          card.title
+        }}</span>
+        <span
+          class="material-symbols-outlined text-[20px]"
+          [ngClass]="
+            card.tone === 'positive'
+              ? 'text-success-green'
+              : card.tone === 'warning'
+                ? 'text-warning-gold'
+                : card.tone === 'danger'
+                  ? 'text-danger-red'
+                  : 'text-outline'
+          "
+          >{{ card.icon }}</span
+        >
       </div>
-      <div class="flex-1 min-h-[300px] relative">
+      <div class="text-stats-metric font-stats-metric text-on-surface">{{ card.value }}</div>
+      <p class="text-label-sm font-label-sm text-outline">{{ card.subtitle }}</p>
+    </article>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap mb-widget-gap">
+    <section
+      class="xl:col-span-2 rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-label-sm font-label-sm uppercase tracking-[0.24em] text-outline">
+            Évolution
+          </p>
+          <h3 class="text-headline-md font-headline-md text-on-surface">Revenus et performance</h3>
+        </div>
+        <span class="rounded-full bg-primary/10 px-3 py-1 text-label-sm font-label-sm text-primary"
+          >Légende FR</span
+        >
+      </div>
+      <div class="min-h-[320px]">
         <app-revenue-chart
           [chartType]="reportChartType()"
-          [chartTitle]="'Analyse des Rapports'"
+          [chartTitle]="'Évolution des revenus'"
           [labels]="reportChartLabels()"
           [dataPoints]="reportChartData()"
+          [datasetLabel]="'Revenu net'"
           [chartOptions]="reportChartOptions()"
         ></app-revenue-chart>
       </div>
-    </div>
-    <!-- Secondary Chart (Takes 1/3 width) -->
-    <div
-      class="lg:col-span-1 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle flex flex-col transition-shadow"
+    </section>
+
+    <section
+      class="rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
     >
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-headline-md font-headline-md text-on-surface">Charges de Passagers</h3>
-        <button class="text-outline hover:text-primary transition-colors">
-          <span class="material-symbols-outlined">more_vert</span>
-        </button>
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <p class="text-label-sm font-label-sm uppercase tracking-[0.24em] text-outline">
+            Répartition
+          </p>
+          <h3 class="text-headline-md font-headline-md text-on-surface">Réservations par statut</h3>
+        </div>
+        <span class="material-symbols-outlined text-outline">analytics</span>
       </div>
-      <div class="flex-1 min-h-[300px] relative flex justify-center items-center">
+      <div class="min-h-[320px]">
         <app-revenue-chart
           [chartType]="reportBreakdownChartType()"
-          [chartTitle]="'Synthèse Rapports'"
+          [chartTitle]="'Répartition des réservations'"
           [labels]="reportBreakdownLabels()"
           [dataPoints]="reportBreakdownData()"
-          [chartOptions]="reportChartOptions()"
+          [datasetLabel]="'Réservations'"
+          [chartOptions]="reportBreakdownChartOptions()"
         ></app-revenue-chart>
       </div>
-    </div>
+    </section>
   </div>
-  <!-- Saved Reports & Data Table -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap pb-8">
-    <!-- Saved Reports List -->
-    <div
-      class="lg:col-span-1 bg-card-bg rounded-xl p-standard-padding shadow-sm border border-border-subtle transition-shadow"
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap pb-8">
+    <section
+      class="rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
     >
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-headline-md font-headline-md text-on-surface">Rapports Sauvegardés</h3>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Soldes &amp; retraits</h3>
+        <span class="material-symbols-outlined text-outline">account_balance_wallet</span>
+      </div>
+      <div class="grid grid-cols-1 gap-3">
+        <div
+          *ngFor="let item of balanceSummary()"
+          class="rounded-xl border border-border-subtle bg-surface-bright p-4"
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-label-sm font-label-sm text-outline">{{ item.label }}</span>
+            <span
+              class="material-symbols-outlined text-[18px]"
+              [ngClass]="
+                item.tone === 'positive'
+                  ? 'text-success-green'
+                  : item.tone === 'warning'
+                    ? 'text-warning-gold'
+                    : item.tone === 'danger'
+                      ? 'text-danger-red'
+                      : 'text-outline'
+              "
+              >wallet</span
+            >
+          </div>
+          <p class="text-headline-sm font-headline-sm text-on-surface mt-2">{{ item.value }}</p>
+          <p class="text-label-sm font-label-sm text-outline mt-1">{{ item.subtitle }}</p>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <h4 class="text-label-sm font-label-sm uppercase tracking-wider text-outline">
+          Demandes de retrait
+        </h4>
+        <div *ngIf="withdrawals().length; else noWithdrawals" class="mt-3 space-y-2">
+          <div
+            *ngFor="let withdrawal of withdrawals()"
+            class="flex items-center justify-between rounded-xl border border-border-subtle bg-surface-bright px-3 py-3"
+          >
+            <div>
+              <p class="text-body-md font-body-md text-on-surface">Retrait #{{ withdrawal.id }}</p>
+              <p class="text-label-sm font-label-sm text-outline">{{ withdrawal.method }}</p>
+            </div>
+            <div class="text-right">
+              <p class="text-body-md font-body-md text-on-surface">
+                {{ formatCurrency(withdrawal.amount) }}
+              </p>
+              <p class="text-label-sm font-label-sm text-outline">{{ withdrawal.status }}</p>
+            </div>
+          </div>
+        </div>
+        <ng-template #noWithdrawals>
+          <div
+            class="mt-3 rounded-xl border border-dashed border-border-subtle p-4 text-center text-outline"
+          >
+            Aucune demande de retrait n’est en cours.
+          </div>
+        </ng-template>
+      </div>
+    </section>
+
+    <section
+      class="xl:col-span-2 rounded-2xl border border-border-subtle bg-card-bg shadow-sm overflow-hidden"
+    >
+      <div class="p-standard-padding border-b border-border-subtle bg-surface-bright">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Transactions récentes</h3>
+      </div>
+      <app-table
+        [data]="recentActivity()"
+        [columns]="transactionColumns()"
+        [actions]="transactionActions()"
+        [pageSize]="5"
+      >
+        <ng-template #customCell let-item let-column="column">
+          <div
+            *ngIf="column.key === 'amount'"
+            class="p-3 font-body-md font-semibold text-on-surface"
+          >
+            {{ formatCurrency(item.amount) }}
+          </div>
+          <div *ngIf="column.key === 'status'" class="p-3">
+            <span
+              class="inline-flex items-center rounded-full px-2 py-1 text-label-sm font-label-sm"
+              [ngClass]="
+                getTransactionStatusClass(item.status) === 'badge-success'
+                  ? 'bg-success-green/10 text-success-green'
+                  : getTransactionStatusClass(item.status) === 'badge-warning'
+                    ? 'bg-warning-gold/10 text-warning-gold'
+                    : 'bg-surface-container text-outline'
+              "
+            >
+              {{ item.status }}
+            </span>
+          </div>
+          <div *ngIf="column.key === 'createdAt'" class="p-3 font-body-md text-outline">
+            {{ formatDate(item.createdAt) }}
+          </div>
+          <div *ngIf="column.key === 'description'" class="p-3 font-body-md text-on-surface">
+            {{ item.description }}
+          </div>
+        </ng-template>
+      </app-table>
+    </section>
+  </div>
+
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-widget-gap pb-8">
+    <section
+      class="rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Rapports sauvegardés</h3>
         <button
           class="text-primary hover:text-primary-fixed-variant transition-colors p-1"
           type="button"
@@ -222,111 +364,55 @@
       >
         <ng-template #customCell let-item let-column="column">
           <div *ngIf="column.key === 'type'" class="p-3 font-body-md text-body-md">
-            {{
-              reportCategoryOptions().find((option) => option.value === item.type)?.label || item.type
-            }}
+            {{ getReportTypeLabel(item.type) }}
           </div>
-          <div *ngIf="column.key !== 'type'" class="p-3 font-body-md text-body-md">
-            {{ item[column.key] }}
-          </div>
-        </ng-template>
-      </app-table>
-    </div>
-    <!-- Recent Data Table -->
-    <div
-      class="lg:col-span-2 bg-card-bg rounded-xl shadow-sm border border-border-subtle overflow-hidden flex flex-col transition-shadow"
-    >
-      <div
-        class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright"
-      >
-        <h3 class="text-headline-md font-headline-md text-on-surface">Activité Récente</h3>
-        <a class="text-label-sm font-label-sm text-primary hover:underline" href="#">Voir tout</a>
-      </div>
-
-      <!-- Utilisation du composant TableComponent -->
-      <app-table
-        [data]="recentActivity()"
-        [columns]="activityColumns()"
-        [actions]="activityActions()"
-        [pageSize]="5"
-      >
-        <ng-template #customCell let-item let-column="column">
-          <!-- Cellule personnalisée pour le statut -->
-          <div *ngIf="column.key === 'status'" class="p-3 text-center">
+          <div *ngIf="column.key === 'status'" class="p-3">
             <span
-              [ngClass]="{
-                'bg-success-green/10 text-success-green': item.status === 'Terminé',
-                'bg-warning-gold/10 text-tertiary-container': item.status === 'En cours',
-                'bg-danger-red/10 text-danger-red': item.status === 'Annulé',
-              }"
-              class="inline-flex items-center px-2 py-1 rounded-full bg-success-green/10 text-success-green text-label-sm font-label-sm"
+              class="rounded-full bg-primary/10 px-2 py-1 text-label-sm font-label-sm text-primary"
+              >{{ item.status }}</span
             >
-              {{ item.status }}
-            </span>
           </div>
-
-          <!-- Cellule par défaut pour les autres colonnes -->
-          <div *ngIf="column.key !== 'status'" class="p-3 font-body-md text-body-md">
+          <div
+            *ngIf="column.key !== 'type' && column.key !== 'status'"
+            class="p-3 font-body-md text-body-md"
+          >
             {{ item[column.key] }}
           </div>
         </ng-template>
       </app-table>
-    </div>
+    </section>
+
+    <section
+      class="xl:col-span-2 rounded-2xl border border-border-subtle bg-card-bg p-standard-padding shadow-sm"
+    >
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-headline-md font-headline-md text-on-surface">Résumé opérationnel</h3>
+        <span class="rounded-full bg-primary/10 px-3 py-1 text-label-sm font-label-sm text-primary"
+          >API</span
+        >
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="rounded-xl border border-border-subtle bg-surface-bright p-4">
+          <p class="text-label-sm font-label-sm uppercase tracking-wider text-outline">Passagers</p>
+          <p class="text-headline-md font-headline-md text-on-surface mt-2">
+            {{ formatNumber(kpiCards()[3]?.value || 0) }}
+          </p>
+          <p class="text-label-sm font-label-sm text-outline mt-1">Passagers actifs et total</p>
+        </div>
+        <div class="rounded-xl border border-border-subtle bg-surface-bright p-4">
+          <p class="text-label-sm font-label-sm uppercase tracking-wider text-outline">
+            Embarquement
+          </p>
+          <p class="text-headline-md font-headline-md text-on-surface mt-2">
+            {{ formatPercent(kpiCards()[4]?.value || 0) }}
+          </p>
+          <p class="text-label-sm font-label-sm text-outline mt-1">Taux renseigné par l’API</p>
+        </div>
+      </div>
+    </section>
   </div>
 </main>
 
-<!-- Modal pour les détails de l'activité -->
-<app-modal
-  [isOpen]="isModalOpen()"
-  [title]="'Détails de l\'Activité'"
-  [size]="'md'"
-  (close)="closeModal()"
->
-  <div *ngIf="selectedActivity()" class="space-y-4">
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">ID Trajet</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity().id }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Route</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity().route }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Date</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity().date }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Statut</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedActivity().status }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Revenu</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold font-mono-data">
-          {{ selectedActivity().revenue }}
-        </p>
-      </div>
-    </div>
-    <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
-      <button
-        class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"
-        (click)="closeModal()"
-      >
-        Fermer
-      </button>
-    </div>
-  </div>
-</app-modal>
-
-<!-- Notification Component -->
 <app-notification
   [show]="showNotification()"
   [type]="notificationType()"
@@ -334,4 +420,3 @@
   [duration]="5000"
 >
 </app-notification>
-

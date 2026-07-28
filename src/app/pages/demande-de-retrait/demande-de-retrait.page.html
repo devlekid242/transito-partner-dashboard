@@ -1,5 +1,17 @@
+<div
+  *ngIf="isLoading()"
+  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
+>
+  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+    <div
+      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
+    ></div>
+    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+  </div>
+</div>
+
 <!-- Main Canvas -->
-<main class="flex-1 p-4 p-container-margin max-w-desktop-max-width mx-auto w-full relative">
+<main *ngIf="!isLoading()" class="flex-1 p-4 p-container-margin max-w-desktop-max-width mx-auto w-full relative">
   <!-- Header Section -->
   <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
     <div>
@@ -31,7 +43,7 @@
   <div class="grid grid-cols-1 md:grid-cols-12 gap-widget-gap mb-8">
     <!-- Main Balance Card (Spans 8 cols on desktop) -->
     <div
-      class="md:col-span-8 bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle relative overflow-hidden"
+      class="md:col-span-4 bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle relative overflow-hidden"
     >
       <div class="absolute top-0 right-0 p-4 opacity-10">
         <span class="material-symbols-outlined text-6xl">account_balance</span>
@@ -44,7 +56,6 @@
           class="font-display-lg text-display-lg text-on-surface font-mono-data tracking-tight"
           >{{ balance().available }}</span
         >
-        <span class="font-headline-md text-headline-md text-on-surface-variant mb-1">XAF</span>
       </div>
       <div class="flex items-center gap-2 font-label-sm text-label-sm">
         <span class="flex items-center text-success-green bg-success-green/10 px-2 py-1 rounded">
@@ -52,6 +63,28 @@
           +8.4%
         </span>
         <span class="text-on-surface-variant">vs mois précédent</span>
+      </div>
+    </div>
+    <div
+      class="md:col-span-4 bg-card-bg rounded-xl p-6 shadow-sm border border-border-subtle relative overflow-hidden"
+    >
+      <div class="absolute top-0 right-0 p-4 opacity-10">
+        <span class="material-symbols-outlined text-6xl text-red-300">account_balance</span>
+      </div>
+      <h3 class="font-label-sm text-label-sm text-on-surface-variant mb-2 uppercase tracking-wider">
+        Solde Bloqué pour remboursement
+      </h3>
+      <div class="flex items-end gap-4 mb-4">
+        <span
+          class="font-display-lg text-display-lg text-on-surface font-mono-data tracking-tight"
+          >{{ balance().atRisk }}</span
+        >
+      </div>
+      <div class="flex items-center gap-2 font-label-sm text-label-sm">
+        <span class="text-on-surface-variant">Solde total retirable</span>
+        <span class="flex items-center text-success-green bg-success-green/10 px-2 py-1 rounded">
+          {{ TotalWithdrawals() }} XAF
+        </span>
       </div>
     </div>
     <!-- Pending Payouts Card (Spans 4 cols on desktop) -->

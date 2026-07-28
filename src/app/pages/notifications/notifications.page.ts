@@ -61,7 +61,7 @@ export class NotificationsPage implements OnInit {
       return notifs.filter((n) => !n.isRead);
     } else {
       const categoryMap: Record<string, string> = {
-        operations: 'TICKET',
+        operations: 'TICKET' as any | 'BOOKING' as any,
         finances: 'PAYMENT',
         system: 'INFO',
       };
@@ -80,14 +80,14 @@ export class NotificationsPage implements OnInit {
 
   // Actions du tableau
   notificationActions: TableAction[] = [
-    {
-      icon: 'visibility',
-      label: 'View Details',
-      action: (item) => this.viewNotificationDetails(item),
-    },
+      // {
+      //   icon: 'visibility',
+      //   label: 'View Details',
+      //   action: (item) => this.viewNotificationDetails(item),
+      // },
     {
       icon: 'check',
-      label: 'Mark as Read',
+      label: 'marquer comme lu',
       action: (item) => this.markAsRead(item),
     },
   ];

@@ -24,6 +24,7 @@ export class DemandeDeRetraitPage {
   private readonly balanceSignal = signal({
     available: '0 XAF',
     pending: '0 XAF',
+    atRisk: '0 XAF',
     pendingTransactions: 0,
   });
   balance = computed(() => this.balanceSignal());
@@ -34,6 +35,9 @@ export class DemandeDeRetraitPage {
   // Recent transactions
   private readonly recentTransactionsSignal = signal<any[]>([]);
   recentTransactions = computed(() => this.recentTransactionsSignal());
+
+  private readonly TotalWithdrawalsSignal = signal<number>(0);
+  TotalWithdrawals = computed(() => this.TotalWithdrawalsSignal());
 
   // Form fields
   private readonly withdrawalFormFieldsSignal = signal<FormField[]>([
@@ -88,6 +92,9 @@ export class DemandeDeRetraitPage {
     { value: 'last_year', label: 'Année dernière' },
   ];
 
+  isLoading = signal<boolean>(false);
+  private pendingLoadingRequests = 0;
+
   constructor(
     private partnerApiService: PartnerApiService,
     private alertService: AlertService,
@@ -102,6 +109,16 @@ export class DemandeDeRetraitPage {
         this.withdrawalFormFieldsSignal.set([...fields]);
       }
     });
+  }
+
+  private beginLoading(): void {
+    this.pendingLoadingRequests += 1;
+    this.isLoading.set(true);
+  }
+
+  private finishLoading(): void {
+    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
+    this.isLoading.set(this.pendingLoadingRequests > 0);
   }
 
   selectWithdrawalRange(value: string | null): void {
@@ -177,7 +194,9 @@ export class DemandeDeRetraitPage {
   }
 
   private loadPartnerStats(): void {
-    this.partnerApiService.getPartnerStats().subscribe({
+    this.beginLoading();
+    this.partnerApiService.getPartnerStats()
+    .subscribe({
       next: (stats: any) => {
         if (stats) {
           const avail = Number(stats.balance?.available ?? 0);
@@ -186,12 +205,17 @@ export class DemandeDeRetraitPage {
           bal.available = `${(isNaN(avail) ? 0 : avail).toLocaleString('fr-FR')} XAF`;
           const pend = Number(stats.balance?.pending ?? 0);
           bal.pending = `${(isNaN(pend) ? 0 : pend).toLocaleString('fr-FR')} XAF`;
+          const Risk = Number(stats.balance?.atRisk ?? 0);
+          bal.atRisk = `${(isNaN(Risk) ? 0 : Risk).toLocaleString('fr-FR')} XAF`;
           bal.pendingTransactions = stats.balance?.pendingTransactions ?? bal.pendingTransactions;
           this.balanceSignal.set(bal);
           if (Array.isArray(stats.withdrawals) && stats.withdrawals.length) {
             this.recentTransactionsSignal.set(stats.withdrawals);
           }
+
+          this.TotalWithdrawalsSignal.set( avail - (stats.balance?.atRisk ?? 0) );
         }
+        this.finishLoading();
       },
     });
   }
