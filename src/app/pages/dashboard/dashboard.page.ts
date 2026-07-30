@@ -219,16 +219,16 @@ export class DashboardPage implements OnInit {
         next: (stats: any) => {
           this.metricsSignal.set({
             revenue: {
-              value: stats.netRevenue || 0,
+              value: stats.netRevenue,
               currency: 'XAF',
-              change: stats.revenueChange || '0%',
+              change: stats.revenueChange,
             },
             activeTrips: {
-              value: stats.activeTrips?.toString() || '0',
-              routes: `${stats.totalRoutes || 0} itinéraires`,
+              value: stats.activeTrips?.toString(),
+              routes: `${stats.totalRoutes} itinéraires`,
             },
             totalPassengers: {
-              value: stats.totalPassengers?.toString() || '0',
+              value: stats.totalPassengers?.toString(),
               description: "Manifestés aujourd'hui",
             },
           });
