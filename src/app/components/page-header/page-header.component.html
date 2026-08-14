@@ -1,0 +1,20 @@
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3">
+        @if (icon) {
+          <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+            <app-icon [name]="icon" [size]="22" />
+          </div>
+        }
+        <div>
+          <h1 class="text-xl font-bold text-ink-900 sm:text-2xl">{{ title }}</h1>
+          @if (subtitle) {
+            <p class="mt-0.5 text-sm text-ink-500">{{ subtitle }}</p>
+          }
+        </div>
+      </div>
+      @if (actions) {
+        <div class="flex items-center gap-2">
+          <ng-content />
+        </div>
+      }
+    </div>

@@ -1,32 +1,40 @@
-import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal } from "@angular/core";
+import { CommonModule } from "@angular/common";
 
 @Component({
-  selector: 'app-modal',
-  templateUrl: './modal.component.html',
-  styleUrls: ['./modal.component.css'],
-  imports: [ CommonModule ]
+    selector: "app-modal",
+    imports: [CommonModule],
+    templateUrl: "modal.component.html",
+    standalone: true,
 })
 export class ModalComponent {
-  @Input() isOpen: boolean = false;
-  @Input() title: string = '';
-  @Input() size: 'sm' | 'md' | 'lg' = 'md';
-  @Output() close = new EventEmitter<void>();
+    @Input({ alias: "title", required: true }) titleText = "";
+    @Input({ alias: "subtitle" }) subtitleText = "";
+    // Accept short and full size names for compatibility
+    @Input() size: "sm" | "md" | "lg" | "small" | "medium" | "large" = "md";
+    @Input() isOpen = false;
 
-  onClose(): void {
-    this.close.emit();
-  }
-
-  get sizeClasses(): string {
-    switch (this.size) {
-      case 'sm':
-        return 'max-w-md';
-      case 'md':
-        return 'max-w-2xl';
-      case 'lg':
-        return 'max-w-4xl';
-      default:
-        return 'max-w-2xl';
+    @Input({ alias: "open" })
+    set open(value: boolean) {
+        this.isOpen = value;
     }
-  }
+
+    get open(): boolean {
+        return this.isOpen;
+    }
+
+    @Output() close = new EventEmitter<void>();
+
+    readonly closing = signal(false);
+
+    sizeClass() {
+        const s = String(this.size);
+        if (s === "lg" || s === "large") return "sm:max-w-3xl";
+        if (s === "sm" || s === "small") return "sm:max-w-md";
+        return "sm:max-w-xl";
+    }
+
+    onClose() {
+        this.close.emit();
+    }
 }

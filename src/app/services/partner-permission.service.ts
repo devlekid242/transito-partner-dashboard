@@ -1,10 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
 
-// Synchronisé avec Agent.agentRole de la BDD
 export enum PartnerRole {
-  ADMIN_AGENCE = 'admin_agence', // Admin de l'agence - accès complet
-  AGENT_QUAI = 'agent_quai', // Agent de quai - accès limité
+  ADMIN_AGENCE = 'admin_agence',
+  AGENT_QUAI = 'agent_quai',
+  ADMIN = 'admin',
+  MANAGER = 'manager',
+  STAFF = 'staff',
 }
 
 export interface PartnerPermissions {
@@ -23,13 +25,14 @@ export interface PartnerPermissions {
   canViewNotifications: boolean;
   canViewProfile: boolean;
   canEditProfile: boolean;
+  [key: string]: boolean;
 }
 
 @Injectable({
   providedIn: 'root',
 })
 export class PartnerPermissionService {
-  private readonly partnerRoleSignal = signal<PartnerRole | null>(null);
+  private readonly partnerRoleSignal = signal<PartnerRole | string | null>(null);
   readonly partnerRole = this.partnerRoleSignal.asReadonly();
   readonly partnerRole$ = toObservable(this.partnerRoleSignal);
 
@@ -42,24 +45,22 @@ export class PartnerPermissionService {
   }
 
   private loadPartnerRole(): void {
-    const role = localStorage.getItem('transito_partner_user_role') as PartnerRole | null;
+    const role = localStorage.getItem('transito_partner_user_role') as PartnerRole | string | null;
     if (role) {
-      // Rôle trouvé, initialiser les permissions
       this.setPartnerRole(role);
     } else {
-      // Pas de rôle trouvé, initialiser avec permissions par défaut
-      const defaultPermissions = this.calculatePermissions(PartnerRole.AGENT_QUAI);
+      const defaultPermissions = this.calculatePermissions(PartnerRole.ADMIN_AGENCE);
       this.permissionsSignal.set(defaultPermissions);
     }
   }
 
-  setPartnerRole(role: PartnerRole): void {
+  setPartnerRole(role: PartnerRole | string): void {
     this.partnerRoleSignal.set(role);
     localStorage.setItem('transito_partner_user_role', role);
     this.updatePermissions(role);
   }
 
-  getPartnerRole(): PartnerRole | null {
+  getPartnerRole(): PartnerRole | string | null {
     return this.partnerRoleSignal();
   }
 
@@ -67,24 +68,52 @@ export class PartnerPermissionService {
     return this.permissionsSignal();
   }
 
-  hasPermission(permission: keyof PartnerPermissions): boolean {
-    const permissions = this.permissionsSignal();
-    if (!permissions) return false;
-    return permissions[permission] === true;
+  getUserPermissions(): string[] | null {
+    // Try to get permissions from localStorage if available
+    const storedUser = localStorage.getItem('transito_partner_user_profile');
+    if (storedUser) {
+      try {
+        const userProfile = JSON.parse(storedUser);
+        return userProfile.permissions || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 
-  hasRole(roles: PartnerRole[]): boolean {
+  hasPermission(permission: keyof PartnerPermissions | string): boolean {
+    const permissions = this.permissionsSignal();
+    if (!permissions) return true;
+    if (permission in permissions) {
+      return permissions[permission] === true;
+    }
+    // Fallback logic for V2 string keys like 'dashboard', 'gestion-flotte'
+    // Get permissions from the partner profile
+    const userPermissions = this.getUserPermissions();
+    if (userPermissions && userPermissions.length > 0) {
+      return userPermissions.includes(permission as string);
+    }
+    // Default fallback based on role
+    const role = this.getPartnerRole();
+    if (!role || role === PartnerRole.ADMIN_AGENCE || role === PartnerRole.ADMIN || role === 'admin') {
+      return true;
+    }
+    return false;
+  }
+
+  hasRole(roles: (PartnerRole | string)[]): boolean {
     const userRole = this.getPartnerRole();
     if (!userRole) return false;
     return roles.includes(userRole);
   }
 
-  private updatePermissions(role: PartnerRole): void {
+  private updatePermissions(role: PartnerRole | string): void {
     const permissions: PartnerPermissions = this.calculatePermissions(role);
     this.permissionsSignal.set(permissions);
   }
 
-  private calculatePermissions(role: PartnerRole): PartnerPermissions {
+  private calculatePermissions(role: PartnerRole | string): PartnerPermissions {
     const basePermissions: PartnerPermissions = {
       canViewDashboard: false,
       canAddBus: false,
@@ -101,11 +130,23 @@ export class PartnerPermissionService {
       canViewNotifications: false,
       canViewProfile: true,
       canEditProfile: true,
+      dashboard: false,
+      'gestion-flotte': false,
+      'gestion-point-embarquement': false,
+      trajet: false,
+      'demande-de-retrait': false,
+      'gestion-finance': false,
+      'gestion-du-staff': false,
+      'rapport-analyse': false,
+      'profil-agence': false,
     };
 
     switch (role) {
-      // Admin de l'agence - accès complet à toutes les pages
       case PartnerRole.ADMIN_AGENCE:
+      case PartnerRole.ADMIN:
+      case 'admin':
+      case 'admin_agence':
+      case 'manager':
         return {
           ...basePermissions,
           canViewDashboard: true,
@@ -121,16 +162,29 @@ export class PartnerPermissionService {
           canViewTrips: true,
           canViewManifest: true,
           canViewNotifications: true,
+          dashboard: true,
+          'gestion-flotte': true,
+          'gestion-point-embarquement': true,
+          trajet: true,
+          'demande-de-retrait': true,
+          'gestion-finance': true,
+          'gestion-du-staff': true,
+          'rapport-analyse': true,
+          'profil-agence': true,
         };
 
-      // Agent de quai - accès limité (validation des tickets)
       case PartnerRole.AGENT_QUAI:
+      case 'agent_quai':
+      case 'agent':
+      case 'staff':
+      case 'conducteur':
         return {
           ...basePermissions,
           canValidateTickets: true,
           canViewTrips: true,
           canViewManifest: true,
           canViewNotifications: true,
+          trajet: true,
         };
 
       default:
@@ -139,20 +193,21 @@ export class PartnerPermissionService {
   }
 
   isWharfAgent(): boolean {
-    return this.getPartnerRole() === PartnerRole.AGENT_QUAI;
+    const role = this.getPartnerRole();
+    return role === PartnerRole.AGENT_QUAI || role === 'agent_quai';
   }
 
   isFullAccessUser(): boolean {
     const role = this.getPartnerRole();
-    return role === PartnerRole.ADMIN_AGENCE;
+    return role === PartnerRole.ADMIN_AGENCE || role === 'admin_agence' || role === 'admin';
   }
 
   isAgentQuai(): boolean {
-    return this.getPartnerRole() === PartnerRole.AGENT_QUAI;
+    return this.isWharfAgent();
   }
 
   isAdminAgence(): boolean {
-    return this.getPartnerRole() === PartnerRole.ADMIN_AGENCE;
+    return this.isFullAccessUser();
   }
 
   reset(): void {

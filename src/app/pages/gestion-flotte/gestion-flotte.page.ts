@@ -1,294 +1,247 @@
-import { Component, OnInit, signal, computed, effect } from '@angular/core';
-import { Router } from '@angular/router';
-import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
-import { ModalComponent } from '../../components/modal/modal.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { IconComponent } from '../../shared/icon.component';
+import { StatCardComponent } from '../../components/stat-card/stat-card.component';
+import { DatatableComponent } from '../../components/datatable/datatable.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { ModalComponent } from '../../components/modal/modal.component';
+import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { Bus } from '../../models/partner.model';
-import { AlertService } from '../../services/alert.service';
-import { finalize } from 'rxjs/operators';
-
-interface BusStats {
-  totalFleet: number;
-  available: number;
-  inMaintenance: number;
-  outOfService: number;
-  utilizationRate: number;
-}
+import { ColumnDef, ActionDef, Bus } from '../../models';
 
 @Component({
   selector: 'app-gestion-flotte',
-  templateUrl: './gestion-flotte.page.html',
-  styleUrls: ['./gestion-flotte.page.css'],
-  imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule],
+  standalone: true,
+  imports: [
+    CommonModule, RouterLink, IconComponent, StatCardComponent,
+    DatatableComponent, PageHeaderComponent, ModalComponent,
+  ],
+  template: `
+    <div class="space-y-6">
+      <app-page-header title="Gestion de la Flotte" subtitle="Gérez vos bus et véhicules" icon="bus">
+        <a routerLink="/ajout-bus" class="btn btn-primary">
+          <app-icon name="plus" [size]="16" /> Ajouter un bus
+        </a>
+      </app-page-header>
+
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement des bus...</span>
+        </div>
+      } @else {
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <app-stat-card label="Total Bus" [value]="busStats().totalFleet" icon="bus" iconBg="bg-brand-50 text-brand-600" />
+            <app-stat-card label="Disponibles" [value]="busStats().available" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
+            <app-stat-card label="En maintenance" [value]="busStats().inMaintenance" icon="settings" iconBg="bg-amber-50 text-amber-600" />
+            <app-stat-card label="Hors service" [value]="busStats().outOfService" icon="x-circle" iconBg="bg-red-50 text-red-600" />
+          </div>
+
+          <app-datatable [columns]="cols" [data]="buses()" [selectable]="true" [exportable]="true" [rowActions]="actions" />
+        </div>
+
+        <!-- Modal de détails -->
+        @if (selectedBus() && isModalOpen()) {
+        <app-modal 
+          [isOpen]="isModalOpen()" 
+          (onClose)="closeModal()"
+          title="Détails du bus"
+        >
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <p class="text-sm text-ink-500">Immatriculation</p>
+                <p class="font-medium">{{ selectedBus()?.registrationNumber || selectedBus()?.immatriculation }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Marque</p>
+                <p class="font-medium">{{ selectedBus()?.brand || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Modèle</p>
+                <p class="font-medium">{{ selectedBus()?.model || selectedBus()?.modele || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Catégorie</p>
+                <p class="font-medium">{{ selectedBus()?.category || '—' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Capacité</p>
+                <p class="font-medium">{{ selectedBus()?.capacity || selectedBus()?.capacite }} places</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Statut</p>
+                <p class="font-medium">{{ getStatusLabel(selectedBus()?.status || selectedBus()?.statut) }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Date d'ajout</p>
+                <p class="font-medium">{{ selectedBus()?.acquisitionDate || selectedBus()?.dateAjout | date:'dd/MM/yyyy' }}</p>
+              </div>
+              <div>
+                <p class="text-sm text-ink-500">Kilométrage</p>
+                <p class="font-medium">{{ selectedBus()?.mileage || '—' }} km</p>
+              </div>
+            </div>
+          </div>
+        </app-modal>
+        }
+
+        <!-- Modal de confirmation de suppression -->
+        @if (deletingBusId() && isDeleteModalOpen()) {
+        <app-modal 
+          [isOpen]="isDeleteModalOpen()" 
+          (onClose)="cancelDelete()"
+          title="Confirmer la suppression"
+        >
+          <div class="space-y-4">
+            <p>Êtes-vous sûr de vouloir supprimer ce bus ? Cette action est irréversible.</p>
+            <div class="flex justify-end gap-3">
+              <button class="btn btn-secondary" (click)="cancelDelete()">Annuler</button>
+              <button class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+                @if (isDeleting()) {
+                  <span class="animate-pulse">Suppression...</span>
+                } @else {
+                  Supprimer
+                }
+              </button>
+            </div>
+          </div>
+        </app-modal>
+        }
+      }
+    </div>
+  `,
 })
 export class GestionFlottePage implements OnInit {
-  // Véhicules (signals)
-  private readonly vehiclesSignal = signal<Bus[]>([]);
-  vehicles = computed(() => this.vehiclesSignal());
+  private api = inject(PartnerApiService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
 
-  private readonly vehiclesMaintenanceSignal = signal<Bus[]>([]);
-  vehiclesMaintenance = computed(() => this.vehiclesMaintenanceSignal());
+  // State
+  readonly buses = signal<Bus[]>([]);
+  readonly isLoading = signal<boolean>(true);
+  
+  readonly busStats = signal<{
+    totalFleet: number;
+    available: number;
+    inMaintenance: number;
+    outOfService: number;
+  }>({ totalFleet: 0, available: 0, inMaintenance: 0, outOfService: 0 });
+  
+  // Modal states
+  readonly isModalOpen = signal<boolean>(false);
+  readonly selectedBus = signal<Bus | null>(null);
+  
+  // Delete confirmation
+  readonly isDeleteModalOpen = signal<boolean>(false);
+  readonly deletingBusId = signal<number | string | null>(null);
+  readonly isDeleting = signal<boolean>(false);
 
-  // Stats
-  private readonly busStatsSignal = signal<BusStats>({
-    totalFleet: 0,
-    available: 0,
-    inMaintenance: 0,
-    outOfService: 0,
-    utilizationRate: 0,
-  });
-  busStats = computed(() => this.busStatsSignal());
-
-  // Loading state
-  private readonly isLoadingSignal = signal<boolean>(false);
-  isLoading = computed(() => this.isLoadingSignal());
-
-  private readonly deletingVehicleIdSignal = signal<number | null>(null);
-  deletingVehicleId = computed(() => this.deletingVehicleIdSignal());
-
-  // Modal state
-  private readonly isModalOpenSignal = signal<boolean>(false);
-  isModalOpen = computed(() => this.isModalOpenSignal());
-
-  private readonly selectedVehicleSignal = signal<Bus | null>(null);
-  selectedVehicle = computed(() => this.selectedVehicleSignal());
-
-  // Maintenance
-  private readonly maintenanceScheduleSignal = signal<
-    Array<{
-      title: string;
-      vehicle: string;
-      scheduledAt: string;
-      description: string;
-    }>
-  >([]);
-  maintenanceSchedule = computed(() => this.maintenanceScheduleSignal());
-
-  // Notification state
-  private readonly showNotificationSignal = signal<boolean>(false);
-  showNotification = computed(() => this.showNotificationSignal());
-
-  private readonly notificationTypeSignal = signal<'success' | 'error' | 'warning' | 'info'>(
-    'info',
-  );
-  notificationType = computed(() => this.notificationTypeSignal());
-
-  private readonly notificationMessageSignal = signal<string>('');
-  notificationMessage = computed(() => this.notificationMessageSignal());
-
-  // Colonnes du tableau
-  vehicleColumns: TableColumn[] = [
-    { key: 'registrationNumber', title: 'Plaque', sortable: true },
-    { key: 'model', title: 'Modèle' },
-    { key: 'capacity', title: 'Sièges' },
-    { key: 'category', title: 'Catégorie', sortable: true },
-    { key: 'status', title: 'Statut', sortable: true },
+  cols: ColumnDef[] = [
+    { key: 'registrationNumber', label: 'Immatriculation', sortable: true },
+    { key: 'brand', label: 'Marque', sortable: true },
+    { key: 'model', label: 'Modèle', sortable: true },
+    { key: 'category', label: 'Catégorie', sortable: true },
+    { key: 'capacity', label: 'Capacité', sortable: true },
+    { key: 'acquisitionDate', label: "Date d'ajout", type: 'date', sortable: true },
+    { key: 'status', label: 'Statut', type: 'status', sortable: true },
   ];
 
-  // Actions du tableau
-  vehicleActions: TableAction[] = [
-    {
-      icon: 'visibility',
-      label: 'Voir détails',
-      action: (item) => this.viewVehicleDetails(item),
-    },
-    {
-      icon: 'edit',
-      label: 'Modifier',
-      action: (item) => this.editVehicle(item),
-    },
-    {
-      icon: 'delete',
-      label: 'Supprimer',
-      action: (item) => this.deleteVehicle(item),
-    },
+  actions: ActionDef[] = [
+    { label: 'Voir', icon: 'eye', class: 'ghost', action: (b: Bus) => this.viewBusDetails(b) },
+    { label: 'Modifier', icon: 'pencil', class: 'ghost', action: (b: Bus) => this.editBus(b) },
+    { label: 'Supprimer', icon: 'trash', class: 'danger', action: (b: Bus) => this.promptDelete(b) },
   ];
 
-  private pendingLoadingRequests = 0;
+  constructor() {}
 
-  constructor(
-    private partnerApiService: PartnerApiService,
-    private router: Router,
-    private alertService: AlertService,
-  ) {
-    effect(() => {
-      this.isLoading();
-    });
+  ngOnInit(): void {
+    this.loadBuses();
   }
 
-  ngOnInit() {
-    this.loadvehiclesMaintenance();
-    this.loadVehicles();
-  }
-
-  private beginLoading(): void {
-    this.pendingLoadingRequests += 1;
-    this.isLoadingSignal.set(true);
-  }
-
-  private finishLoading(): void {
-    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoadingSignal.set(this.pendingLoadingRequests > 0);
-  }
-
-  loadvehiclesMaintenance() {
-    this.beginLoading();
-    this.partnerApiService
-      .getMaintenanceSchedule()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (buses: Bus[]) => {
-          this.vehiclesMaintenanceSignal.set(buses);
-          this.buildMaintenanceSchedule();
-          console.log('Véhicules chargés:', this.vehiclesMaintenanceSignal());
-        },
-        error: (error) => {
-          console.error('Erreur de chargement des véhicules:', error);
-          this.showToastNotification('error', 'Erreur de chargement des véhicules');
-        },
-      });
-  }
-
-  loadVehicles() {
-    this.beginLoading();
-    this.partnerApiService
-      .getBuses()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (buses: any) => {
-          this.vehiclesSignal.set(buses ?? []);
-          this.calculateStats();
-          console.log('Véhicules chargés:', this.vehiclesSignal());
-        },
-        error: (error) => {
-          console.error('Erreur de chargement des véhicules:', error);
-          this.showToastNotification('error', 'Erreur de chargement des véhicules');
-        },
-      });
-  }
-
-  private buildMaintenanceSchedule(): void {
-    const schedule = this.vehiclesMaintenanceSignal()
-      .filter((bus) => bus.status === 'maintenance' || bus.lastMaintenanceDate)
-      .map((bus) => ({
-        title: bus.status === 'maintenance' ? 'Entretien planifié' : 'Dernière maintenance',
-        vehicle: bus.registrationNumber,
-        scheduledAt: bus.lastMaintenanceDate
-          ? bus.lastMaintenanceDate.substring(0, 10)
-          : bus.acquisitionDate
-            ? bus.acquisitionDate.substring(0, 10)
-            : 'Date inconnue',
-        description:
-          bus.brand && bus.model ? `${bus.brand} ${bus.model}` : `Bus ${bus.registrationNumber}`,
-      }))
-      .slice(0, 5);
-    this.maintenanceScheduleSignal.set(schedule);
-  }
-
-  /**
-   * Calcule les stats dynamiquement à partir des véhicules chargés
-   */
-  calculateStats(): void {
-    const vehicles = this.vehiclesSignal();
-    const stats: BusStats = {
-      totalFleet: vehicles.length,
-      available: vehicles.filter((v) => v.status === 'disponible').length,
-      inMaintenance: vehicles.filter((v) => v.status === 'maintenance').length,
-      outOfService: vehicles.filter((v) => v.status === 'hors_service').length,
-      utilizationRate: 0,
-    };
-
-    // Taux d'utilisation: (véhicules disponibles / total) * 100
-    stats.utilizationRate =
-      stats.totalFleet > 0 ? Math.round((stats.available / stats.totalFleet) * 100) : 0;
-    this.busStatsSignal.set(stats);
-  }
-
-  /**
-   * Affiche les détails du véhicule dans une modal
-   */
-  viewVehicleDetails(vehicle: Bus): void {
-    this.selectedVehicleSignal.set(vehicle);
-    this.isModalOpenSignal.set(true);
-  }
-
-  /**
-   * Navigue vers la page d'édition du véhicule
-   */
-  editVehicle(vehicle: Bus | null): void {
-    if (vehicle) {
-      this.router.navigate(['/ajout-bus', vehicle.id]);
-    }
-  }
-
-  /**
-   * Supprime un véhicule après confirmation
-   */
-  async deleteVehicle(vehicle: Bus | null): Promise<void> {
-    if (!vehicle) {
-      return;
-    }
-
-    const confirmed = await this.alertService.confirm(
-      'Supprimer le véhicule',
-      `Êtes-vous sûr de vouloir supprimer le véhicule ${vehicle.registrationNumber}?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    this.deletingVehicleIdSignal.set(vehicle.id);
-    this.partnerApiService.deleteBus(vehicle.id).subscribe({
-      next: (response) => {
-        this.deletingVehicleIdSignal.set(null);
-        const updated = this.vehiclesSignal().filter((v) => v.id !== vehicle.id);
-        this.vehiclesSignal.set(updated);
+  loadBuses(): void {
+    this.isLoading.set(true);
+    this.api.getBuses().subscribe({
+      next: (buses) => {
+        this.buses.set(buses ?? []);
         this.calculateStats();
-        this.alertService.success(`Véhicule ${vehicle.registrationNumber} supprimé avec succès`);
+        this.isLoading.set(false);
       },
-      error: (error) => {
-        this.deletingVehicleIdSignal.set(null);
-        console.error('Erreur de suppression:', error);
-        this.alertService.error('Erreur lors de la suppression du véhicule');
+      error: (err) => {
+        console.error('Erreur de chargement des bus:', err);
+        this.toast.danger('Erreur de chargement des bus');
+        this.isLoading.set(false);
+        this.buses.set([]);
       },
     });
   }
 
-  /**
-   * Ferme la modal des détails
-   */
+  calculateStats(): void {
+    const buses = this.buses();
+    const stats = {
+      totalFleet: buses.length,
+      available: buses.filter((b) => b.status === 'disponible' || b.statut === 'actif').length,
+      inMaintenance: buses.filter((b) => b.status === 'maintenance' || b.statut === 'maintenance').length,
+      outOfService: buses.filter((b) => b.status === 'hors_service' || b.statut === 'hors_service').length,
+    };
+    this.busStats.set(stats);
+  }
+
+  viewBusDetails(bus: Bus): void {
+    this.selectedBus.set(bus);
+    this.isModalOpen.set(true);
+  }
+
   closeModal(): void {
-    this.isModalOpenSignal.set(false);
-    this.selectedVehicleSignal.set(null);
+    this.isModalOpen.set(false);
+    this.selectedBus.set(null);
   }
 
-  /**
-   * Affiche une notification toast
-   */
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationTypeSignal.set(type);
-    this.notificationMessageSignal.set(message);
-    this.showNotificationSignal.set(true);
-
-    // Auto-hide après 5 secondes
-    setTimeout(() => {
-      this.showNotificationSignal.set(false);
-    }, 5000);
+  editBus(bus: Bus): void {
+    this.router.navigate(['/ajout-bus', bus.id]);
   }
 
-  /**
-   * Navigue vers la page d'ajout de bus
-   */
-  navigateToAddBus(): void {
-    this.router.navigate(['/ajout-bus']);
+  promptDelete(bus: Bus): void {
+    this.deletingBusId.set(bus.id);
+    this.isDeleteModalOpen.set(true);
   }
 
-  /**
-   * Gère le tri du tableau
-   */
-  onSortChange(event: any): void {
-    console.log('Tri:', event);
+  cancelDelete(): void {
+    this.isDeleteModalOpen.set(false);
+    this.deletingBusId.set(null);
+  }
+
+  confirmDelete(): void {
+    const busId = this.deletingBusId();
+    if (!busId) return;
+
+    this.isDeleting.set(true);
+    this.api.deleteBus(busId).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.isDeleteModalOpen.set(false);
+        this.deletingBusId.set(null);
+        this.loadBuses(); // Recharger la liste
+        this.toast.success('Bus supprimé avec succès');
+      },
+      error: (err) => {
+        this.isDeleting.set(false);
+        console.error('Erreur de suppression:', err);
+        this.toast.danger('Erreur lors de la suppression du bus');
+      },
+    });
+  }
+
+  getStatusLabel(status: string | undefined): string {
+    if (!status) return 'Inconnu';
+    const labelMap: Record<string, string> = {
+      disponible: 'Disponible',
+      actif: 'Actif',
+      maintenance: 'En maintenance',
+      hors_service: 'Hors service',
+    };
+    return labelMap[status] || status;
   }
 }

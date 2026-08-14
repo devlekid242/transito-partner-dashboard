@@ -1,16 +1,5 @@
-﻿import { Observable, OperatorFunction } from 'rxjs';
+import { Observable, OperatorFunction } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-/**
- * Interface représentant la structure standard d'une collection API Platform / JSON-LD
- */
-interface JsonLdCollection<T> {
-  '@context'?: string;
-  '@id'?: string;
-  '@type'?: string;
-  totalItems?: number;
-  member: T[]; // La propriété cible à extraire
-}
 
 export interface NormalizedCollection<T> {
   data: T[];
@@ -52,9 +41,10 @@ export function unwrapCollection<T>(preserveMetadata = true) {
         const data = normalizeCollectionPayload<T>(response);
 
         if (preserveMetadata === false) {
-          const total = typeof response === 'object' && response !== null
-            ? Number(response.totalItems ?? response['hydra:totalItems'] ?? data.length)
-            : data.length;
+          const total =
+            typeof response === 'object' && response !== null
+              ? Number(response.totalItems ?? response['hydra:totalItems'] ?? data.length)
+              : data.length;
 
           return {
             data,

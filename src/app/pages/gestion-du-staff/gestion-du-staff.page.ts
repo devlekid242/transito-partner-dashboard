@@ -1,255 +1,205 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { RouterLink, Router } from '@angular/router';
+import { IconComponent } from '../../shared/icon.component';
+import { StatCardComponent } from '../../components/stat-card/stat-card.component';
+import { DatatableComponent } from '../../components/datatable/datatable.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { FormComponent, FormField } from '../../components/form/form.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
-import { CommonModule } from '@angular/common';
+import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { AuthService } from '../../services/auth.service';
-import { Router } from '@angular/router';
-import { AlertService } from '../../services/alert.service';
-import { finalize } from 'rxjs/operators';
+import { ColumnDef, ActionDef, Utilisateur, RoleUtilisateur, SelectOption } from '../../models';
 
 @Component({
   selector: 'app-gestion-du-staff',
-  templateUrl: './gestion-du-staff.page.html',
-  styleUrls: ['./gestion-du-staff.page.css'],
-  imports: [TableComponent, CommonModule, ModalComponent, FormComponent, NotificationComponent],
+  standalone: true,
+  imports: [
+    RouterLink,
+    IconComponent,
+    StatCardComponent,
+    DatatableComponent,
+    PageHeaderComponent,
+    ModalComponent,
+  ],
+  template: `
+    <div class="space-y-6">
+      <app-page-header title="Gestion du Personnel" subtitle="Gérez les utilisateurs de votre agence" icon="users">
+        <a routerLink="/ajout-user" class="btn btn-primary"><app-icon name="user-plus" [size]="16" /> Ajouter un utilisateur</a>
+      </app-page-header>
+
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement...</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <app-stat-card label="Total utilisateurs" [value]="totalStaff()" icon="users" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Actifs" [value]="actifs()" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Inactifs" [value]="inactifs()" icon="x-circle" iconBg="bg-red-50 text-red-600" />
+        </div>
+        <app-datatable [columns]="cols" [data]="staffWithRole()" [exportable]="true" [selectable]="true" [rowActions]="actions" />
+      }
+    </div>
+
+    @if (isDeleteConfirmOpen()) {
+      <app-modal
+        title="Confirmer la suppression"
+        [isOpen]="isDeleteConfirmOpen()"
+        (close)="closeDeleteConfirm()"
+        size="small"
+      >
+        <div class="p-1">
+          <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{{ selectedUserName() }}</strong> ? Cette action est irréversible.</p>
+          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
+            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isDeleting()">
+              Annuler
+            </button>
+            <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+              @if (isDeleting()) {
+                <span class="animate-pulse">Suppression...</span>
+              } @else {
+                Oui, supprimer
+              }
+            </button>
+          </div>
+        </div>
+      </app-modal>
+    }
+  `,
 })
 export class GestionDuStaffPage implements OnInit {
-  // Staff members
-  private readonly staffMembersSignal = signal<any[]>([]);
-  staffMembers = computed(() => this.staffMembersSignal());
+  private api = inject(PartnerApiService);
+  private toast = inject(ToastService);
+  private router = inject(Router);
 
-  // Modal states
-  private readonly isModalOpenSignal = signal<boolean>(false);
-  isModalOpen = computed(() => this.isModalOpenSignal());
+  // State
+  readonly isLoading = signal<boolean>(true);
+  readonly isDeleting = signal<boolean>(false);
+  readonly isDeleteConfirmOpen = signal<boolean>(false);
+  readonly roleOptions = signal<SelectOption[]>([]);
+  
+  // Selected user for deletion
+  selectedUserId: string | null = null;
+  selectedUserName = signal<string>('');
 
-  private readonly isFormModalOpenSignal = signal<boolean>(false);
-  isFormModalOpen = computed(() => this.isFormModalOpenSignal());
-
-  private readonly selectedStaffMemberSignal = signal<any>(null);
-  selectedStaffMember = computed(() => this.selectedStaffMemberSignal());
-
-  // Form state
-  private readonly staffFormFieldsSignal = signal<FormField[]>([
-    {
-      key: 'name',
-      label: 'Full Name',
-      type: 'text',
-      required: true,
-      placeholder: 'Enter full name',
-    },
-    {
-      key: 'email',
-      label: 'Email',
-      type: 'email',
-      required: true,
-      placeholder: 'Enter email address',
-    },
-    {
-      key: 'phone',
-      label: 'Phone',
-      type: 'tel',
-      required: false,
-      placeholder: 'Enter phone number',
-    },
-    {
-      key: 'role',
-      label: 'Role',
-      type: 'select',
-      required: true,
-      options: [],
-    },
-    {
-      key: 'status',
-      label: 'Status',
-      type: 'select',
-      required: true,
-      options: [],
-    },
-  ]);
-  staffFormFields = computed(() => this.staffFormFieldsSignal());
-
-  // Notification state
-  private readonly showNotificationSignal = signal<boolean>(false);
-  showNotification = computed(() => this.showNotificationSignal());
-
-  private readonly notificationTypeSignal = signal<'success' | 'error' | 'warning' | 'info'>(
-    'info',
-  );
-  notificationType = computed(() => this.notificationTypeSignal());
-
-  private readonly notificationMessageSignal = signal<string>('');
-  notificationMessage = computed(() => this.notificationMessageSignal());
-
-  private readonly isLoadingSignal = signal<boolean>(false);
-  isLoading = computed(() => this.isLoadingSignal());
-
-  // Colonnes du tableau
-  staffColumns: TableColumn[] = [
-    { key: 'name', title: 'Utilisateur', sortable: true },
-    { key: 'agentRole', title: 'Roles', sortable: true },
-    { key: 'status', title: 'Statut', sortable: true },
-  ];
-
-    // Role distribution data
-  roleDistribution = signal([]);
-
-  // Actions du tableau
-  staffActions: TableAction[] = [
-    {
-      icon: 'edit',
-      label: 'Edit',
-      action: (item) => this.editStaffMember(item),
-    },
-    {
-      icon: 'block',
-      label: 'Deactivate',
-      action: (item) => this.deactivateStaffMember(item),
-    },
-  ];
-
-  private pendingLoadingRequests = 0;
-
-  constructor(
-    private partnerApiService: PartnerApiService,
-    public authService: AuthService,
-    private router: Router,
-    private alertService: AlertService,
-  ) {
-    this.partnerApiService.getRoleOptions().subscribe((options) => {
-      const fields = this.staffFormFieldsSignal();
-      const idx = fields.findIndex((f) => f.key === 'role');
-      if (idx !== -1) {
-        fields[idx].options = options;
-        this.staffFormFieldsSignal.set([...fields]);
-      }
-    });
-
-    this.partnerApiService.getStatusOptions().subscribe((options) => {
-      const fields = this.staffFormFieldsSignal();
-      const idx = fields.findIndex((f) => f.key === 'status');
-      if (idx !== -1) {
-        fields[idx].options = options;
-        this.staffFormFieldsSignal.set([...fields]);
-      }
-    });
+  constructor() {
+    this.loadRoleOptions();
   }
 
-  private beginLoading(): void {
-    this.pendingLoadingRequests += 1;
-    this.isLoadingSignal.set(true);
-  }
-
-  private finishLoading(): void {
-    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoadingSignal.set(this.pendingLoadingRequests > 0);
-  }
-
-  ngOnInit() {
-    this.loadStaffMembers();
-  }
-
-  loadStaffMembers() {
-    this.beginLoading();
-    // Try to load staff from API; if it fails, keep an empty list
-    this.partnerApiService
-      .getStaffMembers()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (staff: any) => {
-          this.staffMembersSignal.set(
-            staff.map((s: any) => ({
-              id: s.id,
-              name: s.fullName ?? s.name ?? s.email,
-              email: s.email,
-              role: s.agentRole ?? s.roles?.[0] ?? 'Staff',
-              status: s.status ?? 'Active',
-              phone: s.phone ?? s.phoneNumber ?? '',
-              agentRole: s.agentRole ?? 'Staff',
-            })),
-          );
-        },
+  ngOnInit(): void {
+    // Ensure staff is loaded
+    if (this.api.staff().length === 0) {
+      this.api.getStaffMembers().subscribe({
+        next: () => this.isLoading.set(false),
         error: (err) => {
-          console.error('Unable to load staff from API, falling back to mock data', err);
-          this.alertService.error('Erreur de chargement du personnel');
+          console.error('Error loading staff:', err);
+          this.toast.danger('Impossible de charger le personnel');
+          this.isLoading.set(false);
         },
       });
+    } else {
+      this.isLoading.set(false);
+    }
   }
 
-  editStaffMember(member: any): void {
-    this.selectedStaffMemberSignal.set({ ...member });
-    this.isFormModalOpenSignal.set(true);
-  }
-
-  deactivateStaffMember(member: any): void {
-    this.alertService
-      .confirm('Désactiver le membre', `Désactiver ${member.name} ?`)
-      .then((confirmed) => {
-        if (!confirmed) {
-          return;
-        }
-        this.showToastNotification('warning', `Staff member ${member.name} deactivation requested`);
-      });
-  }
-
-  inviteNewUser(): void {
-    this.router.navigate(['/ajout-user']).catch(() => {
-      // fallback: open modal
-      this.selectedStaffMemberSignal.set({
-        id: null,
-        name: '',
-        email: '',
-        role: 'Staff',
-        status: 'Invited',
-        phone: '',
-        agentRole: 'Staff',
-      });
-      this.isFormModalOpenSignal.set(true);
+  loadRoleOptions(): void {
+    this.api.getRoleOptions().subscribe({
+      next: (options) => this.roleOptions.set(options),
+      error: (err) => console.error('Error loading role options:', err),
     });
   }
 
-  closeModal(): void {
-    this.isModalOpenSignal.set(false);
-    this.isFormModalOpenSignal.set(false);
-    this.selectedStaffMemberSignal.set(null);
+  getRoleLabel(roleKey: string): string {
+    const options = this.roleOptions();
+    const found = options.find((o) => o.value === roleKey);
+    return found?.label || roleKey;
   }
 
-  onFormSubmit(formData: any): void {
-    console.log('Form submitted:', formData);
-    if (this.selectedStaffMemberSignal()?.id) {
-      // Update existing member
-      this.showToastNotification('success', `Staff member ${formData.name} updated successfully!`);
-    } else {
-      // Add new member
-      this.showToastNotification('success', `Invitation sent to ${formData.email} successfully!`);
-    }
-    this.closeModal();
+  totalStaff = computed(() => this.api.staff().length);
+  actifs = computed(() => this.api.staff().filter((u) => u.statut === 'actif' || u.status === 'active').length);
+  inactifs = computed(() => this.api.staff().filter((u) => u.statut === 'inactif' || u.status === 'inactive').length);
+
+  staffWithRole = computed(() =>
+    this.api.staff().map((u) => ({
+      ...u,
+      roleLabel: this.getRoleLabel(u.role || u.agentRole || '')
+    })),
+  );
+
+  cols: ColumnDef[] = [
+    { key: 'fullName', label: 'Nom', sortable: true },
+    { key: 'email', label: 'Email', sortable: true },
+    { key: 'phoneNumber', label: 'Téléphone', sortable: true },
+    { key: 'agentRole', label: 'Rôle', sortable: true },
+    { key: 'created_at', label: 'Date création', type: 'date', sortable: true },
+    { key: 'status', label: 'Statut', type: 'status', sortable: true },
+  ];
+
+  actions: ActionDef[] = [
+    {
+      label: 'Voir',
+      icon: 'eye',
+      class: 'ghost',
+      action: (u: Utilisateur) => this.viewUser(u),
+    },
+    {
+      label: 'Modifier',
+      icon: 'pencil',
+      class: 'ghost',
+      action: (u: Utilisateur) => this.editUser(u),
+    },
+    {
+      label: 'Supprimer',
+      icon: 'trash',
+      class: 'danger',
+      action: (u: Utilisateur) => this.openDeleteConfirm(u),
+    },
+  ];
+
+  viewUser(user: Utilisateur): void {
+    const details = [
+      `Nom: ${user.nom || user.fullName}`,
+      `Email: ${user.email}`,
+      `Téléphone: ${user.telephone || user.phoneNumber}`,
+      `Rôle: ${this.getRoleLabel(user.role || user.agentRole || '')}`,
+      `Statut: ${user.statut || user.status}`,
+      `Date création: ${user.dateCreation}`,
+    ].join('\n');
+    this.toast.info(details);
   }
 
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationTypeSignal.set(type);
-    this.notificationMessageSignal.set(message);
-    this.showNotificationSignal.set(true);
-
-    setTimeout(() => {
-      this.showNotificationSignal.set(false);
-    }, 5000);
+  editUser(user: Utilisateur): void {
+    this.router.navigate(['/ajout-user', user.id]);
   }
 
-  onSortChange(event: { key: string; direction: 'asc' | 'desc' }): void {
-    console.log('Sort changed:', event);
-    // Logique de tri à implémenter
+  openDeleteConfirm(user: Utilisateur): void {
+    this.selectedUserId = String(user.id);
+    this.selectedUserName.set(user.nom || user.fullName || user.email || 'cet utilisateur');
+    this.isDeleteConfirmOpen.set(true);
   }
 
-  getInitials(name: string): string {
-    if (!name) return '';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase();
+  closeDeleteConfirm(): void {
+    this.isDeleteConfirmOpen.set(false);
+    this.selectedUserId = null;
+    this.selectedUserName.set('');
+  }
+
+  confirmDelete(): void {
+    if (!this.selectedUserId) return;
+
+    this.isDeleting.set(true);
+    this.api.deleteUser(this.selectedUserId).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.toast.success('Utilisateur supprimé avec succès');
+        this.closeDeleteConfirm();
+      },
+      error: (err) => {
+        this.isDeleting.set(false);
+        console.error('Error deleting user:', err);
+        this.toast.danger('Impossible de supprimer l\'utilisateur');
+        this.closeDeleteConfirm();
+      },
+    });
   }
 }

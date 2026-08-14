@@ -1,31 +1,15 @@
-import { Component, OnInit, computed } from '@angular/core';
-import { HeaderComponent } from './header/header.component';
-import { SidebarComponent } from './sidebar/sidebar.component';
+import { Component, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { SidebarService } from '../services/sidebar.service';
+import { SidebarComponent } from './sidebar/sidebar.component';
+import { HeaderComponent } from './header/header.component';
+import { ToastComponent } from '../components/toast/toast.component';
 
 @Component({
   selector: 'app-layout',
-  templateUrl: './layout.component.html',
-  styleUrls: ['./layout.component.css'],
-  imports: [HeaderComponent, SidebarComponent, RouterOutlet, CommonModule],
+  standalone: true,
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, ToastComponent],
+  templateUrl:'layout.component.html',
 })
-export class LayoutComponent implements OnInit {
-  readonly sidebarOpen = computed(() => this.sidebarService.sidebarOpenSignal());
-
-  constructor(public sidebarService: SidebarService) {}
-
-  ngOnInit(): void {
-    // Fermer le sidebar au changement de route sur mobile
-    // (optionnel, à ajouter si vous avez une gestion de route)
-  }
-
-  toggleSidebar(): void {
-    this.sidebarService.toggleSidebar();
-  }
-
-  closeSidebar(): void {
-    this.sidebarService.closeSidebar();
-  }
+export class LayoutComponent {
+  sidebarOpen = signal(false);
 }

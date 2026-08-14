@@ -1,192 +1,160 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
+import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { RouterLink, Router } from '@angular/router';
+import { IconComponent } from '../../shared/icon.component';
+import { StatCardComponent } from '../../components/stat-card/stat-card.component';
+import { DatatableComponent } from '../../components/datatable/datatable.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { ModalComponent } from '../../components/modal/modal.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
-import { CommonModule } from '@angular/common';
+import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { BusPoint } from '../../models/partner.model';
-import { Router } from '@angular/router';
-import { AlertService } from '../../services/alert.service';
-import { finalize } from 'rxjs/operators';
+import { ColumnDef, ActionDef, PointEmbarquement } from '../../models';
 
 @Component({
   selector: 'app-gestion-point-embarquement',
-  templateUrl: './gestion-point-embarquement.page.html',
-  styleUrls: ['./gestion-point-embarquement.page.css'],
-  imports: [TableComponent, ModalComponent, NotificationComponent, CommonModule],
+  standalone: true,
+  imports: [
+    RouterLink, IconComponent, StatCardComponent, DatatableComponent,
+    PageHeaderComponent, ModalComponent,
+  ],
+  template: `
+    <div class="space-y-6">
+      <app-page-header title="Points d'embarquement" subtitle="Gérez vos arrêts et points de départ" icon="map-pin">
+        <a routerLink="/ajout-point-embarquement" class="btn btn-primary">
+          <app-icon name="plus" [size]="16" /> Ajouter un point
+        </a>
+      </app-page-header>
+
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement des points d'embarquement...</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <app-stat-card label="Total points" [value]="totalPoints()" icon="map-pin" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Actifs" [value]="actifs()" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Inactifs" [value]="inactifs()" icon="x-circle" iconBg="bg-red-50 text-red-600" />
+        </div>
+
+        <app-datatable [columns]="cols" [data]="api.pointsEmbarquement()" [exportable]="true" [selectable]="true" [rowActions]="actions" />
+      }
+    </div>
+
+    @if (isDeleteConfirmOpen()) {
+      <app-modal
+        title="Confirmer la suppression"
+        [isOpen]="isDeleteConfirmOpen()"
+        (close)="closeDeleteConfirm()"
+        size="small"
+      >
+        <div class="p-1">
+          <p>Êtes-vous sûr de vouloir supprimer le point <strong>{{ selectedPointName() }}</strong> ? Cette action est irréversible.</p>
+          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
+            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isDeleting()">
+              Annuler
+            </button>
+            <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+              @if (isDeleting()) {
+                <span class="animate-pulse">Suppression...</span>
+              } @else {
+                Oui, supprimer
+              }
+            </button>
+          </div>
+        </div>
+      </app-modal>
+    }
+  `,
 })
 export class GestionPointEmbarquementPage implements OnInit {
-  // Données pour le tableau des points de vente
+  api = inject(PartnerApiService);
+  private toast = inject(ToastService);
+  private router = inject(Router);
 
-  salesPoints = signal<Array<BusPoint & { statusLabel?: string }>>([]);
+  // State
+  readonly isLoading = signal<boolean>(true);
+  readonly isDeleting = signal<boolean>(false);
+  readonly isDeleteConfirmOpen = signal<boolean>(false);
+  
+  selectedPointId: string | null = null;
+  selectedPointName = signal<string>('');
 
-  // Colonnes du tableau
+  totalPoints = computed(() => this.api.pointsEmbarquement().length);
+  actifs = computed(() => this.api.pointsEmbarquement().filter((p) => p.statut === 'actif' || p.status === 'active').length);
+  inactifs = computed(() => this.api.pointsEmbarquement().filter((p) => p.statut === 'inactif' || p.status === 'inactive').length);
 
-  salesPointColumns = signal<TableColumn[]>([
-    { key: 'name', title: 'Nom', sortable: true },
-    { key: 'city', title: 'Ville', sortable: true },
-    { key: 'quartier', title: 'Quartier' },
-    { key: 'address', title: 'Adresse' },
-    { key: 'phoneNumber', title: 'Téléphone' },
-    { key: 'pointType', title: 'Type', sortable: true },
-    { key: 'status', title: 'Statut', sortable: true },
+  cols: ColumnDef[] = [
+    { key: 'name', label: 'Nom', sortable: true },
+    { key: 'address', label: 'Adresse', sortable: true },
+    { key: 'city', label: 'Ville', sortable: true },
+    { key: 'time', label: 'Heure', sortable: true },
+    { key: 'status', label: 'Statut', type: 'status', sortable: true },
+  ];
 
-  ]);
+  actions: ActionDef[] = [
+    { label: 'Voir', icon: 'eye', class: 'ghost', action: (p: PointEmbarquement) => this.viewPoint(p) },
+    { label: 'Modifier', icon: 'pencil', class: 'ghost', action: (p: PointEmbarquement) => this.editPoint(p) },
+    { label: 'Supprimer', icon: 'trash', class: 'danger', action: (p: PointEmbarquement) => this.openDeleteConfirm(p) },
+  ];
 
-  // Actions du tableau
-
-  salesPointActions = signal<TableAction[]>([
-    {
-      icon: 'visibility',
-      label: 'Voir détails',
-      action: (item) => this.viewSalesPointDetails(item),
-    },
-    {
-      icon: 'edit',
-      label: 'Modifier',
-      action: (item) => this.editSalesPoint(item),
-    },
-    {
-      icon: 'delete',
-      label: 'Supprimer',
-      action: (item) => this.deleteSalesPoint(item),
-    },
-
-  ]);
-
-  // Modal state
-
-  isModalOpen = signal<boolean>(false);
-  selectedSalesPoint = signal<BusPoint | null>(null);
-
-  // Notification state
-
-  showNotification = signal<boolean>(false);
-  notificationType = signal<'success' | 'error' | 'warning' | 'info'>('info');
-  notificationMessage = signal<string>('');
-  isLoading = signal<boolean>(false);
-  deletingPointId = signal<number | null>(null);
-  private pendingLoadingRequests = 0;
-
-  constructor(
-    private partnerApiService: PartnerApiService,
-    private router: Router,
-    private alertService: AlertService,
-  ) {}
-
-  ngOnInit() {
-    this.loadSalesPoints();
-  }
-
-  private beginLoading(): void {
-    this.pendingLoadingRequests += 1;
-
-    this.isLoading.set(true);
-  }
-
-  private finishLoading(): void {
-    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-
-    this.isLoading.set(this.pendingLoadingRequests > 0);
-  }
-
-  loadSalesPoints() {
-    this.beginLoading();
-    this.partnerApiService
-      .getBusPoints()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (points: BusPoint[]) => {
-
-          this.salesPoints.set(
-            points.map((point) => ({
-            ...point,
-            statusLabel: point.status === 'active' ? 'Actif' : 'Inactif',
-
-            }))
-          );
+  ngOnInit(): void {
+    if (this.api.pointsEmbarquement().length === 0) {
+      this.api.getBusPoints().subscribe({
+        next: () => this.isLoading.set(false),
+        error: (err) => {
+          console.error('Error loading bus points:', err);
+          this.toast.danger('Impossible de charger les points d\'embarquement');
+          this.isLoading.set(false);
         },
-
-      error: (error) => {
-
-          console.error('Error loading sales points:', error);
-          this.alertService.error('Erreur de chargement des points de vente');
-      },
-    });
+      });
+    } else {
+      this.isLoading.set(false);
+    }
   }
 
-  viewSalesPointDetails(point: BusPoint): void {
-    this.selectedSalesPoint.set(point);
-    this.isModalOpen.set(true);
+  viewPoint(point: PointEmbarquement): void {
+    const details = [
+      `Nom: ${point.nom || point.name || 'N/A'}`,
+      `Adresse: ${point.adresse || point.address || 'N/A'}`,
+      `Ville: ${point.ville || point.city || 'N/A'}`,
+      `Heure: ${point.heure || point.time || 'N/A'}`,
+      `Statut: ${point.statut || point.status || 'N/A'}`,
+    ].join('\n');
+    this.toast.info(details);
   }
 
-  editSalesPoint(point: BusPoint): void {
+  editPoint(point: PointEmbarquement): void {
     this.router.navigate(['/ajout-point-embarquement', point.id]);
   }
 
-  addNewSalesPoint(): void {
-    this.router.navigate(['/ajout-point-embarquement']);
+  openDeleteConfirm(point: PointEmbarquement): void {
+    this.selectedPointId = String(point.id);
+    this.selectedPointName.set(point.nom || point.name || String(point.id));
+    this.isDeleteConfirmOpen.set(true);
   }
 
-  async deleteSalesPoint(point: BusPoint): Promise<void> {
-    const confirmed = await this.alertService.confirm(
-      'Supprimer le point',
-      `Êtes-vous sûr de vouloir supprimer ${point.name}?`,
-    );
-    if (!confirmed) {
-      return;
-    }
-    this.beginLoading();
-    this.deletingPointId.set(point.id);
-    this.partnerApiService.deleteBusPoint(point.id)
-    .pipe(finalize(() => this.finishLoading()))
-    .subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.deletingPointId.set(null);
-          this.salesPoints.update((points) => points.filter((p) => p.id !== point.id));
-          this.alertService.success(`Point de vente ${point.name} supprimé avec succès`);
-        } else {
-          this.showToastNotification('error', `Erreur lors de la suppression: ${response.message}`);
-        }
+  closeDeleteConfirm(): void {
+    this.isDeleteConfirmOpen.set(false);
+    this.selectedPointId = null;
+    this.selectedPointName.set('');
+  }
+
+  confirmDelete(): void {
+    if (!this.selectedPointId) return;
+
+    this.isDeleting.set(true);
+    this.api.deleteBusPoint(this.selectedPointId).subscribe({
+      next: () => {
+        this.isDeleting.set(false);
+        this.toast.success('Point d\'embarquement supprimé avec succès');
+        this.closeDeleteConfirm();
       },
-      error: (error) => {
-        this.deletingPointId.set(null);
-        console.error('Error deleting sales point:', error);
-        this.alertService.error('Erreur lors de la suppression du point de vente');
+      error: (err) => {
+        this.isDeleting.set(false);
+        console.error('Error deleting bus point:', err);
+        this.toast.danger('Impossible de supprimer le point d\'embarquement');
+        this.closeDeleteConfirm();
       },
     });
   }
-
-  closeModal(): void {
-    this.isModalOpen.set(false);
-    this.selectedSalesPoint.set(null);
-  }
-
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-
-    this.notificationType.set(type);
-    this.notificationMessage.set(message);
-    this.showNotification.set(true);
-
-    setTimeout(() => {
-
-      this.showNotification.set(false);
-    }, 5000);
-  }
-
-  // Get status badge class
-  getStatusBadgeClass(status: string): string {
-    switch (status) {
-      case 'active':
-      case 'Actif':
-        return 'bg-[#e6f4ea] text-success-green border-[#cce8d6]';
-      case 'inactive':
-      case 'Inactif':
-        return 'bg-error-container text-danger-red border-[#f5c6c6]';
-      default:
-        return 'bg-surface-container text-on-surface border-border-subtle';
-    }
-  }
 }
-

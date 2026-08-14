@@ -1,540 +1,396 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { RevenueChartComponent } from '../../components/revenue-chart/revenue-chart.component';
-import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
-import { CommonModule } from '@angular/common';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { ChartConfiguration } from 'chart.js';
+import { IconComponent } from '../../shared/icon.component';
+import { StatCardComponent } from '../../components/stat-card/stat-card.component';
+import { ChartComponent } from '../../components/chart/chart.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { DatatableComponent } from '../../components/datatable/datatable.component';
+import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { AlertService } from '../../services/alert.service';
-import { finalize } from 'rxjs/operators';
-
-interface MetricCard {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: string;
-  tone: 'positive' | 'neutral' | 'warning' | 'danger';
-}
-
-interface StatusSummary {
-  label: string;
-  value: number;
-  color: string;
-  icon: string;
-}
-
-interface BalanceSummary {
-  label: string;
-  value: string;
-  subtitle: string;
-  tone: 'positive' | 'neutral' | 'warning' | 'danger';
-}
 
 @Component({
   selector: 'app-rapport-analyse',
-  templateUrl: './rapport-analyse.page.html',
-  styleUrls: ['./rapport-analyse.page.css'],
-  imports: [RevenueChartComponent, TableComponent, NotificationComponent, CommonModule],
+  standalone: true,
+  imports: [FormsModule, IconComponent, StatCardComponent, ChartComponent, PageHeaderComponent, DatatableComponent],
+  template: `
+    <div class="space-y-6">
+      <app-page-header title="Rapports & Analyses" subtitle="Analysez les performances de votre activité" icon="bar-chart">
+        <div class="flex flex-wrap gap-2">
+          <select class="input !w-auto cursor-pointer" [ngModel]="periode()" name="periode" (ngModelChange)="periode.set($event); loadData()">
+            @for (option of dateRangeOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <select class="input !w-auto cursor-pointer" [ngModel]="categorie()" name="categorie" (ngModelChange)="categorie.set($event)">
+            @for (option of categoryOptions(); track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+        </div>
+      </app-page-header>
+      
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement des rapports...</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <app-stat-card label="Revenus totaux" [value]="totalRevenue()" icon="banknote" iconBg="bg-brand-50 text-brand-600" [trend]="revenueTrend()" [trendUp]="true" />
+          <app-stat-card label="Taux de remplissage" [value]="fillRate()" icon="trending-up" iconBg="bg-primary-50 text-primary-600" [trend]="fillRateTrend()" [trendUp]="true" />
+          <app-stat-card label="Trajets effectués" [value]="totalTrips()" icon="route" iconBg="bg-amber-50 text-amber-600" [trend]="tripsTrend()" [trendUp]="true" />
+          <app-stat-card label="Annulations" [value]="cancellationRate()" icon="x-circle" iconBg="bg-red-50 text-red-600" [trend]="cancellationTrend()" [trendUp]="false" />
+        </div>
+        @if (balance()) {
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <app-stat-card label="Chiffre d'affaires" [value]="formatCurrency(balance()?.totalRevenue ?? balance()?.revenue ?? 0)" icon="banknote" iconBg="bg-brand-50 text-brand-600" />
+            <app-stat-card label="Retraits" [value]="formatCurrency(balance()?.totalWithdrawals ?? balance()?.withdrawals ?? 0)" icon="arrow-up-right" iconBg="bg-amber-50 text-amber-600" />
+            <app-stat-card label="Solde disponible" [value]="formatCurrency(balance()?.soldeDisponible ?? balance()?.availableBalance ?? 0)" icon="wallet" iconBg="bg-primary-50 text-primary-600" />
+          </div>
+        }
+        @if (statusSummary().length) {
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Réservations par statut</h3>
+            <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              @for (item of statusSummary(); track item.label) {
+                <div class="rounded-xl border border-ink-100 p-4"><p class="text-xs uppercase tracking-wide text-ink-400">{{ item.label }}</p><p class="mt-1 text-xl font-bold text-ink-900">{{ item.value }}</p></div>
+              }
+            </div>
+          </div>
+        }
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Revenus par trajet</h3>
+            <p class="text-sm text-ink-500">Top destinations</p>
+            <div class="mt-4 h-64"><app-chart type="bar" [data]="barData()" [options]="barOptions" /></div>
+          </div>
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Évolution mensuelle</h3>
+            <p class="text-sm text-ink-500">Revenus vs réservations</p>
+            <div class="mt-4 h-64"><app-chart type="line" [data]="lineData()" [options]="lineOptions" /></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-end gap-3">
+          <button type="button" class="btn btn-secondary" (click)="loadSavedReports()" [disabled]="isLoadingReports()">
+            <app-icon name="refresh-cw" [size]="16" /> Actualiser les rapports
+          </button>
+          <button type="button" class="btn btn-secondary" (click)="exportCurrentReport()" [disabled]="isExporting()">
+            <app-icon name="download" [size]="16" /> Exporter l'analyse
+          </button>
+        </div>
+        @if (recentTransactions().length) {
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Transactions récentes</h3>
+            <div class="mt-4"><app-datatable [columns]="transactionCols" [data]="recentTransactions()" [exportable]="true" /></div>
+          </div>
+        }
+        @if (withdrawals().length) {
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Demandes de retrait</h3>
+            <div class="mt-4"><app-datatable [columns]="withdrawalCols" [data]="withdrawals()" [exportable]="true" /></div>
+          </div>
+        }
+        <div class="card p-5">
+          <h3 class="font-bold text-ink-900">Rapports enregistrés</h3>
+          <div class="mt-4">
+            <app-datatable [columns]="reportCols" [data]="savedReports()" [exportable]="true" [rowActions]="reportActions" />
+          </div>
+        </div>
+        <div class="card p-5">
+          <h3 class="font-bold text-ink-900">Performance par bus</h3>
+          <div class="mt-4 space-y-4">
+            @for (b of busPerf(); track b.id) {
+              <div>
+                <div class="flex justify-between text-sm"><span class="font-medium text-ink-700">{{ b.modele }} — {{ b.immat }}</span><span class="font-bold text-ink-900">{{ b.taux }}%</span></div>
+                <div class="mt-2 h-2.5 rounded-full bg-ink-100"><div class="h-2.5 rounded-full" [class]="b.taux > 75 ? 'bg-brand-500' : b.taux > 50 ? 'bg-primary-500' : 'bg-amber-500'" [style.width.%]="b.taux"></div></div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  `,
 })
 export class RapportAnalysePage implements OnInit {
-  recentActivity = signal<any[]>([]);
-
-  transactionColumns = signal<TableColumn[]>([
-    { key: 'description', title: 'Description' },
-    { key: 'amount', title: 'Montant' },
-    { key: 'status', title: 'Statut' },
-    { key: 'createdAt', title: 'Date' },
+  api = inject(PartnerApiService);
+  private toast = inject(ToastService);
+  
+  readonly isLoading = signal<boolean>(true);
+  periode = signal('30j');
+  categorie = signal('all');
+  readonly dateRangeOptions = signal<any[]>([
+    { value: '7j', label: '7 derniers jours' },
+    { value: '30j', label: '30 derniers jours' },
+    { value: '12m', label: '12 derniers mois' },
   ]);
-  transactionActions = signal<TableAction[]>([]);
-
-  savedReports = signal<any[]>([]);
-
-  reportColumns = signal<TableColumn[]>([
-    { key: 'id', title: 'ID' },
-    { key: 'title', title: 'Titre' },
-    { key: 'type', title: 'Catégorie' },
-    { key: 'date', title: 'Date' },
-    { key: 'status', title: 'Statut' },
+  readonly categoryOptions = signal<any[]>([
+    { value: 'all', label: 'Toutes les catégories' },
+    { value: 'performance', label: 'Performance' },
+    { value: 'finance', label: 'Finance' },
+    { value: 'trips', label: 'Trajets' },
   ]);
+  
+  // Report data
+  readonly reportData = signal<any>(null);
+  readonly reportStats = signal<any>(null);
+  readonly balance = signal<any>(null);
+  readonly statusSummary = signal<any[]>([]);
+  readonly recentTransactions = signal<any[]>([]);
+  readonly withdrawals = signal<any[]>([]);
+  readonly isExporting = signal<boolean>(false);
+  readonly isLoadingReports = signal<boolean>(false);
+  readonly savedReports = signal<any[]>([]);
 
-  reportActions = signal<TableAction[]>([
-    {
-      icon: 'download',
-      label: 'Télécharger',
-      action: (item) => this.downloadReport(item),
-    },
-  ]);
+  reportCols = [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'title', label: 'Titre', sortable: true },
+    { key: 'type', label: 'Catégorie', sortable: true },
+    { key: 'date', label: 'Date', type: 'date' as const, sortable: true },
+    { key: 'status', label: 'Statut', type: 'status' as const, sortable: true },
+  ];
 
-  dateRangeOptions = signal<{ value: string; label: string }[]>([]);
-  selectedDateRange = signal<string>('30');
-  reportCategoryOptions = signal<{ value: string; label: string }[]>([]);
-  selectedReportCategory = signal<string>('all');
+  reportActions = [
+    { label: 'Télécharger', icon: 'download', class: 'ghost' as const, action: (report: any) => this.downloadReport(report) },
+  ];
+  transactionCols = [
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'amount', label: 'Montant', type: 'currency' as const, sortable: true },
+    { key: 'status', label: 'Statut', type: 'status' as const, sortable: true },
+    { key: 'createdAt', label: 'Date', type: 'date' as const, sortable: true },
+  ];
+  withdrawalCols = [
+    { key: 'reference', label: 'Référence', sortable: true },
+    { key: 'montant', label: 'Montant', type: 'currency' as const, sortable: true },
+    { key: 'statut', label: 'Statut', type: 'status' as const, sortable: true },
+    { key: 'dateDemande', label: 'Date', type: 'date' as const, sortable: true },
+  ];
 
-  reportChartLabels = signal<string[]>([]);
-  reportChartData = signal<number[]>([]);
-  reportChartType = signal<'line' | 'bar'>('line');
-  reportChartOptions = signal<any>({
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          color: '#334155',
-          usePointStyle: false,
-          padding: 16,
-          font: { size: 12, weight: '600' },
-        },
-      },
-    },
-  });
-  reportBreakdownLabels = signal<string[]>([]);
-  reportBreakdownData = signal<number[]>([]);
-  reportBreakdownChartType = signal<'line' | 'bar'>('bar');
-  reportBreakdownChartOptions = signal<any>({
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: {
-          color: '#334155',
-          padding: 16,
-          font: { size: 12, weight: '600' },
-        },
-      },
-    },
-  });
-
-  kpiCards = signal<MetricCard[]>([]);
-  statusSummary = signal<StatusSummary[]>([]);
-  balanceSummary = signal<BalanceSummary[]>([]);
-  withdrawals = signal<any[]>([]);
-
-  showNotification = signal<boolean>(false);
-  notificationType = signal<'success' | 'error' | 'warning' | 'info'>('info');
-  notificationMessage = signal<string>('');
-  isLoading = signal<boolean>(false);
-  private pendingLoadingRequests = 0;
-
-  constructor(
-    private partnerApiService: PartnerApiService,
-    private alertService: AlertService,
-  ) {}
-
-  private beginLoading(): void {
-    this.pendingLoadingRequests += 1;
-    this.isLoading.set(true);
-  }
-
-  private finishLoading(): void {
-    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoading.set(this.pendingLoadingRequests > 0);
-  }
+  barOptions: ChartConfiguration['options'] = { plugins: { legend: { display: false } }, scales: { y: { grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } };
+  lineOptions: ChartConfiguration['options'] = { plugins: { legend: { position: 'bottom' } }, scales: { y: { grid: { color: '#f1f5f9' } }, x: { grid: { display: false } } } };
 
   ngOnInit(): void {
-    this.partnerApiService.getDateRangeOptions().subscribe({
-      next: (options) => {
-        this.dateRangeOptions.set(options);
-        if (!options.some((option) => option.value === this.selectedDateRange())) {
-          this.selectedDateRange.set(options[0]?.value || this.selectedDateRange());
-        }
-      },
-      error: (error) => {
-        console.error('Error loading date range options:', error);
-        this.alertService.error('Erreur de chargement des options de plage de dates');
-      },
+    this.api.getDateRangeOptions().subscribe({
+      next: (options) => { if (options?.length) this.dateRangeOptions.set(options); },
+      error: () => {},
     });
-
-    this.partnerApiService.getReportCategoryOptions().subscribe({
-      next: (options) => {
-        this.reportCategoryOptions.set(options);
-        if (!options.some((option) => option.value === this.selectedReportCategory())) {
-          this.selectedReportCategory.set(options[0]?.value || this.selectedReportCategory());
-        }
-      },
-      error: (error) => {
-        console.error('Error loading report category options:', error);
-        this.alertService.error('Erreur de chargement des options de catégorie de rapport');
-      },
+    this.api.getReportCategoryOptions().subscribe({
+      next: (options) => { if (options?.length) this.categoryOptions.set([{ value: 'all', label: 'Toutes les catégories' }, ...options]); },
+      error: () => {},
     });
-
-    this.loadReportData();
+    this.loadData();
     this.loadSavedReports();
   }
 
-  private loadReportData(): void {
-    this.beginLoading();
-    this.partnerApiService
-      .getPartnerStats()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (stats: any) => {
-          if (!stats) {
-            return;
-          }
-
-          console.log('Partner stats loaded:', stats);
-
-          this.kpiCards.set(this.buildKpiCards(stats));
-          this.recentActivity.set(
-            Array.isArray(stats.recentTransactions) ? stats.recentTransactions : [],
-          );
-          this.withdrawals.set(Array.isArray(stats.withdrawals) ? stats.withdrawals : []);
-          this.statusSummary.set(this.buildStatusSummary(stats.reservationsByStatus));
-          this.balanceSummary.set(this.buildBalanceSummary(stats.balance));
-          this.reportChartLabels.set(Array.isArray(stats.chartLabels) ? stats.chartLabels : []);
-          this.reportChartData.set(Array.isArray(stats.chartData) ? stats.chartData : []);
-          this.reportBreakdownLabels.set(
-            this.normalizeBreakdownLabels(stats.breakdownLabels ?? []),
-          );
-          this.reportBreakdownData.set(
-            Array.isArray(stats.breakdownData) ? stats.breakdownData : [],
-          );
-        },
-        error: (error) => {
-          console.error('Error loading partner stats:', error);
-          this.alertService.error('Erreur de chargement des rapports');
-        },
-      });
+  loadData(): void {
+    this.isLoading.set(true);
+    const period = this.periode();
+    
+    // Load analytics report
+    this.api.getAnalyticsReport(period).subscribe({
+      next: (data) => {
+        this.reportData.set(data);
+        this.api.getPartnerStats().subscribe({
+          next: (stats) => {
+            this.reportStats.set(stats);
+            this.balance.set(stats?.balance || null);
+            this.statusSummary.set(
+              Object.entries(stats?.reservationsByStatus || {}).map(([label, value]) => ({ label, value })),
+            );
+            this.recentTransactions.set(Array.isArray(stats?.recentTransactions) ? stats.recentTransactions : []);
+            this.withdrawals.set(Array.isArray(stats?.withdrawals) ? stats.withdrawals : []);
+          },
+          error: (err) => console.error('Error loading report summary:', err),
+        });
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading analytics report:', err);
+        this.toast.danger('Impossible de charger les rapports d\'analyse');
+        this.isLoading.set(false);
+      },
+    });
   }
 
-  public loadSavedReports(): void {
-    this.beginLoading();
-    this.partnerApiService
-      .getReports()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (reports) => {
-          this.savedReports.set(Array.isArray(reports) ? reports : []);
-        },
-        error: (error) => {
-          console.error('Error loading saved reports:', error);
-          this.alertService.error('Erreur de chargement des rapports sauvegardés');
-        },
-      });
-  }
-
-  get filteredReports(): any[] {
-    if (this.selectedReportCategory() === 'all') {
-      return this.savedReports();
-    }
-    return this.savedReports().filter((report) => report.type === this.selectedReportCategory());
-  }
-
-  exportActivityData(activity: any): void {
-    if (!activity) {
-      return;
-    }
-
-    const csvRows = [
-      ['Description', 'Montant', 'Statut', 'Date'],
-      [
-        activity.description ?? '',
-        activity.amount ?? '',
-        activity.status ?? '',
-        activity.createdAt ?? '',
-      ],
-    ];
-    const csvContent = csvRows
-      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `activity_${activity.id || 'export'}.csv`;
-    anchor.click();
-    window.URL.revokeObjectURL(url);
-    this.showToastNotification(
-      'success',
-      `Export de l'activité ${activity.id ?? 'sélectionnée'} lancé.`,
-    );
+  loadSavedReports(): void {
+    this.isLoadingReports.set(true);
+    this.api.getReports().subscribe({
+      next: (reports) => {
+        this.savedReports.set(reports || []);
+        this.isLoadingReports.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading saved reports:', err);
+        this.toast.danger('Impossible de charger les rapports enregistrés.');
+        this.isLoadingReports.set(false);
+      },
+    });
   }
 
   downloadReport(report: any): void {
-    if (!report?.id) {
-      return;
-    }
-
-    this.partnerApiService.downloadReport(report.id).subscribe({
+    if (!report?.id) return;
+    this.api.downloadReport(report.id).subscribe({
       next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = report.fileName || `rapport_${report.id}.pdf`;
+        anchor.download = report.fileName || `rapport-${report.id}.pdf`;
         anchor.click();
-        window.URL.revokeObjectURL(url);
-        this.showToastNotification('success', `Téléchargement du rapport ${report.title} lancé.`);
+        URL.revokeObjectURL(url);
       },
-      error: (error) => {
-        console.error('Error downloading report:', error);
-        this.showToastNotification('error', `Impossible de télécharger ${report.title}.`);
+      error: (err) => {
+        console.error('Error downloading report:', err);
+        this.toast.danger('Impossible de télécharger le rapport.');
       },
     });
   }
+
+  formatCurrency(value: unknown): string {
+    const amount = Number(value ?? 0);
+    return `${Number.isFinite(amount) ? amount.toLocaleString('fr-FR') : '0'} FCFA`;
+  }
+
+  totalRevenue = computed(() => {
+    const data = this.reportData();
+    if (!data?.totalRevenue) return '0 FCFA';
+    return `${Number(data.totalRevenue).toLocaleString('fr-FR')} FCFA`;
+  });
+
+  fillRate = computed(() => {
+    const data = this.reportData();
+    if (!data?.fillRate) return '0%';
+    return `${Number(data.fillRate).toFixed(1)}%`;
+  });
+
+  totalTrips = computed(() => {
+    const data = this.reportData();
+    if (!data?.totalTrips) return '0';
+    return String(data.totalTrips);
+  });
+
+  cancellationRate = computed(() => {
+    const data = this.reportData();
+    if (!data?.cancellationRate) return '0%';
+    return `${Number(data.cancellationRate).toFixed(1)}%`;
+  });
+
+  revenueTrend = computed(() => {
+    const data = this.reportData();
+    return data?.revenueTrend ? `${data.revenueTrend > 0 ? '+' : ''}${data.revenueTrend}%` : '+0%';
+  });
+
+  fillRateTrend = computed(() => {
+    const data = this.reportData();
+    return data?.fillRateTrend ? `${data.fillRateTrend > 0 ? '+' : ''}${data.fillRateTrend}%` : '+0%';
+  });
+
+  tripsTrend = computed(() => {
+    const data = this.reportData();
+    return data?.tripsTrend ? `${data.tripsTrend > 0 ? '+' : ''}${data.tripsTrend}` : '+0';
+  });
+
+  cancellationTrend = computed(() => {
+    const data = this.reportData();
+    return data?.cancellationTrend ? `${data.cancellationTrend > 0 ? '+' : ''}${data.cancellationTrend}%` : '-0%';
+  });
+
+  barData = computed<ChartConfiguration['data']>(() => {
+    const data = this.reportData();
+    if (!data?.revenueByRoute) {
+      return {
+        labels: [],
+        datasets: [{ label: 'Revenus (FCFA)', data: [], backgroundColor: [], borderRadius: 6 }],
+      };
+    }
+    
+    const routes = data.revenueByRoute || [];
+    const backgroundColors = ['#059669', '#10b981', '#3880ff', '#60a5fa', '#f59e0b', '#fb923c'];
+    
+    return {
+      labels: routes.map((r: any) => r.route || r.destination || 'Inconnu'),
+      datasets: [{
+        label: 'Revenus (FCFA)',
+        data: routes.map((r: any) => Number(r.revenue || r.total || 0) / 1000),
+        backgroundColor: backgroundColors,
+        borderRadius: 6,
+      }],
+    };
+  });
+
+  lineData = computed<ChartConfiguration['data']>(() => {
+    const data = this.reportData();
+    if (!data?.monthlyData) {
+      return {
+        labels: [],
+        datasets: [],
+      };
+    }
+    
+    const monthly = data.monthlyData || [];
+    
+    return {
+      labels: monthly.map((m: any) => m.month || m.label || ''),
+      datasets: [
+        {
+          label: 'Revenus',
+          data: monthly.map((m: any) => Number(m.revenue || 0)),
+          borderColor: '#059669',
+          backgroundColor: 'rgba(16,185,129,0.1)',
+          tension: 0.4,
+          fill: true,
+          borderWidth: 2,
+        },
+        {
+          label: 'Réservations',
+          data: monthly.map((m: any) => Number(m.reservations || m.bookings || 0)),
+          borderColor: '#3880ff',
+          backgroundColor: 'rgba(56,128,255,0.05)',
+          tension: 0.4,
+          fill: true,
+          borderWidth: 2,
+        },
+      ],
+    };
+  });
 
   exportCurrentReport(): void {
-    const payload = {
-      category: this.selectedReportCategory(),
-      dateRange: this.selectedDateRange(),
-    };
-
-    this.partnerApiService.generateReport(payload).subscribe({
+    if (this.isExporting()) return;
+    this.isExporting.set(true);
+    this.api.generateReport({ category: this.categorie(), dateRange: this.periode() }).subscribe({
       next: (blob) => {
-        const fileName = `rapport_${payload.category}_${payload.dateRange}.pdf`;
-        const url = window.URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
         const anchor = document.createElement('a');
         anchor.href = url;
-        anchor.download = fileName;
+        anchor.download = `rapport-${this.periode()}.pdf`;
         anchor.click();
-        window.URL.revokeObjectURL(url);
-        this.showToastNotification('success', 'Rapport généré et téléchargement lancé.');
+        URL.revokeObjectURL(url);
+        this.toast.success('Rapport exporté avec succès.');
+        this.isExporting.set(false);
       },
-      error: (error) => {
-        console.error('Error generating report:', error);
-        this.showToastNotification('error', 'Impossible de générer le rapport.');
+      error: (err) => {
+        console.error('Error exporting report:', err);
+        this.toast.danger('Impossible d’exporter le rapport.');
+        this.isExporting.set(false);
       },
     });
   }
 
-  selectDateRange(value: string): void {
-    this.selectedDateRange.set(value);
-  }
-
-  selectReportCategory(value: string): void {
-    this.selectedReportCategory.set(value);
-  }
-
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType.set(type);
-    this.notificationMessage.set(message);
-    this.showNotification.set(true);
-
-    setTimeout(() => {
-      this.showNotification.set(false);
-    }, 5000);
-  }
-
-  formatCurrency(value: any): string {
-    const amount = Number(value ?? 0);
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'XAF',
-      maximumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  formatPercent(value: any): string {
-    const amount = Number(value ?? 0);
-    return `${amount.toFixed(0)}%`;
-  }
-
-  formatNumber(value: any): string {
-    return new Intl.NumberFormat('fr-FR').format(Number(value ?? 0));
-  }
-
-  formatDate(value: string | null | undefined): string {
-    if (!value) {
-      return '—';
-    }
-
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) {
-      return value;
-    }
-
-    return new Intl.DateTimeFormat('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  getTransactionStatusClass(status: string): string {
-    const normalized = String(status ?? '').toLowerCase();
-    if (normalized.includes('termin')) {
-      return 'badge-success';
-    }
-    if (
-      normalized.includes('cours') ||
-      normalized.includes('pending') ||
-      normalized.includes('en cours')
-    ) {
-      return 'badge-warning';
-    }
-    return 'badge-neutral';
-  }
-
-  getReportTypeLabel(type: string): string {
-    switch (type) {
-      case 'financial':
-        return 'Financier';
-      case 'operational':
-        return 'Opérationnel';
-      case 'passenger':
-        return 'Passagers';
-      default:
-        return type || 'Rapport';
-    }
-  }
-
-  private buildKpiCards(stats: any): MetricCard[] {
-    const totalReservations = this.sumReservations(stats.reservationsByStatus);
-
-    return [
-      {
-        title: 'Revenu net',
-        value: this.formatCurrency(stats.netRevenue ?? stats.revenue),
-        subtitle: `${stats.revenueChange ?? '0%'} vs période précédente`,
-        icon: 'payments',
-        tone: 'positive',
-      },
-      {
-        title: 'Frais plateforme',
-        value: this.formatCurrency(stats.platformFees ?? 0),
-        subtitle: 'Déduits du montant encaissé',
-        icon: 'receipt_long',
-        tone: 'neutral',
-      },
-      {
-        title: 'Voyages actifs',
-        value: this.formatNumber(stats.activeTrips ?? 0),
-        subtitle: 'Trajets actuellement en cours',
-        icon: 'route',
-        tone: 'positive',
-      },
-      {
-        title: 'Passagers actifs',
-        value: this.formatNumber(stats.activePassengers ?? stats.totalPassengers ?? 0),
-        subtitle: `${this.formatNumber(stats.totalPassengers ?? 0)} au total`,
-        icon: 'groups',
-        tone: 'neutral',
-      },
-      {
-        title: 'Taux d’embarquement',
-        value: this.formatPercent(stats.boardingRate ?? 0),
-        subtitle: 'Réservations validées à bord',
-        icon: 'how_to_reg',
-        tone: 'positive',
-      },
-      {
-        title: 'Réservations',
-        value: this.formatNumber(totalReservations),
-        subtitle: 'Vue consolidée des statuts',
-        icon: 'confirmation_number',
-        tone: 'neutral',
-      },
-    ];
-  }
-
-  private buildStatusSummary(reservationsByStatus: any): StatusSummary[] {
-    const entries = Object.entries(reservationsByStatus ?? {}).map(([key, value]) => ({
-      key,
-      label: this.getStatusLabel(key),
-      value: Number(value ?? 0),
-    }));
-
-    return entries
-      .filter((entry) => entry.value > 0)
-      .map((entry) => ({
-        label: entry.label,
-        value: entry.value,
-        color: this.getStatusColor(entry.key),
-        icon: this.getStatusIcon(entry.key),
-      }))
-      .sort((a, b) => b.value - a.value);
-  }
-
-  private buildBalanceSummary(balance: any): BalanceSummary[] {
-    return [
-      {
-        label: 'Disponible',
-        value: this.formatCurrency(balance?.available ?? 0),
-        subtitle: 'Solde immédiatement utilisable',
-        tone: 'positive',
-      },
-      {
-        label: 'En attente',
-        value: this.formatCurrency(balance?.pending ?? 0),
-        subtitle: 'Fonds bloqués par retrait',
-        tone: 'warning',
-      },
-      {
-        label: 'À risque',
-        value: this.formatCurrency(balance?.atRisk ?? 0),
-        subtitle: 'Montant à surveiller',
-        tone: 'danger',
-      },
-      {
-        label: 'Transactions en attente',
-        value: this.formatNumber(balance?.pendingTransactions ?? 0),
-        subtitle: 'Mises à jour à venir',
-        tone: 'neutral',
-      },
-    ];
-  }
-
-  private normalizeBreakdownLabels(labels: string[] = []): string[] {
-    return labels.map((label) => this.translateBreakdownLabel(label));
-  }
-
-  private translateBreakdownLabel(label: string): string {
-    const mapping: Record<string, string> = {
-      REFUND_PENDING: 'En attente de remboursement',
-      SUCCESS: 'Réussies',
-      CANCELLED: 'Annulées',
-      PENDING: 'En attente',
-      CONFIRMED: 'Confirmées',
-    };
-
-    return mapping[label] ?? label;
-  }
-
-  private getStatusLabel(key: string): string {
-    const mapping: Record<string, string> = {
-      enAttentePaiement: 'En attente de paiement',
-      confirmees: 'Confirmées',
-      echouees: 'Échouées',
-      annuleesRemboursementEnAttente: 'Annulées - remboursement en attente',
-      annuleesRembourseesConfirmees: 'Annulées - remboursées',
-      annuleesSansPaiementPrealable: 'Annulées sans paiement préalable',
-    };
-
-    return mapping[key] ?? key;
-  }
-
-  private getStatusColor(key: string): string {
-    switch (key) {
-      case 'confirmees':
-        return 'text-success-green';
-      case 'annuleesRemboursementEnAttente':
-      case 'enAttentePaiement':
-        return 'text-warning-gold';
-      case 'echouees':
-        return 'text-danger-red';
-      default:
-        return 'text-outline';
-    }
-  }
-
-  private getStatusIcon(key: string): string {
-    switch (key) {
-      case 'confirmees':
-        return 'check_circle';
-      case 'annuleesRemboursementEnAttente':
-      case 'enAttentePaiement':
-        return 'pending';
-      case 'echouees':
-        return 'error';
-      default:
-        return 'receipt_long';
-    }
-  }
-
-  private sumReservations(reservationsByStatus: any): number {
-    return Object.values(reservationsByStatus ?? {}).reduce<number>((total, value) => {
-      return total + Number(value ?? 0);
-    }, 0);
-  }
+  busPerf = computed(() => {
+    const buses = this.api.bus();
+    const report = this.reportData();
+    
+    return buses
+      .filter((b) => b.statut === 'actif' || b.status === 'active')
+      .slice(0, 5)
+      .map((b) => {
+        // Find bus performance from report
+        const perf = (report?.busPerformance || []).find((p: any) => p.busId === b.id);
+        return {
+          id: b.id,
+          modele: b.modele || b.model || '—',
+          immat: b.immatriculation || b.registrationNumber || '—',
+          taux: perf?.occupancyRate ?? perf?.fillRate ?? 0,
+        };
+      });
+  });
 }

@@ -1,102 +1,95 @@
-import { Component } from '@angular/core';
-import { FormComponent, FormField } from '../../../components/form/form.component';
-import { NotificationComponent } from '../../../components/notification/notification.component';
-import { CommonModule } from '@angular/common';
+import { Component, signal, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { IconComponent } from '../../../shared/icon.component';
 import { AuthService } from '../../../services/auth.service';
-import { Router } from '@angular/router';
-import { PartnerApiService } from '../../../services/partner-api.service';
-import { environment } from '../../../../environments/environment';
+import { ToastService } from '../../../components/toast/toast.component';
 
 @Component({
   selector: 'app-recuperation-de-compte',
-  templateUrl: './recuperation-de-compte.page.html',
-  styleUrls: ['./recuperation-de-compte.page.css'],
-  imports: [FormComponent, NotificationComponent, CommonModule],
+  standalone: true,
+  imports: [FormsModule, RouterLink, IconComponent],
+  template: `
+    <div class="flex min-h-screen items-center justify-center bg-ink-50 p-6">
+      <div class="w-full max-w-md">
+        <div class="mb-6 flex items-center gap-2.5">
+          <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-600 text-white">
+            <app-icon name="bus-front" [size]="24" />
+          </div>
+          <div>
+            <p class="text-lg font-bold text-ink-900">Transito</p>
+            <p class="text-xs text-ink-500">Portail Partenaire</p>
+          </div>
+        </div>
+
+        <div class="card p-8">
+          <div class="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <app-icon name="mail" [size]="28" />
+          </div>
+          <h1 class="text-2xl font-bold text-ink-900">Récupération de compte</h1>
+          <p class="mt-1 text-sm text-ink-500">
+            Entrez votre adresse email. Nous vous enverrons un lien pour réinitialiser votre mot de passe.
+          </p>
+
+          @if (!sent()) {
+            <form (ngSubmit)="submit()" class="mt-6 space-y-4">
+              <div>
+                <label class="label" for="email">Email</label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400">
+                    <app-icon name="mail" [size]="16" />
+                  </span>
+                  <input id="email" type="email" class="input pl-9" placeholder="vous@transito.ci"
+                    [(ngModel)]="email" name="email" required />
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary w-full" [disabled]="loading()">
+                @if (loading()) { Envoi... } @else { Envoyer le lien }
+              </button>
+            </form>
+          } @else {
+            <div class="mt-6 rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-brand-700">
+              <p class="flex items-center gap-2 font-semibold">
+                <app-icon name="check-circle" [size]="18" /> Email envoyé
+              </p>
+              <p class="mt-1">Un lien de réinitialisation a été envoyé à {{ email() }}.</p>
+            </div>
+            <button class="btn btn-secondary mt-4 w-full" (click)="sent.set(false)">Renvoyer</button>
+          }
+
+          <a routerLink="/auth/connexion" class="mt-6 flex items-center justify-center gap-1.5 text-sm font-medium text-ink-600 hover:text-ink-900">
+            <app-icon name="arrow-left" [size]="16" /> Retour à la connexion
+          </a>
+        </div>
+      </div>
+    </div>
+  `,
 })
 export class RecuperationDeComptePage {
-  isLoading: boolean = false;
-  isSent: boolean = false;
+  private auth = inject(AuthService);
+  private toast = inject(ToastService);
 
-  // Form fields for password recovery
-  recoveryFormFields: FormField[] = [
-    {
-      key: 'email',
-      label: 'Adresse E-mail',
-      type: 'email',
-      required: true,
-      placeholder: 'nom@entreprise.com',
-    },
-  ];
+  email = signal('');
+  loading = signal(false);
+  sent = signal(false);
 
-  // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-
-  heroImage: string = environment.baseApiUrl + '/assets/hero-login.jpg';
-
-  constructor(
-    private authService: AuthService,
-    private router: Router,
-    private partnerApiService: PartnerApiService,
-  ) {
-    this.partnerApiService.getPartnerProfile().subscribe(
-      (p) => {
-        this.heroImage = this.normalizeImageUrl(p?.profilePhotoUrl ?? this.heroImage);
-      },
-      () => {},
-    );
-  }
-
-  private normalizeImageUrl(url: string): string {
-    if (!url) {
-      return this.heroImage;
-    }
-
-    if (/^https?:\/\//i.test(url)) {
-      return url;
-    }
-
-    const normalizedPath = url.startsWith('/') ? url : `/${url}`;
-    return `${environment.baseApiUrl}${normalizedPath}`;
-  }
-
-  // Gestion de la soumission du formulaire
-  async onSubmit(formData: any): Promise<void> {
-    this.isLoading = true;
-
-    try {
-      // Call the auth service to request password reset
-      // Note: This is a mock implementation since the backend doesn't have this endpoint yet
-      // In a real implementation, you would call:
-      // const success = await this.authService.requestReset(formData.email);
-
-      // For now, we'll simulate a successful request
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      this.isLoading = false;
-      this.isSent = true;
-      this.showToastNotification('success', 'Lien de récupération envoyé avec succès!');
-
-      // Reset button state after 3 seconds
-      setTimeout(() => {
-        this.isSent = false;
-        this.router.navigate(['/connexion']);
-      }, 3000);
-    } catch (error) {
-      this.isLoading = false;
-      console.error('Password reset error:', error);
-      this.showToastNotification('error', "Erreur lors de l'envoi du lien de récupération");
-    }
-  }
-
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
-
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 5000);
+  submit() {
+    if (!this.email()) return;
+    this.loading.set(true);
+    
+    this.auth.requestPasswordReset(this.email()).then(
+      (success: boolean) => {
+        this.loading.set(false);
+        if (success) {
+          this.sent.set(true);
+          this.toast.success('Lien de réinitialisation envoyé.');
+        } else {
+          this.toast.danger('Impossible d\'envoyer le lien de réinitialisation. Vérifiez votre email.');
+        }
+      }
+    ).catch(() => {
+      this.loading.set(false);
+      this.toast.danger('Une erreur est survenue. Veuillez réessayer.');
+    });
   }
 }

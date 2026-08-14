@@ -1,403 +1,531 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
-import { RevenueChartComponent } from '../../components/revenue-chart/revenue-chart.component';
-import { TableComponent, TableColumn, TableAction } from '../../components/table/table.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
-import { ChartType } from 'chart.js/auto';
-import { PartnerApiService } from '../../services/partner-api.service';
-import { AuthService } from '../../services/auth.service';
-import { CommonModule } from '@angular/common';
-import { AlertService } from '../../services/alert.service';
-import { finalize } from 'rxjs/operators';
-import { Router } from '@angular/router';
+import { Component, computed, inject, signal, OnInit } from "@angular/core";
+import { Router, RouterLink } from "@angular/router";
+import { CurrencyPipe, DecimalPipe, CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ChartConfiguration } from "chart.js";
+import { forkJoin } from 'rxjs';
+import { IconComponent } from "../../shared/icon.component";
+import { StatCardComponent } from "../../components/stat-card/stat-card.component";
+import { ChartComponent } from "../../components/chart/chart.component";
+import { DatatableComponent } from "../../components/datatable/datatable.component";
+import { PageHeaderComponent } from "../../components/page-header/page-header.component";
+import { PartnerApiService } from "../../services/partner-api.service";
+import { ToastService } from "../../components/toast/toast.component";
+import {
+  ColumnDef,
+  ActionDef,
+  KpiData,
+  NotificationItem,
+  Trajet,
+} from "../../models";
 
 @Component({
-  selector: 'app-dashboard',
-  templateUrl: './dashboard.page.html',
-  styleUrls: ['./dashboard.page.css'],
-  imports: [RevenueChartComponent, TableComponent, NotificationComponent, CommonModule],
+  selector: "app-dashboard",
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterLink,
+    CurrencyPipe,
+    DecimalPipe,
+    FormsModule,
+    IconComponent,
+    StatCardComponent,
+    ChartComponent,
+    DatatableComponent,
+    PageHeaderComponent,
+  ],
+  template: `
+    <div class="space-y-6">
+      <div
+        class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <app-page-header
+          title="Tableau de bord"
+          subtitle="Vue d'ensemble de votre activité"
+          icon="dashboard"
+        />
+        <button
+          (click)="openScanModal.set(true)"
+          class="btn btn-primary flex items-center gap-2 self-start sm:self-auto"
+        >
+          <app-icon name="ticket" [size]="18" />
+          <span>Valider un Billet</span>
+        </button>
+      </div>
+
+      <!-- Loading state -->
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div
+            class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"
+          ></div>
+          <span class="ml-3">Chargement du tableau de bord...</span>
+        </div>
+      } @else {
+        <!-- KPI cards -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <app-stat-card
+            label="Revenus Aujourd'hui"
+            [value]="
+              kpiSignal()?.revenusAujourdhui
+                | currency: 'XOF' : 'symbol' : '1.0-0'
+            "
+            icon="banknote"
+            iconBg="bg-brand-50 text-brand-600"
+            [trend]="kpiTrend().revenue"
+            [trendUp]="true"
+          />
+          <app-stat-card
+            label="Trajets Actifs"
+            [value]="String(kpiSignal()?.trajetsActifs)"
+            icon="route"
+            iconBg="bg-primary-50 text-primary-600"
+            [trend]="kpiTrend().trips"
+            [trendUp]="true"
+          />
+          <app-stat-card
+            label="Passagers Totaux"
+            [value]="kpiSignal()?.passagersTotaux | number"
+            icon="users"
+            iconBg="bg-amber-50 text-amber-600"
+            [trend]="kpiTrend().passengers"
+            [trendUp]="true"
+          />
+        </div>
+
+        <!-- Charts row -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <!-- Revenue chart -->
+          <div class="card p-5 lg:col-span-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-ink-900">Tendance des Revenus</h3>
+                <p class="text-sm text-ink-500">Évolution des revenus</p>
+              </div>
+              <div class="flex rounded-lg bg-ink-100 p-0.5">
+                @for (p of periods; track p.key) {
+                  <button
+                    class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                    [class]="
+                      period() === p.key
+                        ? 'bg-white text-brand-700 shadow-sm'
+                        : 'text-ink-500'
+                    "
+                    (click)="period.set(p.key)"
+                  >
+                    {{ p.label }}
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="mt-4 h-72">
+              <app-chart
+                type="line"
+                [data]="chartData()"
+                [options]="chartOptions"
+              />
+            </div>
+          </div>
+
+          <!-- Occupation donut -->
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Taux d'Occupation</h3>
+            <p class="text-sm text-ink-500">Moyenne des bus</p>
+            <div class="mt-4 flex h-72 items-center justify-center">
+              <app-chart
+                type="doughnut"
+                [data]="donutData()"
+                [options]="donutOptions"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Activity + Upcoming -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div class="card p-5">
+            <h3 class="font-bold text-ink-900">Activité Récente</h3>
+            <div class="mt-4 space-y-4">
+              @for (a of activity(); track a.id) {
+                <div class="flex gap-3">
+                  <div
+                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                    [class]="a.bg"
+                  >
+                    <app-icon [name]="a.icon" [size]="16" />
+                  </div>
+                  <div class="flex-1 border-b border-ink-100 pb-4">
+                    <p class="text-sm font-semibold text-ink-800">
+                      {{ a.title }}
+                    </p>
+                    <p class="text-sm text-ink-500">{{ a.message }}</p>
+                    <p class="mt-1 text-xs text-ink-400">{{ a.time }}</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="card p-5">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-ink-900">Départs à Venir</h3>
+              <a
+                routerLink="/trip-schedule"
+                class="text-sm font-semibold text-primary-600 hover:text-primary-700"
+                >Voir tout</a
+              >
+            </div>
+            <div class="mt-4 space-y-2">
+              @for (t of upcoming(); track t.id) {
+                <div
+                  class="flex items-center justify-between rounded-lg border border-ink-100 p-3 hover:bg-ink-50 transition-colors"
+                >
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+                    >
+                      <app-icon name="bus" [size]="18" />
+                    </div>
+                    <div>
+                      <p class="text-sm font-semibold text-ink-800">
+                        {{
+                          t.departureCity || t.origine || t.departure || "—"
+                        }}
+                        →
+                        {{ t.arrivalCity || t.destination || t.arrival || "—" }}
+                      </p>
+                      <p class="text-xs text-ink-500">
+                        {{
+                          t.departureTime ||
+                            t.heureDepart ||
+                            t.departureTimeOfDay ||
+                            "—"
+                        }}
+                        ·
+                        {{
+                          t.tripDate ||
+                            t.dateDepart ||
+                            t.departureDate ||
+                            "Aujourd'hui"
+                        }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-sm font-bold text-ink-900">
+                      {{ t.availableSeats || t.placesDisponibles || 0 }}
+                    </p>
+                    <p class="text-xs text-ink-500">places</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservations datatable -->
+        <div>
+          <h3 class="mb-3 text-lg font-bold text-ink-900">
+            Réservations récentes
+          </h3>
+          <app-datatable
+            [columns]="resCols"
+            [data]="recentReservations()"
+            [exportable]="true"
+            [selectable]="true"
+            [rowActions]="resActions"
+          />
+        </div>
+
+        <!-- Ticket validation modal -->
+        @if (openScanModal()) {
+          <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          >
+            <div class="w-full max-w-md card p-6 bg-white rounded-xl shadow-xl">
+              <div
+                class="flex items-center justify-between border-b border-ink-100 pb-3"
+              >
+                <h3
+                  class="font-bold text-lg text-ink-900 flex items-center gap-2"
+                >
+                  <app-icon name="ticket" [size]="20" /> Validation de Billet
+                </h3>
+                <button
+                  (click)="closeScanModal()"
+                  class="text-ink-400 hover:text-ink-600"
+                >
+                  <app-icon name="x" [size]="20" />
+                </button>
+              </div>
+              <div class="mt-4 space-y-4">
+                <div>
+                  <label class="label">Code du Billet ou QR Code</label>
+                  <input
+                    type="text"
+                    class="input"
+                    placeholder="Ex: TKT-8841"
+                    [(ngModel)]="ticketCode"
+                  />
+                </div>
+                <button
+                  (click)="validateTicketCode()"
+                  [disabled]="validating()"
+                  class="btn btn-primary w-full"
+                >
+                  @if (validating()) {
+                    Validation en cours...
+                  } @else {
+                    Valider le Billet
+                  }
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  `,
 })
 export class DashboardPage implements OnInit {
-  // Données pour le tableau des départs à venir
-  private readonly upcomingTripsSignal = signal<any[]>([]);
-  upcomingTrips = computed(() => this.upcomingTripsSignal());
+  private api = inject(PartnerApiService);
+  private router = inject(Router);
+  private toast = inject(ToastService);
 
-  // Notification état
-  private readonly showNotificationSignal = signal<boolean>(false);
-  showNotification = computed(() => this.showNotificationSignal());
+  // State
+  readonly isLoading = signal<boolean>(true);
 
-  private readonly notificationTypeSignal = signal<'success' | 'error' | 'warning' | 'info'>(
-    'info',
-  );
-  notificationType = computed(() => this.notificationTypeSignal());
+  // KPI - peut être null
+  kpiSignal = this.api.kpi;
+  period = signal<"7j" | "30j" | "12m">("7j");
+  openScanModal = signal(false);
+  ticketCode = "";
+  validating = signal(false);
 
-  private readonly notificationMessageSignal = signal<string>(
-    'Nouvelle réservation reçue pour le trajet Douala-Yaoundé',
-  );
-  notificationMessage = computed(() => this.notificationMessageSignal());
+  periods = [
+    { key: "7j" as const, label: "7 jours" },
+    { key: "30j" as const, label: "30 jours" },
+    { key: "12m" as const, label: "12 mois" },
+  ];
 
-  // Revenue range
-  private readonly selectedRevenueRangeSignal = signal<string>('30');
-  selectedRevenueRange = computed(() => this.selectedRevenueRangeSignal());
+  ngOnInit(): void {
+    this.loadDashboardData();
+  }
 
-  private readonly revenueRangeOptionsSignal = signal<any[]>([
-    { value: '30', label: '30 derniers jours' },
-    { value: '7', label: '7 derniers jours' },
-    { value: 'year', label: 'Cette année' },
-  ]);
-  revenueRangeOptions = computed(() => this.revenueRangeOptionsSignal());
+  loadDashboardData(): void {
+    this.isLoading.set(true);
+    forkJoin({
+      stats: this.api.getPartnerStats(),
+      bookings: this.api.getRecentBookings(),
+      notifications: this.api.getNotifications(),
+      trips: this.api.getTodaysTrips(),
+      revenue: this.api.loadRevenueChart(this.period()),
+    }).subscribe({
+      next: () => this.isLoading.set(false),
+      error: (err) => {
+        console.error('Erreur de chargement du tableau de bord:', err);
+        this.toast.danger('Impossible de charger toutes les données du tableau de bord.');
+        this.isLoading.set(false);
+      },
+    });
+  }
 
-  // Revenue chart data
-  private readonly revenueChartLabelsSignal = signal<string[]>([]);
-  revenueChartLabels = computed(() => this.revenueChartLabelsSignal());
+  loadRevenueData(): void {
+    this.api.loadRevenueChart(this.period()).subscribe({
+      error: (err) => console.error('Erreur de chargement des revenus:', err),
+    });
+  }
 
-  private readonly revenueChartDataSignal = signal<number[]>([]);
-  revenueChartData = computed(() => this.revenueChartDataSignal());
+  kpiTrend = computed(() => {
+    const kpi: any = this.kpiSignal();
+    return {
+      revenue: kpi?.revenueChange ? `${kpi.revenueChange > 0 ? '+' : ''}${kpi.revenueChange}%` : '',
+      trips: kpi?.tripsChange ? `${kpi.tripsChange > 0 ? '+' : ''}${kpi.tripsChange}` : '',
+      passengers: kpi?.passengersChange ? `${kpi.passengersChange > 0 ? '+' : ''}${kpi.passengersChange}%` : '',
+    };
+  });
 
-  private readonly revenueChartTypeSignal = signal<ChartType>('line');
-  revenueChartType = computed(() => this.revenueChartTypeSignal());
+  closeScanModal(): void {
+    this.openScanModal.set(false);
+    this.ticketCode = "";
+  }
 
-  revenueChartOptions: any = {
+  validateTicketCode() {
+    if (!this.ticketCode) return;
+    this.validating.set(true);
+    this.api.validateTicket(this.ticketCode).subscribe({
+      next: (res) => {
+        this.validating.set(false);
+        this.closeScanModal();
+        this.toast.success(res.message || "Billet validé avec succès !");
+        this.ticketCode = "";
+      },
+      error: (err) => {
+        this.validating.set(false);
+        console.error("Erreur de validation:", err);
+        this.toast.danger("Erreur lors de la validation du billet.");
+      },
+    });
+  }
+
+  selectPeriod(value: "7j" | "30j" | "12m"): void {
+    this.period.set(value);
+    this.api.loadRevenueChart(value).subscribe({
+      error: (err) => console.error('Erreur de changement de période:', err),
+    });
+  }
+
+  chartData = computed<ChartConfiguration["data"]>(() => {
+    const d = this.api.revenusChart(this.period());
+    return {
+      labels: d.labels,
+      datasets: [
+        {
+          label: "Revenus (FCFA)",
+          data: d.data,
+          borderColor: "#059669",
+          backgroundColor: "rgba(16,185,129,0.1)",
+          fill: true,
+          tension: 0.4,
+          borderWidth: 2,
+          pointBackgroundColor: "#059669",
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    };
+  });
+
+  chartOptions: ChartConfiguration["options"] = {
     plugins: { legend: { display: false } },
+    scales: {
+      y: { grid: { color: "#f1f5f9" }, ticks: { color: "#64748b" } },
+      x: { grid: { display: false }, ticks: { color: "#64748b" } },
+    },
   };
 
-  // Metrics data
-  private readonly metricsSignal = signal({
-    revenue: { value: '0', currency: 'XAF', change: '0%' },
-    activeTrips: { value: '0', routes: '0 itinéraires' },
-    totalPassengers: { value: '0', description: "Manifestés aujourd'hui" },
+  donutData = computed<ChartConfiguration["data"]>(() => {
+    const kpiData = this.kpiSignal();
+    const occupationRate = kpiData?.tauxOccupation || 0;
+    return {
+      labels: ["Occupé", "Disponible"],
+      datasets: [
+        {
+          data: [occupationRate, 100 - occupationRate],
+          backgroundColor: ["#059669", "#e2e8f0"],
+          borderWidth: 0,
+        },
+      ],
+    };
   });
-  metrics = computed(() => this.metricsSignal());
 
-  // Recent activity data
-  private readonly recentActivitySignal = signal<any[]>([]);
-  recentActivity = computed(() => this.recentActivitySignal());
-
-  // Recent bookings data
-  private readonly recentBookingsSignal = signal<any[]>([]);
-  recentBookings = computed(() => this.recentBookingsSignal());
-
-  private readonly isLoadingSignal = signal<boolean>(false);
-  isLoading = computed(() => this.isLoadingSignal());
-
-  // Colonnes du tableau
-  tripColumns: TableColumn[] = [
-    { key: 'id', title: 'Bus ID' },
-    { key: 'route', title: 'Itinéraire' },
-    { key: 'date', title: 'Date' },
-    { key: 'time', title: 'Heure' },
-    { key: 'status', title: 'Statut' },
-  ];
-
-  // Actions du tableau
-  tripActions: TableAction[] = [
-    {
-      icon: 'visibility',
-      label: 'Voir détails',
-      action: (item) => this.viewTripDetails(item),
+  donutOptions: any = {
+    cutout: "72%",
+    plugins: {
+      legend: { position: "bottom", labels: { color: "#475569", padding: 16 } },
     },
-    {
-      icon: 'edit',
-      label: 'Modifier',
-      action: (item) => this.editTrip(item),
-    },
-  ];
+  };
 
-  bookingColumns: TableColumn[] = [
-    { key: 'id', title: 'Réservation' },
-    { key: 'passengerName', title: 'Passager' },
-    { key: 'route', title: 'Trajet' },
-    { key: 'ticketStatus', title: 'Status du Billet' },
-    { key: 'paymentStatus', title: 'Status du Paiement' },
-    { key: 'price', title: 'Montant' },
-    { key: 'createdAt', title: 'Date de Reservation' },
+  activity = computed(() =>
+    this.api
+      .notifications()
+      .slice(0, 4)
+      .map((n) => ({
+        id: n.id,
+        title: n.titre || n.title || "Notification",
+        message: n.message || "",
+        time: n.date
+          ? new Date(n.date).toLocaleString("fr-FR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "",
+        icon: this.getNotificationIcon(n.type || n.category || ""),
+        bg: this.getNotificationBg(n.type || n.category || ""),
+      })),
+  );
 
-  ];
-
-  private pendingLoadingRequests = 0;
-
-  constructor(
-    private partnerApiService: PartnerApiService,
-    public authService: AuthService,
-    private alertService: AlertService,
-    private route: Router
-  ) {}
-
-  private beginLoading(): void {
-    this.pendingLoadingRequests += 1;
-    this.isLoadingSignal.set(true);
+  getNotificationIcon(type: string): string {
+    const typeMap: Record<string, string> = {
+      success: "check-circle",
+      SUCCESS: "check-circle",
+      warning: "alert-triangle",
+      WARNING: "alert-triangle",
+      danger: "x-circle",
+      DANGER: "x-circle",
+      error: "x-circle",
+      ERROR: "x-circle",
+    };
+    return typeMap[type] || "info";
   }
 
-  private finishLoading(): void {
-    this.pendingLoadingRequests = Math.max(0, this.pendingLoadingRequests - 1);
-    this.isLoadingSignal.set(this.pendingLoadingRequests > 0);
+  getNotificationBg(type: string): string {
+    const typeMap: Record<string, string> = {
+      success: "bg-brand-50 text-brand-600",
+      SUCCESS: "bg-brand-50 text-brand-600",
+      warning: "bg-amber-50 text-amber-600",
+      WARNING: "bg-amber-50 text-amber-600",
+      danger: "bg-red-50 text-red-600",
+      DANGER: "bg-red-50 text-red-600",
+      error: "bg-red-50 text-red-600",
+      ERROR: "bg-red-50 text-red-600",
+    };
+    return typeMap[type] || "bg-primary-50 text-primary-600";
   }
 
-  ngOnInit() {
-    this.partnerApiService.getDateRangeOptions().subscribe((options) => {
-      this.revenueRangeOptionsSignal.set(options);
-      if (!options.some((option) => option.value === this.selectedRevenueRangeSignal())) {
-        this.selectedRevenueRangeSignal.set(options[0]?.value || this.selectedRevenueRangeSignal());
-      }
+  recentReservations = computed(() => this.api.reservations().slice(0, 10));
+
+  upcoming = computed(() =>
+    this.api
+      .trajets()
+      .filter(
+        (t) =>
+          t.status === "planifie" ||
+          t.status === "en_cours" ||
+          t.statut === "planifie" ||
+          t.statut === "en_cours" ||
+          t.status === "active" ||
+          t.statut === "actif",
+      )
+      .slice(0, 4),
+  );
+
+  resCols: ColumnDef[] = [
+    { key: "reference", label: "Référence", sortable: true },
+    { key: "passager", label: "Passager", sortable: true },
+    { key: "trajet", label: "Trajet", sortable: true },
+    { key: "date", label: "Date", type: "date", sortable: true },
+    { key: "montant", label: "Montant", type: "currency", sortable: true },
+    { key: "statut", label: "Statut", type: "status", sortable: true },
+  ];
+
+  resActions: ActionDef[] = [
+    {
+      label: "Reçu",
+      icon: "download",
+      class: "ghost",
+      action: (r) => this.downloadReservationReceipt(r),
+    },
+  ];
+
+  downloadReservationReceipt(reservation: any): void {
+    this.api.getReservationReceipt(reservation.id).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = url;
+        anchor.download = `recu-${reservation.reference || reservation.id}.pdf`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Erreur de téléchargement du reçu:', err);
+        this.toast.danger('Impossible de télécharger le reçu.');
+      },
     });
-
-    this.loadDashboardData();
-    this.loadRecentActivity();
-    this.loadRecentBookings();
-    this.updateRevenueChartData('30');
   }
 
-  selectRevenueRange(value: string | null): void {
-    if (!value) {
-      return;
-    }
-    this.selectedRevenueRangeSignal.set(value);
-    this.updateRevenueChartData(value);
-  }
-
-  private updateRevenueChartData(range: string): void {
-    this.beginLoading();
-    if (range === '7') {
-      this.revenueChartTypeSignal.set('bar');
-    } else {
-      this.revenueChartTypeSignal.set('line');
-    }
-
-    this.partnerApiService
-      .getRevenue(this.getStartDate(range), this.getEndDate(range))
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (revenueData: any) => {
-          if (revenueData) {
-            this.revenueChartLabelsSignal.set(revenueData.labels ?? []);
-            this.revenueChartDataSignal.set(revenueData.data ?? []);
-            const m = this.metricsSignal();
-            m.revenue.value = this.formatCurrency(revenueData.totalRevenue ?? 0);
-            m.revenue.change = revenueData.change ?? m.revenue.change;
-            this.metricsSignal.set(m);
-          }
-        },
-        error: (error) => {
-          this.finishLoading();
-          console.error('Error loading revenue chart data:', error);
-          this.alertService.error('Erreur de chargement du graphique des revenus');
-        },
-      });
-  }
-
-  private getStartDate(range: string): string {
-    const today = new Date();
-    if (range === '7') {
-      const date = new Date(today);
-      date.setDate(date.getDate() - 6);
-      return date.toISOString().slice(0, 10);
-    }
-    if (range === 'year') {
-      return `${today.getFullYear()}-01-01`;
-    }
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
-  }
-
-  private getEndDate(range: string): string {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  private formatCurrency(value: number | string): string {
-    const numericValue = typeof value === 'string' ? Number(value) : value;
-    if (Number.isNaN(numericValue)) {
-      return '0';
-    }
-    return numericValue.toLocaleString('fr-FR');
-  }
-
-  loadDashboardData() {
-    this.beginLoading();
-    // Charger les statistiques du partenaire
-    this.partnerApiService
-      .getPartnerStats()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (stats: any) => {
-          this.metricsSignal.set({
-            revenue: {
-              value: stats.netRevenue,
-              currency: 'XAF',
-              change: stats.revenueChange,
-            },
-            activeTrips: {
-              value: stats.activeTrips?.toString(),
-              routes: `${stats.totalRoutes} itinéraires`,
-            },
-            totalPassengers: {
-              value: stats.totalPassengers?.toString(),
-              description: "Manifestés aujourd'hui",
-            },
-          });
-        },
-        error: (error) => {
-          console.error('Error loading stats:', error);
-          this.alertService.error('Erreur de chargement des statistiques du tableau de bord');
-        },
-      });
-
-    // Charger les trajets à venir
-    this.partnerApiService
-      .getTodaysTrips()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (trips: any[]) => {
-          this.upcomingTripsSignal.set(
-            trips.map((trip) => ({
-              id: trip.bus?.registrationNumber || trip.id,
-              route: `${
-                trip.departureCity ||
-                trip.boardingPoints?.[0]?.name ||
-                trip.departurePoint?.name ||
-                'N/A'
-              } → ${
-                trip.arrivalCity ||
-                trip.deboardingPoints?.[0]?.name ||
-                trip.arrivalPoint?.name ||
-                'N/A'
-              }`,
-              time:
-                new Date(trip.departureTime).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }) ||
-                trip.departure_time ||
-                'N/A',
-              status: trip.status || 'Programmé',
-            })),
-          );
-        },
-        error: (error) => {
-          console.error('Error loading trips:', error);
-          this.alertService.error('Erreur de chargement des trajets à venir');
-        },
-      });
-  }
-
-  loadRecentActivity() {
-    this.beginLoading();
-    // Charger les notifications récentes comme activité
-    this.partnerApiService
-      .getNotifications()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (notifications: any[]) => {
-          this.recentActivitySignal.set(
-            notifications.slice(0, 4).map((notif) => ({
-              icon: this.getIconForNotification(notif.type),
-              colorClass: this.getColorClassForNotification(notif.type),
-              title: notif.title,
-              time: this.formatTime(notif.createdAt),
-            })),
-          );
-        },
-        error: (error) => {
-          console.error('Error loading notifications:', error);
-          this.alertService.error("Erreur de chargement de l'activité récente");
-        },
-      });
-  }
-
-  loadRecentBookings() {
-    this.beginLoading();
-    this.partnerApiService
-      .getRecentBookings()
-      .pipe(finalize(() => this.finishLoading()))
-      .subscribe({
-        next: (bookings: any[]) => {
-          this.recentBookingsSignal.set(
-            (bookings ?? []).map((booking) => ({
-              id: booking.id,
-              passengerName: booking.passengerName || 'N/A',
-              route:
-                booking.route ||
-                `${booking.departureCity || 'N/A'} → ${booking.arrivalCity || 'N/A'}`,
-              price: booking.price ? this.formatCurrency(booking.price) : '0',
-              paymentStatus: booking.paymentStatus || 'N/A',
-              ticketStatus: booking.ticketStatus || 'N/A',
-              createdAt: new Date(booking.bookingDate).toLocaleDateString('fr-FR', {day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit', weekday: 'long'}) || booking.createdAt,
-            })),
-          );
-        },
-        error: (error) => {
-          console.error('Error loading recent bookings:', error);
-          this.alertService.error('Erreur de chargement des dernières réservations');
-        },
-      });
-  }
-
-  getColorClassForNotification(type: string): string {
-    const classes: Record<string, string> = {
-      BOOKING: 'bg-primary-container text-on-primary-container',
-      PAYMENT: 'bg-warning-gold/20 text-tertiary-container',
-      TICKET: 'bg-success-green/20 text-success-green',
-      ALERT: 'bg-surface-container-high text-on-surface-variant',
-      INFO: 'bg-surface-container-high text-on-surface-variant',
-    };
-    return classes[type] || 'bg-surface-container-high text-on-surface-variant';
-  }
-
-  getIconForNotification(type: string): string {
-    const icons: Record<string, string> = {
-      BOOKING: 'add_circle',
-      PAYMENT: 'account_balance_wallet',
-      TICKET: 'check_circle',
-      ALERT: 'warning',
-      INFO: 'info',
-    };
-    return icons[type] || 'info';
-  }
-
-  getTypeForNotification(type: string): 'success' | 'warning' | 'info' {
-    const types: Record<string, 'success' | 'warning' | 'info'> = {
-      BOOKING: 'success',
-      PAYMENT: 'warning',
-      TICKET: 'success',
-      ALERT: 'warning',
-      INFO: 'info',
-    };
-    return types[type] || 'info';
-  }
-
-  formatTime(dateString: string): string {
-    if (!dateString) return 'il y a quelques instants';
-
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-
-    if (minutes < 1) return 'il y a quelques instants';
-    if (minutes < 60) return `il y a ${minutes} mins`;
-    if (hours < 24) return `il y a ${hours} heures`;
-
-    return date.toLocaleDateString('fr-FR');
-  }
-
-  goTo(url : string): void {
-    this.route.navigate([url])
-  }
-
-  viewTripDetails(trip: any): void {
-    console.log('Voir détails pour:', trip);
-    // Logique pour afficher les détails
-  }
-
-  editTrip(trip: any): void {
-    console.log('Modifier trajet:', trip);
-    // Logique pour modifier le trajet
-  }
-
-  onNotificationClosed(): void {
-    this.showNotificationSignal.set(false);
+  String(value: any): string {
+    return value !== null && value !== undefined ? String(value) : "";
   }
 }

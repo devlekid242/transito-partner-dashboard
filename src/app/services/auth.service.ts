@@ -1,9 +1,10 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { PartnerPermissionService } from './partner-permission.service';
 import { environment } from '../../environments/environment';
+import { AlertService } from './alert.service';
 
 export interface AuthResponse {
   token: string;
@@ -15,6 +16,7 @@ export interface AuthResponse {
     phoneNumber: string;
     roles?: string[];
     role?: string;
+    permissions?: string[];
     prefNotifications?: number;
     prefLanguage?: string;
     prefDarkMode?: number;
@@ -29,6 +31,7 @@ export interface UserProfile {
   email: string;
   phoneNumber: string;
   role?: string;
+  permissions?: string[];
   profilePhotoUrl?: string;
   profilePhoto?: string;
   photoUrl?: string;
@@ -45,6 +48,24 @@ export interface UserProfile {
   };
 }
 
+// V2 UI compat interface
+export interface AuthUser {
+  nom: string;
+  email: string;
+  role: string;
+  permissions: string[];
+  avatar?: string;
+  id?: number;
+  agent?: any;
+}
+
+// Extend AuthUser with optional compatibility fields used by V2 UI
+export interface AuthUser {
+  fullName?: string;
+  telephone?: string;
+  phoneNumber?: string;
+}
+
 const STORAGE_TOKEN_KEY = 'transito_partner_access_token';
 const STORAGE_REFRESH_TOKEN_KEY = 'transito_partner_refresh_token';
 const STORAGE_USER_KEY = 'transito_partner_user_profile';
@@ -55,34 +76,63 @@ const STORAGE_ROLE_KEY = 'transito_partner_user_role';
 })
 export class AuthService {
   private readonly apiBaseUrl = environment.apiUrl;
-  private readonly token = signal<string | null>(null);
-  private readonly refreshToken = signal<string | null>(null);
-  private readonly currentUser = signal<UserProfile | null>(null);
-  readonly user = this.currentUser.asReadonly();
-  readonly user$ = toObservable(this.currentUser);
-  private readonly currentRole = signal<string | null>(null);
-  readonly role = this.currentRole.asReadonly();
-  readonly role$ = toObservable(this.currentRole);
+  private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly permissionService = inject(PartnerPermissionService);
+  private readonly alertService = inject(AlertService);
 
-  constructor(
-    private router: Router,
-    private http: HttpClient,
-    private permissionService: PartnerPermissionService,
-  ) {
+  private readonly tokenSignal = signal<string | null>(null);
+  private readonly refreshTokenSignal = signal<string | null>(null);
+  private readonly currentUserSignal = signal<UserProfile | null>(null);
+  private readonly currentRoleSignal = signal<string | null>(null);
+
+  readonly currentUser = this.currentUserSignal.asReadonly();
+  readonly user$ = toObservable(this.currentUserSignal);
+  readonly role = this.currentRoleSignal.asReadonly();
+  readonly role$ = toObservable(this.currentRoleSignal);
+
+  // V2 UI binding compatibility: user signal returning AuthUser structure
+  readonly user = computed<AuthUser | null>(() => {
+    const u = this.currentUserSignal();
+    if (!u) return null;
+    const initials = u.fullName
+      ? u.fullName
+          .split(' ')
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2)
+      : 'U';
+    return {
+      id: u.id,
+      nom: u.fullName,
+      email: u.email,
+      role: u.role || this.currentRoleSignal() || 'admin_agence',
+      permissions: u.permissions || [],
+      avatar: initials,
+      agent: u.agent,
+    };
+  });
+
+  readonly isAuthenticated = computed(() => !!this.tokenSignal());
+
+  constructor() {
     this.loadFromStorage();
   }
 
   private loadFromStorage() {
+    if (typeof localStorage === 'undefined') return;
+
     const storedToken = localStorage.getItem(STORAGE_TOKEN_KEY);
     const storedRefreshToken = localStorage.getItem(STORAGE_REFRESH_TOKEN_KEY);
     const storedUser = localStorage.getItem(STORAGE_USER_KEY);
     const storedRole = localStorage.getItem(STORAGE_ROLE_KEY);
 
     if (storedToken) {
-      this.token.set(storedToken);
+      this.tokenSignal.set(storedToken);
     }
     if (storedRefreshToken) {
-      this.refreshToken.set(storedRefreshToken);
+      this.refreshTokenSignal.set(storedRefreshToken);
     }
 
     let loadedUser: UserProfile | null = null;
@@ -95,70 +145,72 @@ export class AuthService {
     }
 
     if (storedRole) {
-      this.currentRole.set(storedRole);
+      this.currentRoleSignal.set(storedRole);
       if (loadedUser) {
         loadedUser = { ...loadedUser, role: storedRole };
       }
+      this.permissionService.setPartnerRole(storedRole);
     }
 
-    this.currentUser.set(loadedUser);
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.token();
+    this.currentUserSignal.set(loadedUser);
   }
 
   getToken(): string | null {
-    return this.token();
+    return this.tokenSignal();
   }
 
   getRefreshToken(): string | null {
-    return this.refreshToken();
+    return this.refreshTokenSignal();
   }
 
   getUser(): UserProfile | null {
-    return this.currentUser();
+    return this.currentUserSignal();
   }
 
   getRole(): string | null {
-    return this.currentRole();
+    return this.currentRoleSignal();
   }
 
   setRole(role: string) {
-    this.currentRole.set(role);
-    localStorage.setItem(STORAGE_ROLE_KEY, role);
-    const currentUser = this.currentUser();
-    if (currentUser) {
-      this.currentUser.set({ ...currentUser, role });
+    this.currentRoleSignal.set(role);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_ROLE_KEY, role);
     }
+    const curr = this.currentUserSignal();
+    if (curr) {
+      this.currentUserSignal.set({ ...curr, role });
+    }
+    this.permissionService.setPartnerRole(role);
   }
 
   setUser(user: UserProfile | null): void {
     const normalizedUser = this.normalizeUserProfile(user);
-    this.currentUser.set(normalizedUser);
-    if (normalizedUser) {
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(normalizedUser));
-    } else {
-      localStorage.removeItem(STORAGE_USER_KEY);
+    this.currentUserSignal.set(normalizedUser);
+    if (typeof localStorage !== 'undefined') {
+      if (normalizedUser) {
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(normalizedUser));
+      } else {
+        localStorage.removeItem(STORAGE_USER_KEY);
+      }
     }
   }
 
   private persistTokens(accessToken: string, refreshToken: string): void {
-    this.token.set(accessToken);
-    this.refreshToken.set(refreshToken);
-    localStorage.setItem(STORAGE_TOKEN_KEY, accessToken);
-    localStorage.setItem(STORAGE_REFRESH_TOKEN_KEY, refreshToken);
+    this.tokenSignal.set(accessToken);
+    this.refreshTokenSignal.set(refreshToken);
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_TOKEN_KEY, accessToken);
+      localStorage.setItem(STORAGE_REFRESH_TOKEN_KEY, refreshToken);
+    }
   }
 
   public normalizeImageUrl(url?: string): string | undefined {
     if (!url) {
       return undefined;
     }
-
     if (/^https?:\/\//i.test(url)) {
       return url;
     }
-
     const normalizedPath = url.startsWith('/') ? url : `/${url}`;
     return `${environment.baseApiUrl}${normalizedPath}`;
   }
@@ -167,11 +219,9 @@ export class AuthService {
     if (!user) {
       return null;
     }
-
     const normalizedPhotoUrl = this.normalizeImageUrl(
       user.profilePhotoUrl || user.photoUrl || user.profilePhoto,
     );
-
     return {
       ...user,
       profilePhotoUrl: normalizedPhotoUrl,
@@ -182,35 +232,35 @@ export class AuthService {
 
   private applyAuthResponse(response: AuthResponse): void {
     this.persistTokens(response.token, response.refresh_token);
-    let role = ''; // Default role
+    let role = 'admin_agence';
     let agent = null;
+    let permissions: string[] = [];
 
     if (response.user) {
       if (response.user?.agent) {
-        // Utiliser agentRole directement de la BDD (admin_agence ou agent_quai)
-        role = response.user?.agent.agentRole;
+        role = response.user?.agent.agentRole || role;
         agent = response.user?.agent;
       }
+      // Extract permissions from user if available
+      permissions = response.user.permissions || [];
       const normalizedUser = this.normalizeUserProfile({
         id: response.user.id,
         fullName: response.user.fullName,
         email: response.user.email,
         phoneNumber: response.user.phoneNumber,
         role,
+        permissions,
         agent,
         profilePhotoUrl: response.user.profilePhotoUrl,
         prefNotifications: response.user.prefNotifications ?? 1,
         prefLanguage: response.user.prefLanguage ?? 'fr',
         prefDarkMode: response.user.prefDarkMode ?? 0,
       });
-      this.currentUser.set(normalizedUser);
-      localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(normalizedUser));
-      this.setRole(role);
-
-      // Synchroniser avec le PartnerPermissionService pour les permissions du dashboard
-      if (role) {
-        this.permissionService.setPartnerRole(role as any);
+      this.currentUserSignal.set(normalizedUser);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(normalizedUser));
       }
+      this.setRole(role);
     }
   }
 
@@ -218,7 +268,7 @@ export class AuthService {
     try {
       const response = await this.http
         .post<AuthResponse>(`${this.apiBaseUrl}/auth/login`, {
-          email: email, // Send email if it looks like email, else treat as phone
+          email,
           password,
         })
         .toPromise();
@@ -227,22 +277,23 @@ export class AuthService {
         this.applyAuthResponse(response);
         return true;
       }
+      this.alertService.error('Échec de la connexion. Veuillez vérifier vos identifiants.');
       return false;
     } catch (error) {
       console.error('Login error:', error);
+      this.alertService.error('Une erreur est survenue lors de la connexion.');
       return false;
     }
   }
 
   async refreshAccessToken(): Promise<string | null> {
-    if (!this.refreshToken()) {
+    if (!this.refreshTokenSignal()) {
       return null;
     }
-
     try {
       const response = await this.http
         .post<AuthResponse>(`${this.apiBaseUrl}/auth/refresh`, {
-          refresh_token: this.refreshToken(),
+          refresh_token: this.refreshTokenSignal(),
         })
         .toPromise();
 
@@ -257,21 +308,32 @@ export class AuthService {
     }
   }
 
-  logout(redirect = true) {
-    this.token.set(null);
-    this.refreshToken.set(null);
-    this.currentUser.set(null);
-    localStorage.removeItem(STORAGE_TOKEN_KEY);
-    localStorage.removeItem(STORAGE_REFRESH_TOKEN_KEY);
-    localStorage.removeItem(STORAGE_USER_KEY);
-    localStorage.removeItem(STORAGE_ROLE_KEY);
-    this.currentRole.set(null);
+  logout(redirect = true): void {
+    this.tokenSignal.set(null);
+    this.refreshTokenSignal.set(null);
+    this.currentUserSignal.set(null);
+    this.currentRoleSignal.set(null);
 
-    // Reset les permissions du dashboard
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_TOKEN_KEY);
+      localStorage.removeItem(STORAGE_REFRESH_TOKEN_KEY);
+      localStorage.removeItem(STORAGE_USER_KEY);
+      localStorage.removeItem(STORAGE_ROLE_KEY);
+    }
+
     this.permissionService.reset();
 
     if (redirect) {
-      this.router.navigate(['/connexion']);
+      this.router.navigate(['/auth/connexion']);
     }
+  }
+
+  requestPasswordReset(email: string): Promise<boolean> {
+    if (!email) return Promise.resolve(false);
+    return this.http
+      .post(`${this.apiBaseUrl}/auth/forgot-password`, { email })
+      .toPromise()
+      .then(() => true)
+      .catch(() => false);
   }
 }

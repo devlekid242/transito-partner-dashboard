@@ -8,6 +8,12 @@ export interface AgencyDocument {
   createdAt: string;
 }
 
+export interface RevenueChartResponse {
+  labels: string[];
+  data: number[];
+  totalRevenue: number;
+}
+
 export interface AgencyProfile {
   id: number;
   name?: string;
@@ -32,6 +38,7 @@ export interface PartnerProfile {
   email: string;
   phoneNumber: string;
   role: string;
+  permissions?: string[];
   prefNotifications: number;
   prefLanguage: string;
   prefDarkMode: number;
@@ -47,6 +54,9 @@ export interface PartnerProfile {
     status: string;
     agency?: AgencyProfile;
   };
+  // Backwards compatibility: some APIs return `agence` or `agency`
+  agence?: AgencyProfile | any;
+  // agency?: Agence | AgencyProfile | any;
 }
 
 export interface PartnerStats {
@@ -61,18 +71,23 @@ export interface PartnerStats {
 }
 
 export interface Bus {
-  id: number;
-  registrationNumber: string;
-  capacity: number;
-  category: 'VIP' | 'Classique';
-  status: 'disponible' | 'maintenance' | 'hors_service';
+  id: number | string;
+  registrationNumber?: string;
+  immatriculation?: string;
+  capacity?: number;
+  capacite?: number;
+  category?: 'VIP' | 'Classique';
+  status?: string;
+  statut?: 'actif' | 'maintenance' | 'hors_service';
   brand?: string;
   model?: string;
+  modele?: string;
   color?: string;
   acquisitionDate?: string;
   mileage?: number;
   lastMaintenanceDate?: string;
-  createdAt: string;
+  createdAt?: string;
+  dateAjout?: string;
   agency?: {
     id: number;
     name?: string;
@@ -87,17 +102,24 @@ export interface Bus {
 }
 
 export interface BusPoint {
-  id: number;
-  name: string;
-  city: string;
+  id: number | string;
+  name?: string;
+  nom?: string;
+  city?: string;
+  ville?: string;
   quartier?: string;
-  address: string;
+  address?: string;
+  adresse?: string;
+  heure?: string;
+  embarkationTime?: string;
+  time?: string;
   phoneNumber?: string;
   latitude?: number;
   longitude?: number;
   pointType?: 'principal' | 'premium' | 'express' | 'crossborder';
-  status: 'active' | 'inactive';
-  isActive: number;
+  status?: string;
+  statut?: string;
+  isActive?: number;
   hasVipLounge?: number;
   hasWifi?: number;
   hasAc?: number;
@@ -105,8 +127,20 @@ export interface BusPoint {
   createdAt?: string;
 }
 
-export interface Trip {
+export interface Passenger {
   id: number;
+  seatNumber: string | number;
+  name: string;
+  phone: string;
+  ticketCode: string;
+  ticketNumber?: string;
+  boardingStatus?: string;
+  boardingPoint?: string;
+  status: 'Embarqué' | 'Payé' | 'Annulé';
+}
+
+export interface Trip {
+  id: number | string;
   departureCity: string;
   arrivalCity: string;
   boardingPoints: Array<{ id: number; name: string; address?: string; city?: string }>;
@@ -118,6 +152,12 @@ export interface Trip {
   tripDate?: string;
   departureTimeOfDay?: string;
   arrivalTimeOfDay?: string;
+  origine?: string;
+  destination?: string;
+  heureDepart?: string;
+  dateDepart?: string;
+  placesDisponibles?: number;
+  placesTotal?: number;
   price: string | number;
   driverName?: string;
   driverLicense?: string;
@@ -131,9 +171,17 @@ export interface Trip {
   passengers?: Passenger[];
 
   bus?: any;
-  seatsReserved: number;
-  status: 'planifie' | 'embarquement' | 'en_route' | 'termine' | 'annule';
-  createdAt: string;
+  seatsReserved?: number;
+  busId?: number | string;
+  boardingPointIds?: Array<number | string>;
+  deboardingPointIds?: Array<number | string>;
+  departure?: string;
+  arrival?: string;
+  departureDate?: string;
+  availableSeats?: number;
+  status?: string;
+  statut?: string;
+  createdAt?: string;
   time?: string;
   date?: string;
   route?: string;
@@ -151,10 +199,16 @@ export interface ManifestData {
     arrivalDateTime?: string;
   };
   departure: string;
+  departureCity?: string;
   arrival: string;
+  arrivalCity?: string;
   departureTime: string;
   arrivalTime?: string;
-  status?: 'planifie' | 'embarquement' | 'en_route' | 'termine' | 'annule';
+  busRegistrationNumber?: string;
+  seatsReserved?: number;
+  busCapacity?: number;
+  totalRevenue?: number;
+  status?: string;
   notes?: string;
   busInfo: {
     id: number;
@@ -206,27 +260,38 @@ export interface ManifestData {
   };
 }
 
-export interface Passenger {
-  id: number;
-  seatNumber: string;
-  name: string;
-  phone: string;
-  ticketCode: string;
-  status: 'Embarqué' | 'Payé' | 'Annulé';
+export interface Notification {
+  id: number | string;
+  recipientType?: string;
+  recipientId?: number | null;
+  type?: string;
+  category?: string;
+  title?: string;
+  titre?: string;
+  message?: string;
+  time?: string;
+  date?: string;
+  isRead?: boolean;
+  read?: boolean;
+  lu?: boolean;
+  payload?: any;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface Notification {
-  id: number;
-  recipientType: string;
-  recipientId: number | null;
-  type: string;
-  category?: string;
-  title: string;
+export interface TicketValidationResponse {
+  success: boolean;
+  ticketNumber: string;
+  passengerName: string;
+  boardingStatus: 'VALID' | 'ALREADY_BOARDED' | 'NOT_FOUND' | 'CANCELLED';
   message: string;
-  time?: string;
-  isRead: boolean;
-  read?: boolean;
-  payload?: any;
-  createdAt: string;
-  updatedAt?: string;
+  boardingTime?: string;
+}
+
+export interface SelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  icon?: string;
+  description?: string;
 }

@@ -1,42 +1,21 @@
-<div class="bg-surface-bg text-on-surface font-body-md antialiased min-h-screen flex relative">
-  <!-- Overlay pour mobile (ferme le sidebar au clic) -->
-  <div
-    *ngIf="sidebarOpen()"
-    class="fixed inset-0 bg-black bg-opacity-30 z-30 lg:hidden"
-    style="opacity: 0.5"
-    (click)="closeSidebar()"
-  ></div>
+<div class="flex h-screen overflow-hidden bg-ink-100">
+      <!-- Sidebar -->
+      <div class="fixed inset-y-0 left-0 z-50 lg:static lg:z-auto">
+        <app-sidebar [open]="sidebarOpen()" />
+      </div>
 
-  <!-- Sidebar -->
-  <div
-    [ngClass]="{
-      fixed: true,
-      'lg:static': true,
-      'inset-y-0': true,
-      'left-0': true,
-      'z-40': true,
-      'w-[280px]': true,
-      transform: true,
-      'transition-transform': true,
-      'duration-300': true,
-      '-translate-x-full': !sidebarOpen(),
-      'translate-x-0': sidebarOpen(),
-      'lg:translate-x-0': true,
-    }"
-  >
-    <app-sidebar (navigationClick)="closeSidebar()"></app-sidebar>
-  </div>
+      <!-- Overlay for mobile -->
+      @if (sidebarOpen()) {
+        <div class="fixed inset-0 z-40 bg-black/40 lg:hidden" (click)="sidebarOpen.set(false)"></div>
+      }
 
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col w-full lg:w-auto">
-    <!-- Header -->
-    <app-header (toggleSidebar)="toggleSidebar()"></app-header>
-
-    <!-- Page Content -->
-    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
-      <ng-content>
-        <router-outlet />
-      </ng-content>
+      <!-- Main -->
+      <div class="flex flex-1 flex-col overflow-hidden">
+        <app-header (toggleSidebar)="sidebarOpen.set(!sidebarOpen())" />
+        <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+          <router-outlet />
+        </main>
+      </div>
     </div>
-  </div>
-</div>
+    <app-toast />
+  

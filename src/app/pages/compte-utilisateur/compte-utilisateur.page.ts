@@ -1,444 +1,352 @@
-import { Component, OnInit } from '@angular/core';
-import { FormComponent, FormField } from '../../components/form/form.component';
-import { ModalComponent } from '../../components/modal/modal.component';
-import { NotificationComponent } from '../../components/notification/notification.component';
-import { CommonModule } from '@angular/common';
-import { AuthService, UserProfile } from '../../services/auth.service';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { IconComponent } from '../../shared/icon.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { ToastService } from '../../components/toast/toast.component';
+import { AuthService } from '../../services/auth.service';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { environment } from '../../../environments/environment';
+import { SelectOption } from '../../models';
 
 @Component({
   selector: 'app-compte-utilisateur',
-  templateUrl: './compte-utilisateur.page.html',
-  styleUrls: ['./compte-utilisateur.page.css'],
-  imports: [FormComponent, ModalComponent, NotificationComponent, CommonModule],
+  standalone: true,
+  imports: [ReactiveFormsModule, IconComponent, PageHeaderComponent],
+  template: `
+    <div class="space-y-6">
+      <app-page-header title="Compte utilisateur" subtitle="Gérez vos informations personnelles, votre sécurité et vos préférences" icon="user-circle" />
+
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement du profil...</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div class="card p-6">
+            <div class="flex flex-col items-center text-center">
+              @if (profilePhoto()) {
+                <img [src]="profilePhoto()" alt="Photo de profil" class="h-24 w-24 rounded-full object-cover ring-4 ring-brand-50" />
+              } @else {
+                <div class="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 text-2xl font-bold text-white">{{ initials() }}</div>
+              }
+              <h3 class="mt-4 text-lg font-bold text-ink-900">{{ userName() }}</h3>
+              <p class="text-sm text-ink-500">{{ userEmail() }}</p>
+              <span class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-brand-50 border border-brand-200 px-3 py-1 text-xs font-semibold text-brand-700">
+                <app-icon name="shield-check" [size]="13" /> {{ userRole() }}
+              </span>
+              <label class="btn btn-secondary mt-5 cursor-pointer">
+                <app-icon name="camera" [size]="16" /> Changer la photo
+                <input type="file" class="hidden" accept="image/*" (change)="onPhotoSelected($event)" />
+              </label>
+            </div>
+          </div>
+
+          <div class="card p-6 lg:col-span-2">
+            <div class="flex flex-wrap gap-2 border-b border-ink-100 pb-4">
+              @for (tab of tabs; track tab.key) {
+                <button type="button" class="rounded-lg px-4 py-2 text-sm font-semibold"
+                  [class]="activeTab() === tab.key ? 'bg-brand-50 text-brand-700' : 'text-ink-500 hover:bg-ink-50'"
+                  (click)="activeTab.set(tab.key)">
+                  {{ tab.label }}
+                </button>
+              }
+            </div>
+
+            @if (activeTab() === 'profile') {
+              <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="mt-5 space-y-5">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div>
+                    <label class="label" for="fullName">Nom complet</label>
+                    <input id="fullName" class="input" formControlName="fullName" />
+                    @if (profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched) {
+                      <p class="mt-1 text-xs text-red-500">Nom complet requis.</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="label" for="email">Adresse email</label>
+                    <input id="email" type="email" class="input" formControlName="email" />
+                    @if (profileForm.get('email')?.invalid && profileForm.get('email')?.touched) {
+                      <p class="mt-1 text-xs text-red-500">Adresse email valide requise.</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="label" for="phoneNumber">Téléphone</label>
+                    <input id="phoneNumber" type="tel" class="input" formControlName="phoneNumber" />
+                  </div>
+                </div>
+                <div class="flex justify-end border-t border-ink-100 pt-5">
+                  <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+                    <app-icon name="save" [size]="16" /> Enregistrer
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (activeTab() === 'security') {
+              <form [formGroup]="securityForm" (ngSubmit)="savePassword()" class="mt-5 space-y-5">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div class="sm:col-span-2">
+                    <label class="label" for="currentPassword">Mot de passe actuel</label>
+                    <input id="currentPassword" type="password" class="input" formControlName="currentPassword" />
+                  </div>
+                  <div>
+                    <label class="label" for="newPassword">Nouveau mot de passe</label>
+                    <input id="newPassword" type="password" class="input" formControlName="newPassword" />
+                    @if (securityForm.get('newPassword')?.invalid && securityForm.get('newPassword')?.touched) {
+                      <p class="mt-1 text-xs text-red-500">Minimum 8 caractères.</p>
+                    }
+                  </div>
+                  <div>
+                    <label class="label" for="confirmPassword">Confirmation</label>
+                    <input id="confirmPassword" type="password" class="input" formControlName="confirmPassword" />
+                  </div>
+                </div>
+                @if (securityForm.hasError('mismatch') && securityForm.get('confirmPassword')?.touched) {
+                  <p class="text-xs text-red-500">Les mots de passe ne correspondent pas.</p>
+                }
+                <div class="flex justify-end border-t border-ink-100 pt-5">
+                  <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+                    <app-icon name="lock" [size]="16" /> Modifier le mot de passe
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (activeTab() === 'notifications') {
+              <form [formGroup]="notificationsForm" (ngSubmit)="saveNotifications()" class="mt-5 space-y-5">
+                <label class="flex items-center gap-3 rounded-xl border border-ink-100 p-4">
+                  <input type="checkbox" formControlName="notificationsEnabled" class="h-4 w-4" />
+                  <span>
+                    <span class="block font-semibold text-ink-800">Activer les notifications</span>
+                    <span class="block text-sm text-ink-500">Recevoir les notifications de l'activité de l'agence.</span>
+                  </span>
+                </label>
+                <div class="flex justify-end">
+                  <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()"><app-icon name="save" [size]="16" /> Enregistrer</button>
+                </div>
+              </form>
+            }
+
+            @if (activeTab() === 'preferences') {
+              <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()" class="mt-5 space-y-5">
+                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <div>
+                    <label class="label" for="language">Langue</label>
+                    <select id="language" class="input cursor-pointer" formControlName="language">
+                      @for (option of languageOptions(); track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label class="label" for="theme">Thème</label>
+                    <select id="theme" class="input cursor-pointer" formControlName="theme">
+                      @for (option of themeOptions(); track option.value) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+                <div class="flex justify-end">
+                  <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()"><app-icon name="save" [size]="16" /> Enregistrer</button>
+                </div>
+              </form>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  `,
 })
 export class CompteUtilisateurPage implements OnInit {
-  // Active tab
-  activeTab: 'profile' | 'security' | 'notifications' | 'preferences' = 'profile';
+  private auth = inject(AuthService);
+  private api = inject(PartnerApiService);
+  private toast = inject(ToastService);
+  private fb = inject(FormBuilder);
 
-  ApibaseUrl: string = environment.baseApiUrl;
-  // Profile form fields
-  profileFormFields: FormField[] = [
-    {
-      key: 'fullName',
-      label: 'Nom Complet',
-      type: 'text',
-      required: true,
-      placeholder: 'Votre nom complet',
-    },
-    {
-      key: 'email',
-      label: 'Adresse Email',
-      type: 'email',
-      required: true,
-      placeholder: 'votre@email.com',
-    },
-    {
-      key: 'phoneNumber',
-      label: 'Numéro de Téléphone',
-      type: 'tel',
-      required: false,
-      placeholder: '+33 6 XX XX XX XX',
-    },
+  readonly isLoading = signal(true);
+  readonly isSubmitting = signal(false);
+  readonly activeTab = signal<'profile' | 'security' | 'notifications' | 'preferences'>('profile');
+  readonly languageOptions = signal<SelectOption[]>([]);
+  readonly themeOptions = signal<SelectOption[]>([]);
+
+  readonly tabs = [
+    { key: 'profile' as const, label: 'Profil' },
+    { key: 'security' as const, label: 'Sécurité' },
+    { key: 'notifications' as const, label: 'Notifications' },
+    { key: 'preferences' as const, label: 'Préférences' },
   ];
 
-  // Security form fields
-  securityFormFields: FormField[] = [
-    {
-      key: 'currentPassword',
-      label: 'Mot de passe actuel',
-      type: 'password',
-      required: true,
-      placeholder: '••••••••',
-    },
-    {
-      key: 'newPassword',
-      label: 'Nouveau mot de passe',
-      type: 'password',
-      required: true,
-      placeholder: '••••••••',
-    },
-    {
-      key: 'confirmPassword',
-      label: 'Confirmer le nouveau mot de passe',
-      type: 'password',
-      required: true,
-      placeholder: '••••••••',
-    },
-  ];
+  profileForm = this.fb.group({
+    fullName: ['', [Validators.required, Validators.maxLength(100)]],
+    email: ['', [Validators.required, Validators.email]],
+    phoneNumber: [''],
+  });
 
-  // Preferences form fields
-  preferencesFormFields: FormField[] = [
-    {
-      key: 'language',
-      label: 'Langue',
-      type: 'select',
-      required: true,
-      options: [],
-    },
-    {
-      key: 'theme',
-      label: 'Thème',
-      type: 'select',
-      required: true,
-      options: [],
-    },
-  ];
+  securityForm = this.fb.group({
+    currentPassword: ['', [Validators.required]],
+    newPassword: ['', [Validators.required, Validators.minLength(8)]],
+    confirmPassword: ['', [Validators.required]],
+  }, { validators: (form: FormGroup) =>
+    form.get('newPassword')?.value === form.get('confirmPassword')?.value ? null : { mismatch: true }
+  });
 
-  notificationsFormFields: FormField[] = [
-    {
-      key: 'notificationsEnabled',
-      label: 'Activer les notifications',
-      type: 'checkbox',
-      required: false,
-    },
-  ];
+  notificationsForm = this.fb.group({
+    notificationsEnabled: [true],
+  });
 
-  languageOptions: { value: string; label: string }[] = [];
-  themeOptions: { value: string; label: string }[] = [];
-  selectedLanguage: string = 'fr';
-  selectedTheme: string = 'light';
+  preferencesForm = this.fb.group({
+    language: ['fr', Validators.required],
+    theme: ['light', Validators.required],
+  });
 
-  // Modal state
-  isModalOpen = false;
-  modalTitle = '';
-  modalMessage = '';
+  userName = computed(() => this.auth.getUser()?.fullName || 'Utilisateur');
+  userEmail = computed(() => this.auth.getUser()?.email || '');
+  userRole = computed(() => this.auth.getUser()?.role || 'Utilisateur');
+  profilePhoto = computed(() => this.auth.getUser()?.profilePhotoUrl || '');
 
-  // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
-  isSubmitting = false;
+  initials = computed(() => {
+    const parts = this.userName().split(/\s+/).filter(Boolean);
+    return parts.length > 1
+      ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+      : (parts[0]?.slice(0, 2) || 'U').toUpperCase();
+  });
 
-  // remove empty constructor; use dependency-injected one below
-
-  setActiveTab(tab: 'profile' | 'security' | 'notifications' | 'preferences'): void {
-    this.activeTab = tab;
-  }
-
-  onProfileSubmit(formData: any): void {
-    if (this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-
-    const payload = {
-      fullName: formData.fullName ?? this.user?.fullName,
-      email: formData.email ?? this.user?.email,
-      phoneNumber: formData.phoneNumber ?? this.user?.phoneNumber,
-    };
-
-    this.partnerApiService.updatePartnerProfile(payload).subscribe({
-      next: (profile) => {
-        this.showToastNotification('success', 'Profil mis à jour avec succès !');
-        this.applyUserUpdates(profile ?? payload);
-        this.updateFormFields();
-      },
-      error: (error) => {
-        console.error('Error updating profile:', error);
-        this.showToastNotification('error', 'Erreur lors de la mise à jour du profil');
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      },
+  ngOnInit(): void {
+    this.loadProfile();
+    this.api.getLanguageOptions().subscribe({
+      next: (options) => this.languageOptions.set(options),
+      error: () => this.languageOptions.set([]),
+    });
+    this.api.getThemeOptions().subscribe({
+      next: (options) => this.themeOptions.set(options),
+      error: () => this.themeOptions.set([]),
     });
   }
 
-  onSecuritySubmit(formData: any): void {
-    if (this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-
-    const { currentPassword, newPassword, confirmPassword } = formData;
-    if (!currentPassword || !newPassword || newPassword !== confirmPassword) {
-      this.isSubmitting = false;
-      return;
-    }
-
-    this.partnerApiService.updatePartnerPassword(currentPassword, newPassword).subscribe({
-      next: () => {
-        this.showToastNotification('success', 'Mot de passe mis à jour avec succès !');
-        this.modalTitle = 'Mot de Passe Mis à Jour';
-        this.modalMessage = 'Votre mot de passe a été changé avec succès.';
-        this.isModalOpen = true;
-      },
-      error: (err) => {
-        console.error('Change password error', err);
-        this.showToastNotification(
-          'error',
-          err?.error?.message ?? 'Erreur lors du changement de mot de passe',
-        );
-      },
-      complete: () => {
-        this.isSubmitting = false;
-      },
-    });
-  }
-
-  onNotificationsSubmit(formData: any): void {
-    if (this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-
-    const payload = {
-      prefNotifications: formData.notificationsEnabled ? 1 : 0,
-    };
-
-    this.partnerApiService.updatePartnerProfile(payload).subscribe({
-      next: (profile) => {
-        this.showToastNotification('success', 'Notifications mises à jour avec succès !');
-        this.applyUserUpdates(profile ?? payload);
-        this.updateFormFields();
+  private loadProfile(): void {
+    this.isLoading.set(true);
+    this.api.getPartnerProfile().subscribe({
+      next: (profile: any) => {
+        const user = profile?.user || profile;
+        this.auth.setUser({
+          ...(this.auth.getUser() || {}),
+          id: user?.id || this.auth.getUser()?.id || 0,
+          fullName: user?.fullName || user?.nom || '',
+          email: user?.email || '',
+          phoneNumber: user?.phoneNumber || user?.phone || user?.telephone || '',
+          role: user?.role || this.auth.getUser()?.role,
+          profilePhotoUrl: user?.profilePhotoUrl || user?.photoUrl || '',
+          prefLanguage: user?.prefLanguage ?? 'fr',
+          prefDarkMode: user?.prefDarkMode ?? 0,
+          prefNotifications: user?.prefNotifications ?? 1,
+        } as any);
+        this.patchForms(this.auth.getUser());
+        this.isLoading.set(false);
       },
       error: () => {
-        this.showToastNotification('error', 'Erreur lors de la mise à jour des notifications');
-      },
-      complete: () => {
-        this.isSubmitting = false;
+        this.patchForms(this.auth.getUser());
+        this.isLoading.set(false);
       },
     });
   }
 
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
-
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 5000);
-  }
-
-  closeModal(): void {
-    this.isModalOpen = false;
-  }
-
-  // User data
-  user: any = {};
-
-  constructor(
-    private authService: AuthService,
-    private partnerApiService: PartnerApiService,
-  ) {}
-
-  ngOnInit() {
-    this.loadUserData();
-    this.partnerApiService.getLanguageOptions().subscribe((options) => {
-      this.languageOptions = options;
-      const idx = this.preferencesFormFields.findIndex((f) => f.key === 'language');
-      if (idx !== -1) {
-        this.preferencesFormFields[idx].options = options;
-      }
-      if (options.length && !options.some((option) => option.value === this.selectedLanguage)) {
-        this.selectedLanguage = options[0].value;
-      }
+  private patchForms(user: any): void {
+    this.profileForm.patchValue({
+      fullName: user?.fullName || '',
+      email: user?.email || '',
+      phoneNumber: user?.phoneNumber || '',
     });
-
-    this.partnerApiService.getThemeOptions().subscribe((options) => {
-      this.themeOptions = options;
-      const idx = this.preferencesFormFields.findIndex((f) => f.key === 'theme');
-      if (idx !== -1) {
-        this.preferencesFormFields[idx].options = options;
-      }
-      if (options.length && !options.some((option) => option.value === this.selectedTheme)) {
-        this.selectedTheme = options[0].value;
-      }
+    this.notificationsForm.patchValue({ notificationsEnabled: user?.prefNotifications !== 0 });
+    this.preferencesForm.patchValue({
+      language: user?.prefLanguage || 'fr',
+      theme: user?.prefDarkMode === 1 ? 'dark' : 'light',
     });
   }
 
-  selectLanguage(value: string): void {
-    this.selectedLanguage = value;
-    this.preferencesFormFields = this.preferencesFormFields.map((field) =>
-      field.key === 'language' ? { ...field, value } : field,
-    );
-  }
-
-  selectTheme(value: string): void {
-    this.selectedTheme = value;
-    this.preferencesFormFields = this.preferencesFormFields.map((field) =>
-      field.key === 'theme' ? { ...field, value } : field,
-    );
-  }
-
-  private getDisplayRole(role?: string): string {
-    return role?.toLowerCase().includes('partner') ? 'Administrateur Flotte' : 'Utilisateur';
-  }
-
-  private normalizeImageUrl(url?: string): string {
-    if (!url) {
-      return '';
-    }
-
-    if (/^https?:\/\//i.test(url)) {
-      return url;
-    }
-
-    const normalizedPath = url.startsWith('/') ? url : `/${url}`;
-    return `${environment.baseApiUrl}${normalizedPath}`;
-  }
-
-  private applyUserUpdates(updates: Record<string, any>): void {
-    const normalized = {
-      fullName: updates['fullName'] ?? this.user?.fullName,
-      email: updates['email'] ?? this.user?.email,
-      phoneNumber: updates['phoneNumber'] ?? this.user?.phoneNumber,
-      profilePhotoUrl: this.normalizeImageUrl(
-        updates['profilePhotoUrl'] ?? this.user?.profilePhotoUrl,
-      ),
-      prefLanguage: updates['prefLanguage'] ?? this.user?.prefLanguage ?? 'fr',
-      prefDarkMode: updates['prefDarkMode'] ?? this.user?.prefDarkMode ?? 0,
-      prefNotifications: updates['prefNotifications'] ?? this.user?.prefNotifications ?? 1,
-      role: updates['role'] ?? this.user?.role,
-    };
-
-    this.user = {
-      ...this.user,
-      ...normalized,
-      profilePhotoUrl: normalized.profilePhotoUrl || this.user?.profilePhotoUrl || '',
-      avatar: normalized.profilePhotoUrl || this.user?.avatar || this.user?.profilePhotoUrl || '',
-    };
-
-    this.selectedLanguage = normalized.prefLanguage;
-    this.selectedTheme = normalized.prefDarkMode === 1 ? 'dark' : 'light';
-
-    const currentUser = this.authService.getUser();
-    if (currentUser) {
-      this.authService.setUser({
-        ...currentUser,
-        ...normalized,
-        role: normalized.role ?? currentUser.role,
-      } as UserProfile);
-    }
-  }
-
-  loadUserData() {
-    const user = this.authService.getUser();
-    if (user) {
-      type ExtendedUserProfile = UserProfile & {
-        profilePhotoUrl?: string;
-        profilePhoto?: string;
-        photoUrl?: string;
-        prefLanguage?: string;
-        prefDarkMode?: number;
-        prefNotifications?: number;
-      };
-      const userProfile = user as ExtendedUserProfile;
-      this.applyUserUpdates({
-        fullName: user.fullName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        role: user.role,
-        profilePhotoUrl: this.normalizeImageUrl(
-          userProfile.profilePhotoUrl || userProfile.photoUrl || userProfile.profilePhoto || '',
-        ),
-        prefLanguage: userProfile.prefLanguage ?? 'fr',
-        prefDarkMode: userProfile.prefDarkMode ?? 0,
-        prefNotifications: userProfile.prefNotifications ?? 1,
-      });
-
-      this.updateFormFields();
-    } else {
-      // If auth service has no user cached, try fetching profile from API
-      this.partnerApiService.getPartnerProfile().subscribe(
-        (p: any) => {
-          this.applyUserUpdates({
-            fullName: p?.fullName ?? `${p?.firstName ?? ''} ${p?.lastName ?? ''}`.trim(),
-            email: p?.email ?? '',
-            phoneNumber: p?.phone ?? p?.phoneNumber ?? '',
-            role: p?.role,
-            profilePhotoUrl: this.normalizeImageUrl(p?.profilePhotoUrl ?? ''),
-            prefLanguage: p?.prefLanguage ?? 'fr',
-            prefDarkMode: p?.prefDarkMode ?? 0,
-            prefNotifications: p?.prefNotifications ?? 1,
-          });
-          this.updateFormFields();
-        },
-        () => {},
-      );
-    }
-  }
-
-  updateFormFields() {
-    this.profileFormFields = this.profileFormFields.map((field) => ({
-      ...field,
-      placeholder: field.placeholder,
-      value: this.user[field.key] ?? this.user[field.key as keyof typeof this.user],
-    }));
-
-    this.notificationsFormFields = this.notificationsFormFields.map((field) => ({
-      ...field,
-      value: this.user.prefNotifications === 1,
-    }));
-
-    this.preferencesFormFields = this.preferencesFormFields.map((field) => {
-      if (field.key === 'language') {
-        return { ...field, value: this.selectedLanguage };
-      }
-      if (field.key === 'theme') {
-        return { ...field, value: this.selectedTheme };
-      }
-      return field;
-    });
-  }
-
-  // Photo upload
-  onProfilePhotoSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input?.files?.[0];
-    if (!file) return;
-
-    this.partnerApiService.updateProfilePhoto(file).subscribe(
-      (res) => {
-        this.showToastNotification('success', 'Photo de profil mise à jour.');
-        const photoUrl = this.normalizeImageUrl(
-          res.photoUrl || (res as { profilePhotoUrl?: string }).profilePhotoUrl || '',
-        );
-        this.user.profilePhotoUrl = photoUrl;
-        this.user.avatar = photoUrl;
-        this.applyUserUpdates({ profilePhotoUrl: photoUrl });
-      },
-      (err) => {
-        console.error('Profile photo upload error', err);
-        this.showToastNotification('error', 'Erreur lors de l upload de la photo');
-      },
-    );
-  }
-
-  // Preferences save
-  onPreferencesSubmit(formData: any): void {
-    if (this.isSubmitting) {
+  saveProfile(): void {
+    if (this.profileForm.invalid || this.isSubmitting()) {
+      this.profileForm.markAllAsTouched();
       return;
     }
+    this.isSubmitting.set(true);
+    this.api.updatePartnerProfile(this.profileForm.getRawValue()).subscribe({
+      next: (profile) => {
+        const current = this.auth.getUser();
+        this.auth.setUser({ ...current, ...(profile as any), fullName: this.profileForm.value.fullName, email: this.profileForm.value.email, phoneNumber: this.profileForm.value.phoneNumber } as any);
+        this.toast.success('Profil mis à jour avec succès.');
+        this.isSubmitting.set(false);
+      },
+      error: () => {
+        this.toast.danger('Impossible de mettre à jour le profil.');
+        this.isSubmitting.set(false);
+      },
+    });
+  }
 
-    this.isSubmitting = true;
-
-    const payload: Record<string, any> = {};
-    if (formData.language) payload['prefLanguage'] = formData.language;
-    if (formData.theme) payload['prefDarkMode'] = formData.theme === 'dark' ? 1 : 0;
-
-    if (!Object.keys(payload).length) {
-      this.isSubmitting = false;
-      this.showToastNotification('warning', 'Aucune préférence à enregistrer.');
+  savePassword(): void {
+    if (this.securityForm.invalid || this.isSubmitting()) {
+      this.securityForm.markAllAsTouched();
       return;
     }
-
-    this.partnerApiService.updatePartnerProfile(payload).subscribe({
+    this.isSubmitting.set(true);
+    const { currentPassword, newPassword } = this.securityForm.getRawValue();
+    this.api.updatePartnerPassword(currentPassword || '', newPassword || '').subscribe({
       next: () => {
-        this.showToastNotification('success', 'Préférences mises à jour.');
-        this.applyUserUpdates(payload);
-        this.updateFormFields();
+        this.toast.success('Mot de passe mis à jour avec succès.');
+        this.securityForm.reset();
+        this.isSubmitting.set(false);
       },
-      error: () =>
-        this.showToastNotification('error', 'Erreur lors de la mise à jour des préférences'),
-      complete: () => {
-        this.isSubmitting = false;
+      error: (err) => {
+        this.toast.danger(err?.error?.message || 'Erreur lors du changement de mot de passe.');
+        this.isSubmitting.set(false);
       },
+    });
+  }
+
+  saveNotifications(): void {
+    this.saveProfilePreference({
+      prefNotifications: this.notificationsForm.value.notificationsEnabled ? 1 : 0,
+    });
+  }
+
+  savePreferences(): void {
+    this.saveProfilePreference({
+      prefLanguage: this.preferencesForm.value.language,
+      prefDarkMode: this.preferencesForm.value.theme === 'dark' ? 1 : 0,
+    });
+  }
+
+  private saveProfilePreference(payload: Record<string, any>): void {
+    if (this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.api.updatePartnerProfile(payload).subscribe({
+      next: (profile) => {
+        this.auth.setUser({ ...(this.auth.getUser() || {}), ...(profile as any), ...payload } as any);
+        this.toast.success('Préférences mises à jour avec succès.');
+        this.isSubmitting.set(false);
+      },
+      error: () => {
+        this.toast.danger('Impossible d’enregistrer les préférences.');
+        this.isSubmitting.set(false);
+      },
+    });
+  }
+
+  onPhotoSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement)?.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.toast.danger('Veuillez sélectionner une image.');
+      return;
+    }
+    this.api.updateProfilePhoto(file).subscribe({
+      next: (response) => {
+        const current = this.auth.getUser();
+        this.auth.setUser({ ...(current as any), profilePhotoUrl: response.photoUrl } as any);
+        this.toast.success('Photo de profil mise à jour.');
+      },
+      error: () => this.toast.danger('Impossible de mettre à jour la photo.'),
     });
   }
 }

@@ -1,58 +1,131 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { IconComponent } from '../../shared/icon.component';
+import { PageHeaderComponent } from '../../components/page-header/page-header.component';
+import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { Bus } from '../../models/partner.model';
-import { environment } from '../../../environments/environment';
-import { AlertService } from '../../services/alert.service';
+import { SelectOption } from '../../models';
 
 @Component({
   selector: 'app-ajout-bus',
-  templateUrl: './ajout-bus.page.html',
-  styleUrls: ['./ajout-bus.page.css'],
-  imports: [CommonModule, ReactiveFormsModule],
+  standalone: true,
+  imports: [ReactiveFormsModule, RouterLink, IconComponent, PageHeaderComponent],
+  template: `
+    <div class="space-y-6">
+      <app-page-header [title]="pageTitle()" [subtitle]="pageDescription()" icon="bus">
+        <a routerLink="/gestion-flotte" class="btn btn-secondary">
+          <app-icon name="arrow-left" [size]="16" /> Retour
+        </a>
+      </app-page-header>
+
+      <div class="card max-w-2xl p-6">
+        <form [formGroup]="busForm" (ngSubmit)="onSubmit()" class="space-y-5">
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div>
+              <label class="label" for="registrationNumber">N° Immatriculation</label>
+              <input id="registrationNumber" class="input" placeholder="CI-2024-XX" formControlName="registrationNumber" />
+              @if (getFieldError('registrationNumber')) {
+                <p class="text-red-500 text-xs mt-1">{{ getFieldError('registrationNumber') }}</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="brand">Marque</label>
+              <input id="brand" class="input" placeholder="Mercedes" formControlName="brand" />
+            </div>
+            <div>
+              <label class="label" for="model">Modèle</label>
+              <input id="model" class="input" placeholder="O500" formControlName="model" />
+            </div>
+            <div>
+              <label class="label" for="category">Catégorie</label>
+              <select id="category" class="input cursor-pointer" formControlName="category">
+                @for (cat of busCategories(); track cat.value) {
+                  <option [value]="cat.value">{{ cat.label }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="label" for="capacity">Capacité (places)</label>
+              <input id="capacity" type="number" class="input" placeholder="55" formControlName="capacity" />
+              @if (getFieldError('capacity')) {
+                <p class="text-red-500 text-xs mt-1">{{ getFieldError('capacity') }}</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="status">Statut</label>
+              <select id="status" class="input cursor-pointer" formControlName="status">
+                @for (stat of busStatuses(); track stat.value) {
+                  <option [value]="stat.value">{{ stat.label }}</option>
+                }
+              </select>
+            </div>
+            <div>
+              <label class="label" for="color">Couleur</label>
+              <input id="color" class="input" placeholder="Rouge" formControlName="color" />
+            </div>
+            <div>
+              <label class="label" for="mileage">Kilométrage</label>
+              <input id="mileage" type="number" class="input" placeholder="10000" formControlName="mileage" />
+              @if (getFieldError('mileage')) {
+                <p class="text-red-500 text-xs mt-1">{{ getFieldError('mileage') }}</p>
+              }
+            </div>
+            <div>
+              <label class="label" for="acquisitionDate">Date d'acquisition</label>
+              <input id="acquisitionDate" type="date" class="input" formControlName="acquisitionDate" />
+            </div>
+            <div>
+              <label class="label" for="lastMaintenanceDate">Dernière maintenance</label>
+              <input id="lastMaintenanceDate" type="date" class="input" formControlName="lastMaintenanceDate" />
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5">
+            <a routerLink="/gestion-flotte" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary" [disabled]="isSubmitting() || !busForm.valid">
+              <app-icon name="save" [size]="16" /> 
+              @if (!isSubmitting()) {
+                Enregistrer
+              } @else {
+                Enregistrement...
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `,
 })
 export class AjoutBusPage implements OnInit {
+  private api = inject(PartnerApiService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private fb = inject(FormBuilder);
+  private toast = inject(ToastService);
+
   // Form
   busForm!: FormGroup;
-  isEditMode = false;
-  busId: number | null = null;
-  isSubmitting = false;
-
-  // Image preview
-  previewImageUrl: string = environment.baseApiUrl + '/assets/bus-placeholder.jpg';
-  selectedFile: File | null = null;
-
-  // Notification state
-  showNotification = false;
-  notificationType: 'success' | 'error' | 'warning' | 'info' = 'info';
-  notificationMessage = '';
+  isEditMode = signal(false);
+  busId = signal<number | string | null>(null);
+  readonly isSubmitting = signal(false);
 
   // UI State
-  isLoading = false;
-  pageTitle = 'Ajouter un Nouveau Bus';
-  pageDescription = "Saisissez les informations du véhicule pour l'enregistrer dans la flotte.";
+  readonly pageTitle = signal('Ajouter un Nouveau Bus');
+  readonly pageDescription = signal("Saisissez les informations du véhicule pour l'enregistrer dans la flotte.");
 
   // Options for selects
-  busCategories = [
+  busCategories = signal<SelectOption[]>([
     { value: 'Classique', label: 'Classique' },
     { value: 'VIP', label: 'VIP' },
-  ];
+  ]);
 
-  busStatuses = [
+  busStatuses = signal<SelectOption[]>([
     { value: 'disponible', label: 'Disponible' },
     { value: 'maintenance', label: 'Maintenance' },
     { value: 'hors_service', label: 'Hors Service' },
-  ];
+  ]);
 
-  constructor(
-    private fb: FormBuilder,
-    private partnerApiService: PartnerApiService,
-    private route: ActivatedRoute,
-    private router: Router,
-    private alertService: AlertService,
-  ) {
+  constructor() {
     this.initializeForm();
   }
 
@@ -61,10 +134,10 @@ export class AjoutBusPage implements OnInit {
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (id) {
-        this.busId = +id;
-        this.isEditMode = true;
-        this.pageTitle = 'Modifier le Bus';
-        this.pageDescription = 'Mettez à jour les informations du véhicule.';
+        this.busId.set(id);
+        this.isEditMode.set(true);
+        this.pageTitle.set('Modifier le Bus');
+        this.pageDescription.set('Mettez à jour les informations du véhicule.');
         this.loadBusData();
       }
     });
@@ -92,33 +165,32 @@ export class AjoutBusPage implements OnInit {
    * Charge les données du bus pour l'édition
    */
   private loadBusData(): void {
-    if (!this.busId) return;
+    const busId = this.busId();
+    if (!busId) return;
 
-    this.isLoading = true;
-    this.partnerApiService.getBusDetails(this.busId).subscribe(
-      (bus: Bus) => {
+    this.isSubmitting.set(true);
+    this.api.getBusDetails(busId).subscribe({
+      next: (bus: any) => {
         this.busForm.patchValue({
-          registrationNumber: bus.registrationNumber,
+          registrationNumber: bus.registrationNumber || bus.immatriculation || '',
           brand: bus.brand || '',
-          model: bus.model || '',
+          model: bus.model || bus.modele || '',
           color: bus.color || '',
-          capacity: bus.capacity,
-          category: bus.category,
-          status: bus.status,
+          capacity: bus.capacity || bus.capacite || '',
+          category: bus.category || 'Classique',
+          status: bus.status || bus.statut || 'disponible',
           acquisitionDate: bus.acquisitionDate ? bus.acquisitionDate.substring(0, 10) : '',
           mileage: bus.mileage || '',
-          lastMaintenanceDate: bus.lastMaintenanceDate
-            ? bus.lastMaintenanceDate.substring(0, 10)
-            : '',
+          lastMaintenanceDate: bus.lastMaintenanceDate ? bus.lastMaintenanceDate.substring(0, 10) : '',
         });
-        this.isLoading = false;
+        this.isSubmitting.set(false);
       },
-      (error) => {
+      error: (error) => {
         console.error('Erreur de chargement du bus:', error);
-        this.alertService.error('Erreur de chargement des données du bus');
-        this.isLoading = false;
+        this.toast.danger('Erreur de chargement des données du bus');
+        this.isSubmitting.set(false);
       },
-    );
+    });
   }
 
   /**
@@ -126,45 +198,42 @@ export class AjoutBusPage implements OnInit {
    */
   onSubmit(): void {
     if (!this.busForm.valid) {
-      this.alertService.warning('Veuillez remplir tous les champs obligatoires');
+      this.toast.warning('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    this.isSubmitting = true;
+    this.isSubmitting.set(true);
     const formData = this.preparePayload(this.busForm.value);
 
-    if (this.isEditMode && this.busId) {
+    const busId = this.busId();
+    if (this.isEditMode() && busId) {
       // Édition
-      this.partnerApiService.updateBus(this.busId, formData).subscribe(
-        (response) => {
-          this.isSubmitting = false;
-          this.alertService.success(`Bus ${formData.registrationNumber} modifié avec succès`);
-          setTimeout(() => {
-            this.router.navigate(['/gestion-flotte']);
-          }, 2000);
+      this.api.updateBus(busId, formData).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.toast.success(`Bus ${formData.registrationNumber} modifié avec succès`);
+          this.router.navigate(['/gestion-flotte']);
         },
-        (error) => {
-          this.isSubmitting = false;
+        error: (error) => {
+          this.isSubmitting.set(false);
           console.error('Erreur de modification:', error);
-          this.alertService.error('Erreur lors de la modification du bus');
+          this.toast.danger('Erreur lors de la modification du bus');
         },
-      );
+      });
     } else {
       // Création
-      this.partnerApiService.addBus(formData).subscribe(
-        (response) => {
-          this.isSubmitting = false;
-          this.alertService.success(`Bus ${formData.registrationNumber} ajouté avec succès`);
-          setTimeout(() => {
-            this.router.navigate(['/gestion-flotte']);
-          }, 2000);
+      this.api.createBus(formData).subscribe({
+        next: () => {
+          this.isSubmitting.set(false);
+          this.toast.success(`Bus ${formData.registrationNumber} ajouté avec succès`);
+          this.router.navigate(['/gestion-flotte']);
         },
-        (error) => {
-          this.isSubmitting = false;
+        error: (error) => {
+          this.isSubmitting.set(false);
           console.error('Erreur de création:', error);
-          this.alertService.error("Erreur lors de l'ajout du bus");
+          this.toast.danger("Erreur lors de l'ajout du bus");
         },
-      );
+      });
     }
   }
 
@@ -188,74 +257,6 @@ export class AjoutBusPage implements OnInit {
   }
 
   /**
-   * Gère la sélection d'image
-   */
-  onFileSelected(event: any): void {
-    const file = event.target.files?.[0];
-    if (file) {
-      this.selectedFile = file;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        this.previewImageUrl = e.target?.result as string;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  /**
-   * Affiche une notification toast
-   */
-  showToastNotification(type: 'success' | 'error' | 'warning' | 'info', message: string): void {
-    this.notificationType = type;
-    this.notificationMessage = message;
-    this.showNotification = true;
-
-    setTimeout(() => {
-      this.showNotification = false;
-    }, 5000);
-  }
-
-  /**
-   * Annule et retourne à la gestion de flotte
-   */
-  cancel(): void {
-    this.router.navigate(['/gestion-flotte']);
-  }
-
-  confirmDeleteBus(): void {
-    if (!this.busId) {
-      return;
-    }
-
-    const confirmed = window.confirm(
-      'Souhaitez-vous vraiment supprimer ce bus ? Cette action est irréversible.',
-    );
-    if (confirmed) {
-      this.deleteBus();
-    }
-  }
-
-  deleteBus(): void {
-    if (!this.busId || this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.partnerApiService.deleteBus(this.busId).subscribe(
-      () => {
-        this.isSubmitting = false;
-        this.alertService.success('Bus supprimé avec succès.');
-        this.router.navigate(['/gestion-flotte']);
-      },
-      (error) => {
-        this.isSubmitting = false;
-        console.error('Erreur lors de la suppression du bus :', error);
-        this.alertService.error('Impossible de supprimer le bus.');
-      },
-    );
-  }
-
-  /**
    * Obtient les erreurs d'un champ
    */
   getFieldError(fieldName: string): string | null {
@@ -272,3 +273,4 @@ export class AjoutBusPage implements OnInit {
     return null;
   }
 }
+
