@@ -20,52 +20,8 @@ import { ColumnDef, ActionDef, Utilisateur, RoleUtilisateur, SelectOption } from
     PageHeaderComponent,
     ModalComponent,
   ],
-  template: `
-    <div class="space-y-6">
-      <app-page-header title="Gestion du Personnel" subtitle="Gérez les utilisateurs de votre agence" icon="users">
-        <a routerLink="/ajout-user" class="btn btn-primary"><app-icon name="user-plus" [size]="16" /> Ajouter un utilisateur</a>
-      </app-page-header>
-
-      @if (isLoading()) {
-        <div class="flex items-center justify-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-          <span class="ml-3">Chargement...</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <app-stat-card label="Total utilisateurs" [value]="totalStaff()" icon="users" iconBg="bg-brand-50 text-brand-600" />
-          <app-stat-card label="Actifs" [value]="actifs()" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
-          <app-stat-card label="Inactifs" [value]="inactifs()" icon="x-circle" iconBg="bg-red-50 text-red-600" />
-        </div>
-        <app-datatable [columns]="cols" [data]="staffWithRole()" [exportable]="true" [selectable]="true" [rowActions]="actions" />
-      }
-    </div>
-
-    @if (isDeleteConfirmOpen()) {
-      <app-modal
-        title="Confirmer la suppression"
-        [isOpen]="isDeleteConfirmOpen()"
-        (close)="closeDeleteConfirm()"
-        size="small"
-      >
-        <div class="p-1">
-          <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong>{{ selectedUserName() }}</strong> ? Cette action est irréversible.</p>
-          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
-            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isDeleting()">
-              Annuler
-            </button>
-            <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
-              @if (isDeleting()) {
-                <span class="animate-pulse">Suppression...</span>
-              } @else {
-                Oui, supprimer
-              }
-            </button>
-          </div>
-        </div>
-      </app-modal>
-    }
-  `,
+  templateUrl: './gestion-du-staff.page.html',
+  
 })
 export class GestionDuStaffPage implements OnInit {
   private api = inject(PartnerApiService);

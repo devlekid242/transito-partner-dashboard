@@ -2,6 +2,34 @@ import { BusPoint, Trip, Notification } from './partner.model';
 export * from './partner.model';
 import { AgencyDocument } from './partner.model';
 
+export interface AgencyReservationTicket {
+	id: number;
+	seatNumber: string | number;
+	passengerName: string;
+	passengerPhone: string;
+	status: string;
+}
+
+export interface AgencyReservation {
+	id: number;
+	reference: string;
+	passager: string;
+	passengerPhone: string;
+	passengerEmail: string;
+	trajet: string;
+	departureCity: string;
+	arrivalCity: string;
+	date: string; // date de départ, utilisée pour la colonne "Date" du tableau
+	departureTime: string | null;
+	boardingPoint: string;
+	deboardingPoint: string;
+	seatNumber: string;
+	montant: number;
+	statut: string; // 'Confirmé' | 'En attente' | 'Annulé' | 'Remboursé'
+	tickets: AgencyReservationTicket[];
+	createdAt: string;
+}
+
 export type StatutReservation =
   | 'paye'
   | 'confirme'

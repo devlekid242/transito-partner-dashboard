@@ -133,7 +133,7 @@ export class PartnerPermissionService {
       dashboard: false,
       'gestion-flotte': false,
       'gestion-point-embarquement': false,
-      trajet: false,
+      'trajet': false,
       'demande-de-retrait': false,
       'gestion-finance': false,
       'gestion-du-staff': false,
@@ -144,8 +144,6 @@ export class PartnerPermissionService {
     switch (role) {
       case PartnerRole.ADMIN_AGENCE:
       case PartnerRole.ADMIN:
-      case 'admin':
-      case 'admin_agence':
       case 'manager':
         return {
           ...basePermissions,
@@ -165,7 +163,7 @@ export class PartnerPermissionService {
           dashboard: true,
           'gestion-flotte': true,
           'gestion-point-embarquement': true,
-          trajet: true,
+          'trajet': true,
           'demande-de-retrait': true,
           'gestion-finance': true,
           'gestion-du-staff': true,
@@ -174,7 +172,6 @@ export class PartnerPermissionService {
         };
 
       case PartnerRole.AGENT_QUAI:
-      case 'agent_quai':
       case 'agent':
       case 'staff':
       case 'conducteur':

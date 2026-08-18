@@ -93,15 +93,21 @@
                 class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline"
                 >location_city</span
               >
-              <input
-                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              <select
+                class="w-full pl-10 pr-4 py-2.5 bg-surface border border-subtle rounded-lg font-body-md text-body-md text-on-surface focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer appearance-none"
                 id="ville"
                 name="ville"
                 [(ngModel)]="ville"
-                placeholder="Ex: Douala"
-                type="text"
                 required
-              />
+                [disabled]="isLoadingCities"
+              >
+                <option value="" disabled>
+                  {{ isLoadingCities ? 'Chargement des villes...' : 'Sélectionner une ville' }}
+                </option>
+                <option *ngFor="let city of cities()" [value]="city.value">
+                  {{ city.label }}
+                </option>
+              </select>
             </div>
           </div>
         </div>

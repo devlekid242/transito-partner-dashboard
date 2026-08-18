@@ -13,8 +13,14 @@ import { Utilisateur, RoleUtilisateur, SelectOption, Agence } from '../../models
   imports: [ReactiveFormsModule, RouterLink, IconComponent, PageHeaderComponent],
   template: `
     <div class="space-y-6">
-      <app-page-header [title]="pageTitle()" subtitle="Créez un compte pour un membre du personnel" icon="user-plus">
-        <a routerLink="/gestion-du-staff" class="btn btn-secondary"><app-icon name="arrow-left" [size]="16" /> Retour</a>
+      <app-page-header
+        [title]="pageTitle()"
+        subtitle="Créez un compte pour un membre du personnel"
+        icon="user-plus"
+      >
+        <a routerLink="/gestion-du-staff" class="btn btn-secondary"
+          ><app-icon name="arrow-left" [size]="16" /> Retour</a
+        >
       </app-page-header>
       <div class="card max-w-2xl p-6">
         @if (isLoading()) {
@@ -27,47 +33,99 @@ import { Utilisateur, RoleUtilisateur, SelectOption, Agence } from '../../models
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
                 <label class="label" for="fullName">Nom complet</label>
-                <input id="fullName" type="text" class="input" placeholder="Awa Traoré" formControlName="fullName" required />
+                <input
+                  id="fullName"
+                  type="text"
+                  class="input"
+                  placeholder="Awa Traoré"
+                  formControlName="fullName"
+                  required
+                />
                 @if (userForm.get('fullName')?.invalid && userForm.get('fullName')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Nom complet est requis</p>
                 }
               </div>
               <div>
                 <label class="label" for="email">Email</label>
-                <input id="email" type="email" class="input" placeholder="awa@transito.ci" formControlName="email" required />
+                <input
+                  id="email"
+                  type="email"
+                  class="input"
+                  placeholder="awa@transito.ci"
+                  formControlName="email"
+                  required
+                />
                 @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Email est requis</p>
                 }
               </div>
               <div>
                 <label class="label" for="phoneNumber">Téléphone</label>
-                <input id="phoneNumber" type="tel" class="input" placeholder="+225 07 00 00 00" formControlName="phoneNumber" required />
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  class="input"
+                  placeholder="+225 07 00 00 00"
+                  formControlName="phoneNumber"
+                  required
+                />
                 @if (userForm.get('phoneNumber')?.invalid && userForm.get('phoneNumber')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Téléphone est requis</p>
                 }
               </div>
               <div>
                 <label class="label" for="ville">Ville de résidence</label>
-                <input id="ville" type="text" class="input" placeholder="Ex: Abidjan" formControlName="ville" required />
+                <select
+                  id="ville"
+                  class="input cursor-pointer"
+                  formControlName="ville"
+                  required
+                  [disabled]="isLoadingCities()"
+                >
+                  <option value="" disabled>
+                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
+                  </option>
+                  @for (city of cities(); track city.value) {
+                    <option [value]="city.value">{{ city.label }}</option>
+                  }
+                </select>
                 @if (userForm.get('ville')?.invalid && userForm.get('ville')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Ville est requise</p>
                 }
               </div>
               <div>
                 <label class="label" for="quartier">Quartier</label>
-                <input id="quartier" type="text" class="input" placeholder="Ex: Cocody" formControlName="quartier" required />
+                <input
+                  id="quartier"
+                  type="text"
+                  class="input"
+                  placeholder="Ex: Cocody"
+                  formControlName="quartier"
+                  required
+                />
                 @if (userForm.get('quartier')?.invalid && userForm.get('quartier')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Quartier est requis</p>
                 }
               </div>
               <div>
                 <label class="label" for="password">Mot de passe</label>
-                <input id="password" type="password" class="input" placeholder="Laisser vide pour générer automatiquement" formControlName="password" />
+                <input
+                  id="password"
+                  type="password"
+                  class="input"
+                  placeholder="Laisser vide pour générer automatiquement"
+                  formControlName="password"
+                />
               </div>
               <div>
                 <label class="label" for="agentRole">Rôle</label>
-                <select id="agentRole" class="input cursor-pointer" formControlName="agentRole" required>
-                  <option value="">Sélectionner un rôle</option>
+                <select
+                  id="agentRole"
+                  class="input cursor-pointer"
+                  formControlName="agentRole"
+                  required
+                >
+                  <option value="" disabled>Sélectionner un rôle</option>
                   @for (r of roleOptions(); track r.value) {
                     <option [value]="r.value">{{ r.label }}</option>
                   }
@@ -128,6 +186,8 @@ export class AjoutUserPage implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly isSubmitting = signal<boolean>(false);
   readonly roleOptions = signal<SelectOption[]>([]);
+  readonly cities = signal<SelectOption[]>([]);
+  readonly isLoadingCities = signal<boolean>(true);
   readonly agencies = signal<Agence[]>([]);
 
   // Form
@@ -160,7 +220,7 @@ export class AjoutUserPage implements OnInit {
       const idParam = params.get('id');
       if (idParam) {
         this.selectedUserId = idParam;
-        this.pageTitle.set('Modifier l\'utilisateur');
+        this.pageTitle.set("Modifier l'utilisateur");
         this.submitLabel.set('Mettre à jour');
         this.loadUserDetails(idParam);
       } else {
@@ -176,18 +236,22 @@ export class AjoutUserPage implements OnInit {
 
   loadReferenceData(): void {
     // Load role options
-    this.api.getRoleOptions().subscribe({
+    this.roleOptions.set([
+      { value: 'admin_agence', label: 'Administrateur' },
+      { value: 'agent_quai', label: 'Agent de quai' },
+    ]);
+
+    // Load city options
+    this.isLoadingCities.set(true);
+    this.api.getCityOptions().subscribe({
       next: (options) => {
-        this.roleOptions.set(options);
-        // Set default role if not in edit mode
-        if (!this.selectedUserId && options.length > 0) {
-          const defaultRole = options.find(o => o.value === 'agent') || options[0];
-          this.userForm.patchValue({ agentRole: defaultRole?.value || 'agent' });
-        }
+        this.cities.set(options);
+        this.isLoadingCities.set(false);
       },
       error: (err) => {
-        console.error('Error loading role options:', err);
-        this.toast.danger('Impossible de charger les options de rôle');
+        console.error('Error loading cities:', err);
+        this.toast.danger('Impossible de charger la liste des villes');
+        this.isLoadingCities.set(false);
       },
     });
 
@@ -221,7 +285,7 @@ export class AjoutUserPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading user details:', err);
-        this.toast.danger('Impossible de charger les détails de l\'utilisateur');
+        this.toast.danger("Impossible de charger les détails de l'utilisateur");
         this.isLoading.set(false);
       },
     });
@@ -263,7 +327,9 @@ export class AjoutUserPage implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.toast.success(
-          this.selectedUserId ? 'Utilisateur mis à jour avec succès.' : 'Utilisateur ajouté avec succès.'
+          this.selectedUserId
+            ? 'Utilisateur mis à jour avec succès.'
+            : 'Utilisateur ajouté avec succès.',
         );
         this.router.navigate(['/gestion-du-staff']);
       },
@@ -271,10 +337,11 @@ export class AjoutUserPage implements OnInit {
         this.isSubmitting.set(false);
         console.error('Error saving user:', err);
         this.toast.danger(
-          this.selectedUserId ? 'Impossible de mettre à jour l\'utilisateur.' : 'Impossible d\'ajouter l\'utilisateur.'
+          this.selectedUserId
+            ? "Impossible de mettre à jour l'utilisateur."
+            : "Impossible d'ajouter l'utilisateur.",
         );
       },
     });
   }
 }
-

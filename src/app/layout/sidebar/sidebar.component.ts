@@ -111,6 +111,7 @@ export class SidebarComponent {
         { label: 'Gestion de la Flotte', icon: 'bus' as IconName, link: 'gestion-flotte', perm: 'gestion-flotte' },
         { label: "Points d'embarquement", icon: 'map-pin' as IconName, link: 'gestion-point-embarquement', perm: 'gestion-point-embarquement' },
         { label: 'Planning des Trajets', icon: 'calendar-clock' as IconName, link: 'trip-schedule', perm: 'trajet' },
+        { label: 'Reservation', icon: 'ticket' as IconName, link: 'reservations', perm: 'reservations' },
         { label: 'Gestion Financière', icon: 'wallet' as IconName, link: 'gestion-finance', perm: 'gestion-finance' },
       ],
     },

@@ -1,416 +1,548 @@
-<div
-  *ngIf="isLoading()"
-  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
->
-  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-    <div
-      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
-    ></div>
-    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
-  </div>
-</div>
+<div class="space-y-6">
+  <app-page-header
+    title="Profil de l'agence"
+    subtitle="Gérez l'identité, les coordonnées et les informations publiques de votre agence"
+    icon="building"
+  />
 
-<main *ngIf="!isLoading()" class="p-4 md:px-container-margin max-w-desktop-max-width mx-auto">
-  <!-- Header Section -->
-  <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-    <div>
-      <h1 class="text-headline-lg text-headline-lg text-on-surface">Profil de l'Agence</h1>
-      <p class="text-body-md text-body-md text-on-surface-variant mt-1">
-        Gérez les informations publiques et les documents de votre flotte.
-      </p>
-    </div>
-    <div class="flex gap-3">
-      <button
-        type="button"
-        class="px-6 py-2.5 border border-outline-variant rounded-full text-body-md font-medium text-on-surface-variant bg-transparent hover:bg-surface-container-low transition-all active:opacity-80"
-        (click)="loadProfileData()"
-      >
-        Annuler
-      </button>
-      <button
-        type="button"
-        class="px-6 py-2.5 bg-primary text-on-primary rounded-full text-body-md font-medium hover:bg-surface-tint shadow-md transition-all active:scale-95 flex items-center gap-2"
-        (click)="triggerProfileSave()"
-        [disabled]="isSavingProfile()"
-      >
-        <span class="material-symbols-outlined text-[20px]">save</span>
-        <span *ngIf="!isSavingProfile()">Enregistrer les modifications</span>
-        <span *ngIf="isSavingProfile()" class="inline-flex items-center gap-2">
-          <span class="material-symbols-outlined animate-spin text-[20px]">autorenew</span>
-          Enregistrement...
-        </span>
-      </button>
-    </div>
-  </div>
-
-
-  <!-- Banner & Logo -->
-  <div class="bento-card mb-6 p-0 overflow-hidden relative group">
-    <div class="h-48 w-full bg-surface-container-highest relative">
+  @if (isLoading()) {
+    <div class="card flex min-h-64 items-center justify-center p-8">
       <div
-        class="absolute inset-0 bg-gradient-to-r from-primary-container/20 to-secondary-container/20"
+        class="h-8 w-8 animate-spin rounded-full border-2 border-ink-200 border-t-brand-600"
       ></div>
-      <!-- Banner Image Placeholder -->
-      <img
-        alt="Agency Banner"
-        class="w-full h-full object-cover"
-        [attr.data-alt]="'Agency banner for ' + (profileData()?.agencyName || '')"
-        [src]="profileData()?.bannerUrl || profileData()?.banner || ''"
-      />
-      <button
-        type="button"
-        class="absolute top-4 right-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-on-surface hover:bg-white transition-colors shadow-sm opacity-0 group-hover:opacity-100 flex items-center gap-2"
-        (click)="bannerInput.click()"
-      >
-        <span class="material-symbols-outlined text-[18px]">photo_camera</span>
-        <span class="text-[12px]">Changer bannière</span>
-      </button>
-      <input
-        type="file"
-        #bannerInput
-        accept="image/*"
-        hidden
-        (change)="onBannerFileChange($event)"
-      />
+      <span class="ml-3 text-sm text-ink-500">Chargement du profil...</span>
     </div>
-    <div class="px-6 pb-6 pt-0 relative flex justify-between items-end -mt-12">
-      <div class="flex items-end gap-6">
-        <div
-          class="w-24 h-24 rounded-xl bg-white border-4 border-white shadow-md overflow-hidden relative z-10 group/logo"
-        >
-          <img
-            alt="Agency Logo"
-            class="w-full h-full object-cover"
-            [attr.data-alt]="'Logo for ' + (profileData()?.agencyName || '')"
-            [src]="profileData()?.logoUrl || ''"
-          />
+  } @else {
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <!-- Colonne identité -->
+      <aside class="space-y-6">
+        <section class="card overflow-hidden">
           <div
-            class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/logo:opacity-100 transition-opacity cursor-pointer"
-            (click)="logoInput.click()"
+            class="relative h-32 overflow-hidden bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500"
           >
-            <span class="material-symbols-outlined text-white">photo_camera</span>
-            <span class="sr-only">Changer logo</span>
+            @if (agencyBanner()) {
+              <img
+                [src]="baseApiUrl + agencyBanner()"
+                alt="Bannière de l'agence"
+                class="h-full w-full object-cover"
+              />
+              <div class="absolute inset-0 bg-black/25"></div>
+            }
+            <div
+              class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/35 to-transparent"
+            ></div>
           </div>
-          <input
-            type="file"
-            #logoInput
-            accept="image/*"
-            hidden
-            (change)="onLogoFileChange($event)"
-          />
-        </div>
-        <div class="mb-2">
-          <h2 class="text-headline-md text-headline-md text-on-surface">
-            {{ profileData()?.agencyName || '—' }}
-          </h2>
-          <p class="text-body-md text-body-md text-on-surface-variant flex items-center gap-1">
-            <span class="material-symbols-outlined text-[16px]">verified</span>
-            Partenaire Premium
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Bento Grid Layout -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <!-- Column 1: Basic Info & Contacts (8 cols) -->
-    <div class="lg:col-span-8 flex flex-col gap-6">
-      <!-- Basic Information -->
-      <div class="bento-card">
-        <div class="flex justify-between items-center mb-4">
-          <h3 class="text-body-lg font-body-lg font-bold text-on-surface flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-[20px]">info</span>
-            Informations Générales
-          </h3>
-        </div>
 
-        <!-- Utilisation du composant FormComponent -->
-        <app-form
-          [fields]="profileFormFields()"
-          [submitLabel]="'Enregistrer les modifications'"
-          [IsSubmit]="isSavingProfile()"
-          (submit)="onFormSubmit($event)"
-        >
-        </app-form>
-      </div>
-      <!-- Contact & Address -->
-      <div class="bento-card">
-        <h3
-          class="text-body-lg font-body-lg font-bold text-on-surface flex items-center gap-2 mb-4"
-        >
-          <span class="material-symbols-outlined text-primary text-[20px]">contact_mail</span>
-          Contacts &amp; Localisation Centrale
-        </h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-              >Email Principal</label
-            >
-            <div class="relative">
-              <span
-                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]"
-                >mail</span
-              >
-              <input
-                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                type="email"
-                [value]="profileData()?.email || ''"
-              />
-            </div>
-          </div>
-          <div>
-            <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-              >Téléphone Support</label
-            >
-            <div class="relative">
-              <span
-                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant text-[18px]"
-                >call</span
-              >
-              <input
-                class="w-full pl-10 pr-3 py-2 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary focus:border-primary transition-all"
-                type="tel"
-                [value]="profileData()?.phone || ''"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="border-t border-border-subtle pt-4">
-          <label class="block text-label-sm font-label-sm text-on-surface-variant mb-1"
-            >Adresse Siège Social</label
-          >
-          <input
-            class="w-full px-3 py-2 mb-3 border border-border-subtle rounded-lg text-body-md font-body-md focus:ring-2 focus:ring-primary transition-all"
-            type="text"
-            [value]="profileData()?.address || ''"
-          />
-          <div class="grid grid-cols-1 gap-4">
-            <div
-              class="rounded-lg overflow-hidden border border-border-subtle bg-surface-container-highest"
-            >
-              <ng-container *ngIf="mapEmbedUrl(); else noMap">
-                <iframe
-                  [src]="mapEmbedUrl()"
-                  class="w-full h-64 border-0"
-                  allowfullscreen
-                  loading="lazy"
-                ></iframe>
-              </ng-container>
-              <ng-template #noMap>
-                <div class="h-64 w-full flex items-center justify-center text-on-surface-variant">
-                  Carte non disponible
-                </div>
-              </ng-template>
-            </div>
-            <div class="rounded-lg border border-border-subtle p-4 bg-surface-container-lowest">
-              <h4 class="text-body-md font-semibold text-on-surface mb-2">Support & contact</h4>
-              <p class="text-label-sm text-on-surface-variant mb-2">
-                <span class="font-bold">Email :</span> {{ profileData()?.email || 'Non défini' }}
-              </p>
-              <p class="text-label-sm text-on-surface-variant mb-2">
-                <span class="font-bold">Téléphone :</span> {{ profileData()?.phone || 'Non défini' }}
-              </p>
-              <p class="text-label-sm text-on-surface-variant mb-2">
-                <span class="font-bold">Site web :</span>
-                <a
-                  *ngIf="profileData()?.websiteUrl"
-                  [href]="profileData()?.websiteUrl"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-primary hover:underline"
-                  >{{ profileData()?.websiteUrl }}</a
-                >
-                <span *ngIf="!profileData()?.websiteUrl">Non défini</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Column 2: Documents & Compliance (4 cols) -->
-    <div class="lg:col-span-4 flex flex-col gap-6">
-      <!-- Document Compliance -->
-      <div class="bento-card">
-        <h3
-          class="text-body-lg font-body-lg font-bold text-on-surface flex items-center gap-2 mb-1"
-        >
-          <span class="material-symbols-outlined text-primary text-[20px]">shield_person</span>
-          Conformité &amp; Documents
-        </h3>
-        <p class="text-label-sm font-label-sm text-on-surface-variant mb-4">
-          Statut global:
-          <span class="text-success-green font-bold">À jour</span>
-        </p>
-        <div class="flex flex-col gap-3">
-          <ng-container *ngIf="documents() && documents().length; else noDocs">
-            <div
-              *ngFor="let doc of documents()"
-              class="p-3 border border-border-subtle rounded-lg flex items-start gap-3 hover:bg-surface-container-lowest transition-colors group"
-            >
+          <div class="px-6 pb-6">
+            <div class="-mt-12 flex items-end justify-between gap-3">
               <div
-                class="w-10 h-10 rounded bg-surface-container-high text-outline-variant flex items-center justify-center shrink-0"
+                class="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-white bg-brand-50 text-brand-600 shadow-lg"
               >
-                <span class="material-symbols-outlined">{{ doc.icon || 'description' }}</span>
+                @if (agencyLogo()) {
+                  <img
+                    [src]="baseApiUrl + agencyLogo()"
+                    alt="Logo de l'agence"
+                    class="h-full w-full object-cover"
+                  />
+                } @else {
+                  <app-icon name="building" [size]="38" />
+                }
               </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-body-md font-body-md font-medium text-on-surface truncate">
-                  {{ doc.name }}
+
+              <label class="btn btn-secondary mb-1 cursor-pointer bg-white">
+                <app-icon name="image" [size]="16" />
+                Logo
+                <input
+                  type="file"
+                  class="hidden"
+                  accept="image/png,image/jpeg,image/webp"
+                  (change)="uploadImage($event, 'logo')"
+                />
+              </label>
+            </div>
+
+            <div class="mt-4">
+              <div class="flex flex-wrap items-center gap-2">
+                <h2 class="text-xl font-bold text-ink-900">{{ agency().name || 'Agence' }}</h2>
+                @if (agency().isVerified) {
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-semibold text-brand-700"
+                  >
+                    <app-icon name="verified" [size]="13" /> Vérifiée
+                  </span>
+                }
+              </div>
+              <p class="mt-1 text-sm text-ink-500">
+                {{ agency().city || 'Ville non renseignée' }}
+                @if (agency().status) {
+                  · {{ agency().status }}
+                }
+              </p>
+            </div>
+
+            <div class="mt-5 grid grid-cols-2 gap-3">
+              <div class="rounded-xl bg-ink-50 p-3">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-ink-400">Note</p>
+                <p class="mt-1 text-lg font-bold text-ink-900">
+                  {{ agency().ratingCache || '0.00' }}
                 </p>
-                <p class="text-label-sm font-label-sm text-on-surface-variant">
-                  {{ doc.expiry ? 'Expire le: ' + doc.expiry : (doc.status ?? '') }}
+              </div>
+              <div class="rounded-xl bg-ink-50 p-3">
+                <p class="text-[11px] font-medium uppercase tracking-wide text-ink-400">
+                  Agence depuis
                 </p>
-                <div
-                  *ngIf="doc.status"
-                  class="mt-1 flex items-center gap-1 text-[10px] uppercase font-bold"
-                  [ngClass]="{'text-success-green': doc.status === 'Validé', 'text-warning-gold': doc.status && doc.status !== 'Validé'}"
+                <p class="mt-1 text-sm font-bold text-ink-900">
+                  {{ formatDate(agency().createdAt) }}
+                </p>
+              </div>
+            </div>
+
+            <div class="mt-5 space-y-3 border-t border-ink-100 pt-5 text-sm">
+              <div class="flex items-start gap-3 text-ink-600">
+                <span class="mt-0.5 text-brand-600"><app-icon name="mail" [size]="16" /></span>
+                <span class="min-w-0 break-all">{{ agency().email || 'Email non renseigné' }}</span>
+              </div>
+              <div class="flex items-start gap-3 text-ink-600">
+                <span class="mt-0.5 text-brand-600"><app-icon name="phone" [size]="16" /></span>
+                <span>{{ agency().phone || 'Téléphone non renseigné' }}</span>
+              </div>
+              <div class="flex items-start gap-3 text-ink-600">
+                <span class="mt-0.5 text-brand-600"><app-icon name="map-pin" [size]="16" /></span>
+                <span
+                  >{{ agency().address || 'Adresse non renseignée'
+                  }}{{ agency().city ? ', ' + agency().city : '' }}</span
                 >
-                  <span class="material-symbols-outlined text-[14px]">{{ doc.status === 'Validé' ? 'check_circle' : 'warning' }}</span>
-                  {{ doc.status }}
+              </div>
+            </div>
+
+            <label class="btn btn-secondary mt-5 w-full cursor-pointer justify-center">
+              <app-icon name="image" [size]="16" />
+              {{ agencyBanner() ? 'Modifier la bannière' : 'Ajouter une bannière' }}
+              <input
+                type="file"
+                class="hidden"
+                accept="image/png,image/jpeg,image/webp"
+                (change)="uploadImage($event, 'banner')"
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="card p-5">
+          <div class="flex items-center gap-2">
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+            >
+              <app-icon name="shield-check" [size]="18" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-ink-900">État de l'agence</h3>
+              <p class="text-xs text-ink-500">Informations gérées par la plateforme</p>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between border-t border-ink-100 pt-4">
+            <span class="text-sm text-ink-500">Statut</span>
+            <app-status-badge [statut]="String(agency().status || '')" />
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <span class="text-sm text-ink-500">Vérification</span>
+            <span
+              class="text-sm font-semibold"
+              [class.text-brand-700]="agency().kycStatut === 'verifie' "
+              [class.text-amber-600]="agency().kycStatut === 'en_attente' "
+            >
+              {{ agency().kycStatut === 'verifie' ? 'Vérifiée' : 'En attente' }}
+            </span>
+          </div>
+          @if (agency().commissionRate) {
+            <div class="mt-3 flex items-center justify-between">
+              <span class="text-sm text-ink-500">Commission plateforme</span>
+              <span class="text-sm font-semibold text-ink-800">{{ agency().commissionRate }}%</span>
+            </div>
+          }
+        </section>
+
+        <section class="card p-5">
+          <div class="flex items-center gap-2">
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+            >
+              <app-icon name="smartphone" [size]="18" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-ink-900">Numéro de retrait Mobile Money</h3>
+              <p class="text-xs text-ink-500">Utilisé pour verser vos gains</p>
+            </div>
+          </div>
+
+          <div class="mt-4 border-t border-ink-100 pt-4">
+            <p class="text-xs font-medium uppercase tracking-wide text-ink-400">Numéro actif</p>
+            <p class="mt-1 font-mono text-base font-semibold text-ink-900">
+              {{ payoutMsisdn() || 'Non renseigné' }}
+            </p>
+          </div>
+
+          @if (pendingPayoutMsisdn()) {
+            <div class="mt-4 rounded-lg bg-amber-50 p-3">
+              <div class="flex items-center gap-2 text-xs font-semibold text-amber-700">
+                <app-icon name="clock" [size]="14" />
+                En attente de validation par un administrateur
+              </div>
+              <p class="mt-1 font-mono text-sm font-semibold text-amber-900">
+                {{ pendingPayoutMsisdn() }}
+              </p>
+            </div>
+          } @else {
+            <form (submit)="$event.preventDefault(); submitPayoutMsisdn()" class="mt-4 space-y-2">
+              <label class="label" for="payoutMsisdn">Proposer un nouveau numéro</label>
+              <input
+                id="payoutMsisdn"
+                class="input"
+                placeholder="06 XXX XX XX ou +242 06 XXX XX XX"
+                [formControl]="payoutMsisdnControl"
+              />
+              @if (payoutMsisdnControl.invalid && payoutMsisdnControl.touched) {
+                <p class="text-xs text-danger-600">
+                  Numéro invalide. Format attendu : 9 chiffres, avec ou sans indicatif +242.
+                </p>
+              }
+              <button
+                type="submit"
+                class="btn btn-secondary w-full justify-center"
+                [disabled]="isSubmittingPayout()"
+              >
+                @if (isSubmittingPayout()) {
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-ink-300 border-t-brand-600"
+                  ></span>
+                  Envoi...
+                } @else {
+                  <app-icon name="send" [size]="15" /> Proposer ce numéro
+                }
+              </button>
+              <p class="text-xs text-ink-400">
+                Le nouveau numéro ne sera actif qu'après validation par un administrateur.
+              </p>
+            </form>
+          }
+        </section>
+      </aside>
+
+      <!-- Colonne formulaire -->
+      <div class="space-y-6">
+        <section class="card p-6">
+          <div
+            class="flex flex-col gap-2 border-b border-ink-100 pb-5 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <h3 class="text-base font-bold text-ink-900">Informations de l'agence</h3>
+              <p class="mt-1 text-sm text-ink-500">
+                Les informations ci-dessous correspondent directement aux données de l'agence.
+              </p>
+            </div>
+            <span class="rounded-full bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700"
+              >Profil public</span
+            >
+          </div>
+
+          <form [formGroup]="agencyForm" (ngSubmit)="save()" class="mt-6 space-y-7">
+            <div>
+              <div class="mb-4 flex items-center gap-2">
+                <span class="text-brand-600"><app-icon name="building" [size]="17" /></span>
+                <h4 class="text-sm font-bold text-ink-900">Identité légale</h4>
+              </div>
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="label" for="name">Nom de l'agence</label>
+                  <input id="name" class="input" formControlName="name" />
+                  @if (agencyForm.controls.name.invalid && agencyForm.controls.name.touched) {
+                    <p class="mt-1 text-xs text-danger-600">Le nom de l'agence est obligatoire.</p>
+                  }
+                </div>
+                <div>
+                  <label class="label" for="registrationNumber">Numéro d'immatriculation</label>
+                  <input
+                    id="registrationNumber"
+                    class="input"
+                    formControlName="registrationNumber"
+                    placeholder="RCCM / registre"
+                  />
+                </div>
+                <div class="md:col-span-2">
+                  <label class="label" for="legalRepresentative">Représentant légal</label>
+                  <input
+                    id="legalRepresentative"
+                    class="input"
+                    formControlName="legalRepresentative"
+                    placeholder="Nom du représentant légal"
+                  />
                 </div>
               </div>
-              <button
-                type="button"
-                (click)="deleteDocument(doc)"
-                class="text-outline-variant hover:text-primary transition-colors"
-              >
-                <span class="material-symbols-outlined text-[20px]">delete</span>
+            </div>
+
+            <div class="border-t border-ink-100 pt-6">
+              <div class="mb-4 flex items-center gap-2">
+                <span class="text-brand-600"><app-icon name="phone" [size]="17" /></span>
+                <h4 class="text-sm font-bold text-ink-900">Coordonnées</h4>
+              </div>
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="label" for="email">Email</label>
+                  <input id="email" type="email" class="input" formControlName="email" />
+                </div>
+                <div>
+                  <label class="label" for="phone">Téléphone</label>
+                  <input id="phone" class="input" formControlName="phone" placeholder="+242..." />
+                </div>
+                <div>
+                  <label class="label" for="city">Ville</label>
+                  <select
+                    id="city"
+                    class="input cursor-pointer"
+                    formControlName="city"
+                    [disabled]="isLoadingCities()"
+                  >
+                    <option value="">
+                      {{
+                        isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville'
+                      }}
+                    </option>
+                    @for (c of cityOptions(); track c.value) {
+                      <option [value]="c.value">{{ c.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="label" for="address">Adresse</label>
+                  <input
+                    id="address"
+                    class="input"
+                    formControlName="address"
+                    placeholder="Adresse / quartier"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-ink-100 pt-6">
+              <div class="mb-4 flex items-center gap-2">
+                <span class="text-brand-600"><app-icon name="globe" [size]="17" /></span>
+                <h4 class="text-sm font-bold text-ink-900">Présence en ligne</h4>
+              </div>
+              <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                  <label class="label" for="websiteUrl">Site web</label>
+                  <input
+                    id="websiteUrl"
+                    type="url"
+                    class="input"
+                    formControlName="websiteUrl"
+                    placeholder="https://..."
+                  />
+                </div>
+                <div>
+                  <label class="label" for="mapUrl">Lien Google Maps</label>
+                  <input
+                    id="mapUrl"
+                    type="url"
+                    class="input"
+                    formControlName="mapUrl"
+                    placeholder="https://maps.google.com/..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="border-t border-ink-100 pt-6">
+              <div class="mb-4 flex items-center gap-2">
+                <span class="text-brand-600"><app-icon name="file-text" [size]="17" /></span>
+                <h4 class="text-sm font-bold text-ink-900">Présentation</h4>
+              </div>
+              <textarea
+                id="description"
+                rows="5"
+                class="input resize-y"
+                formControlName="description"
+                placeholder="Présentez brièvement votre agence et ses services..."
+              ></textarea>
+              <p class="mt-1 text-xs text-ink-400">
+                Cette description peut être utilisée sur les pages publiques de l'agence.
+              </p>
+            </div>
+
+            <div
+              class="flex flex-col-reverse gap-3 border-t border-ink-100 pt-5 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <p class="text-xs text-ink-400">
+                Les informations de statut, de vérification et de commission sont gérées par la
+                plateforme.
+              </p>
+              <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+                @if (isSubmitting()) {
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+                  ></span>
+                  Enregistrement...
+                } @else {
+                  <app-icon name="save" [size]="16" /> Enregistrer les modifications
+                }
               </button>
             </div>
-          </ng-container>
-          <ng-template #noDocs>
-            <div
-              class="p-3 border border-border-subtle rounded-lg text-label-sm text-on-surface-variant"
-            >
-              Aucun document fourni.
+          </form>
+        </section>
+
+        <section class="card p-6">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div class="flex items-center gap-2">
+                <div
+                  class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+                >
+                  <app-icon name="folder" [size]="18" />
+                </div>
+                <h3 class="font-bold text-ink-900">Documents de l'agence</h3>
+              </div>
+              <p class="mt-2 text-sm text-ink-500">
+                Conservez ici les justificatifs demandés par la plateforme.
+              </p>
             </div>
-          </ng-template>
-        </div>
-        <button
-          type="button"
-          class="w-full mt-4 py-2 border border-primary text-primary rounded-lg text-body-md font-body-md hover:bg-primary-container/10 transition-colors flex items-center justify-center gap-2"
-          (click)="openDocumentModal()"
-        >
-          <span class="material-symbols-outlined text-[18px]">add</span>
-          Ajouter un document
-        </button>
-      </div>
-      <!-- Quick Stats Mini -->
-      <div class="bento-card bg-gradient-to-br from-primary to-surface-tint text-white">
-        <h3
-          class="text-body-md font-body-md font-medium mb-4 flex items-center gap-2 text-primary-fixed"
-        >
-          <span class="material-symbols-outlined text-[18px]">store</span>
-          Points de vente actifs
-        </h3>
-        <div class="flex items-end gap-2">
-          <span class="text-display-lg font-display-lg leading-none">{{ activeSalesPoints() }}</span>
-          <span class="text-body-md font-body-md text-primary-fixed mb-1 pb-1">agences</span>
-        </div>
-        <div
-          class="mt-4 pt-4 border-t border-white/20 flex justify-between items-center text-label-sm font-label-sm"
-        >
-          <span class="">Couverture nationale: {{ agencyStats.nationalCoverage }}</span>
-          <a
-            class="flex items-center gap-1 text-secondary-fixed hover:text-white transition-colors"
-            href="#"
-          >
-            Gérer
-            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
-          </a>
-        </div>
+            <button type="button" class="btn btn-primary" (click)="openDocumentModal()">
+              <app-icon name="upload" [size]="16" /> Ajouter un document
+            </button>
+          </div>
+
+          <div class="mt-5 overflow-hidden rounded-xl border border-ink-100">
+            @for (doc of documents(); track doc.id) {
+              <div
+                class="flex items-center justify-between gap-4 border-b border-ink-100 p-4 last:border-b-0 hover:bg-ink-50"
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <div
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-ink-100 text-ink-500"
+                  >
+                    <app-icon name="file-text" [size]="18" />
+                  </div>
+                  <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-ink-800">{{ doc.name }}</p>
+                    <p class="mt-0.5 text-xs text-ink-500">
+                      {{ doc.type || 'Document' }}
+                      @if (doc.expiryDate) {
+                        · Expire le {{ doc.expiryDate | date: 'dd/MM/yyyy' }}
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div class="flex shrink-0 items-center gap-2">
+                  @if (doc.status) {
+                    <span
+                      class="hidden rounded-full bg-ink-100 px-2 py-1 text-[11px] font-semibold text-ink-600 sm:inline-flex"
+                      >{{ doc.status }}</span
+                    >
+                  }
+                  @if (doc.fileUrl) {
+                    <a class="btn btn-secondary" [href]="doc.fileUrl" target="_blank" rel="noopener"
+                      >Ouvrir</a
+                    >
+                  }
+                  <button type="button" class="btn btn-danger" (click)="deleteDocument(doc)">
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div class="flex flex-col items-center justify-center px-6 py-12 text-center">
+                <div
+                  class="flex h-12 w-12 items-center justify-center rounded-full bg-ink-100 text-ink-400"
+                >
+                  <app-icon name="folder" [size]="22" />
+                </div>
+                <p class="mt-3 text-sm font-semibold text-ink-700">Aucun document enregistré</p>
+                <p class="mt-1 max-w-md text-xs text-ink-400">
+                  Ajoutez les justificatifs nécessaires à la vérification de votre agence.
+                </p>
+              </div>
+            }
+          </div>
+        </section>
       </div>
     </div>
-  </div>
-</main>
-
-<!-- Notification Component -->
-<app-notification
-  [show]="showNotification()"
-  [type]="notificationType()"
-  [message]="notificationMessage()"
-  [duration]="5000"
->
-</app-notification>
-
-<!-- Success Modal -->
-<app-modal [isOpen]="isModalOpen()" [title]="modalTitle()" [size]="'md'" (close)="closeModal()">
-  <div class="p-4">
-    <p class="font-body-md text-body-md text-on-surface">{{ modalMessage() }}</p>
-    <div class="flex justify-end gap-3 mt-6">
-      <button
-        class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors"
-        (click)="closeModal()"
-      >
-        OK
-      </button>
-    </div>
-  </div>
-</app-modal>
-
-<!-- Document Upload Modal -->
+  }
+</div>
 <app-modal
-  [isOpen]="isDocumentModalOpen()"
   title="Ajouter un document"
-  size="sm"
+  subtitle="Renseignez les informations du justificatif avant de le téléverser"
+  size="md"
+  [isOpen]="showDocumentModal()"
   (close)="closeDocumentModal()"
 >
-  <div class="space-y-4">
-    <label class="block text-label-sm font-label-sm text-on-surface-variant">Nom du document</label>
-    <input
-      type="text"
-      class="w-full px-4 py-2 border border-border-subtle rounded-lg"
-      [(ngModel)]="documentForm().name"
-      placeholder="Ex: Contrat d'assurance"
-    />
+  <form class="space-y-5" (ngSubmit)="submitDocumentModal()" [formGroup]="documentForm">
+    <div>
+      <label class="label" for="documentName">Nom du document</label>
+      <input
+        id="documentName"
+        class="input"
+        formControlName="name"
+        placeholder="Ex : Registre de commerce 2026"
+      />
+      @if (documentForm.controls.name.invalid && documentForm.controls.name.touched) {
+        <p class="mt-1 text-xs text-red-600">Le nom du document est obligatoire.</p>
+      }
+    </div>
 
-    <label class="block text-label-sm font-label-sm text-on-surface-variant"
-      >Type de document</label
-    >
-    <select
-      class="w-full px-4 py-2 border border-border-subtle rounded-lg"
-      [(ngModel)]="documentForm().type"
-    >
-      <option value="" disabled>Choisissez un type</option>
-      <option *ngFor="let type of documentTypes" [value]="type.value">
-        {{ type.label }}
-      </option>
-    </select>
+    <div>
+      <label class="label" for="documentType">Type de document</label>
+      <select id="documentType" class="input cursor-pointer" formControlName="type">
+        <option value="">Sélectionner un type</option>
+        @for (t of documentTypeOptions; track t.value) {
+          <option [value]="t.value">{{ t.label }}</option>
+        }
+      </select>
+      @if (documentForm.controls.type.invalid && documentForm.controls.type.touched) {
+        <p class="mt-1 text-xs text-red-600">Le type de document est obligatoire.</p>
+      }
+    </div>
 
-    <label class="block text-label-sm font-label-sm text-on-surface-variant"
-      >Date d'expiration</label
-    >
-    <input
-      type="date"
-      class="w-full px-4 py-2 border border-border-subtle rounded-lg"
-      [(ngModel)]="documentForm().expiryDate"
-    />
+    <div>
+      <label class="label" for="documentFile">Fichier</label>
+      <input
+        id="documentFile"
+        type="file"
+        class="input cursor-pointer"
+        accept="application/pdf,image/png,image/jpeg"
+        (change)="onDocumentFileSelected($event)"
+      />
+      @if (selectedDocumentFile(); as file) {
+        <p class="mt-1 text-xs text-ink-500">Fichier sélectionné : {{ file.name }}</p>
+      } @else {
+        <p class="mt-1 text-xs text-ink-400">Formats acceptés : PDF, PNG, JPEG.</p>
+      }
+    </div>
 
-    <label class="block text-label-sm font-label-sm text-on-surface-variant">Fichier</label>
-    <input
-      type="file"
-      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-      (change)="onDocumentFileChange($event)"
-    />
-
-    <div class="flex justify-end gap-3 pt-4">
-      <button
-        type="button"
-        class="px-4 py-2 bg-surface text-on-surface rounded-lg border border-border-subtle hover:bg-surface-container-low transition-colors"
-        (click)="closeDocumentModal()"
-      >
+    <div class="flex justify-end gap-3 border-t border-ink-100 pt-5">
+      <button type="button" class="btn btn-secondary" (click)="closeDocumentModal()">
         Annuler
       </button>
-      <button
-        type="button"
-        class="px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-surface-tint transition-colors flex items-center gap-2"
-        (click)="submitDocumentForm()"
-        [disabled]="isUploadingDocument()"
-      >
-        <span class="material-symbols-outlined">upload_file</span>
-        <span *ngIf="!isUploadingDocument()">Téléverser</span>
-        <span *ngIf="isUploadingDocument()">Téléversement...</span>
+      <button type="submit" class="btn btn-primary" [disabled]="isSubmittingFile()">
+        @if (isSubmittingFile()) {
+          <span
+            class="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+          ></span>
+          Envoi...
+        } @else {
+          <app-icon name="upload" [size]="16" /> Téléverser
+        }
       </button>
     </div>
-  </div>
+  </form>
 </app-modal>
 
+@if (isSubmittingFile() && !showDocumentModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="flex flex-col items-center gap-3 rounded-lg bg-white p-6 shadow-lg">
+      <div
+        class="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent"
+      ></div>
+      <p class="text-sm text-ink-700">Action en cours...</p>
+    </div>
+  </div>
+}

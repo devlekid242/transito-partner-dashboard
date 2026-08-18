@@ -30,6 +30,11 @@ export interface AgencyProfile {
   status?: string;
   createdAt?: string;
   documents?: AgencyDocument[];
+  	/** Numéro mobile money validé, utilisé pour les retraits. Absent tant que normalizeAgency() ne l'expose pas côté back. */
+	payoutMsisdn?: string | null;
+	/** Numéro proposé par l'agence, en attente de validation admin. */
+	pendingPayoutMsisdn?: string | null;
+	pendingPayoutMsisdnRequestedAt?: string | null;
 }
 
 export interface PartnerProfile {

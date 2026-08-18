@@ -1,11 +1,13 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { IconComponent } from '../../shared/icon.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
-import { PointEmbarquement, BusPoint } from '../../models';
+import { PointEmbarquement, BusPoint, SelectOption } from '../../models';
 
 @Component({
   selector: 'app-ajout-point-embarquement',
@@ -37,7 +39,14 @@ import { PointEmbarquement, BusPoint } from '../../models';
               </div>
               <div>
                 <label class="label" for="ville">Ville</label>
-                <input id="ville" class="input" placeholder="Abidjan" formControlName="ville" required />
+                <select id="ville" class="input cursor-pointer" formControlName="ville" required [disabled]="isLoadingCities()">
+                  <option value="" disabled>
+                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
+                  </option>
+                  @for (city of cities(); track city.value) {
+                    <option [value]="city.value">{{ city.label }}</option>
+                  }
+                </select>
                 @if (pointForm.get('ville')?.invalid && pointForm.get('ville')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Ville est requise</p>
                 }
@@ -127,7 +136,11 @@ export class AjoutPointEmbarquementPage implements OnInit {
   // State
   readonly isLoading = signal<boolean>(true);
   readonly isSubmitting = signal<boolean>(false);
-  
+
+  // Villes actives disponibles pour le select
+  readonly cities = signal<SelectOption[]>([]);
+  readonly isLoadingCities = signal<boolean>(true);
+
   // Form
   pointForm: FormGroup;
 
@@ -139,7 +152,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
   constructor() {
     this.pointForm = this.fb.group({
       nom: ['', [Validators.required, Validators.maxLength(100)]],
-      ville: ['', [Validators.required, Validators.maxLength(100)]],
+      ville: ['', [Validators.required]],
       adresse: ['', [Validators.required, Validators.maxLength(200)]],
       quartier: [''],
       phoneNumber: [''],
@@ -163,21 +176,58 @@ export class AjoutPointEmbarquementPage implements OnInit {
         this.selectedPointId = idParam;
         this.pageTitle.set('Modifier le point d\'embarquement');
         this.submitLabel.set('Mettre à jour');
-        this.loadPointDetails(idParam);
+        this.loadCitiesAndPointDetails(idParam);
       } else {
         this.isLoading.set(false);
+        this.loadCities();
       }
     });
   }
 
-  loadPointDetails(pointId: string): void {
+  /** Charge la liste des villes actives (mode création). */
+  private loadCities(): void {
+    this.isLoadingCities.set(true);
+    this.api.getCityOptions().subscribe({
+      next: (options) => {
+        this.cities.set(options);
+        this.isLoadingCities.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading cities:', err);
+        this.toast.danger('Impossible de charger la liste des villes');
+        this.isLoadingCities.set(false);
+      },
+    });
+  }
+
+  /**
+   * Charge en parallèle les villes actives et le détail du point (mode édition),
+   * puis pré-remplit le formulaire. Si la ville du point n'est plus active,
+   * elle est réinjectée dans la liste (marquée "inactive") pour rester sélectionnable.
+   */
+  private loadCitiesAndPointDetails(pointId: string): void {
     this.isLoading.set(true);
-    this.api.getBusPointDetail(pointId).subscribe({
-      next: (point) => {
+    this.isLoadingCities.set(true);
+
+    forkJoin({
+      cities: this.api.getCityOptions().pipe(catchError(() => of([] as SelectOption[]))),
+      point: this.api.getBusPointDetail(pointId),
+    }).subscribe({
+      next: ({ cities, point }) => {
         const p = point as any;
+        const villeValue = p.ville || p.city || '';
+
+        const options =
+          villeValue && !cities.some((c) => c.value === villeValue)
+            ? [...cities, { value: villeValue, label: `${villeValue} (inactive)` }]
+            : cities;
+
+        this.cities.set(options);
+        this.isLoadingCities.set(false);
+
         this.pointForm.patchValue({
           nom: p.nom || p.name || '',
-          ville: p.ville || p.city || '',
+          ville: villeValue,
           adresse: p.adresse || p.address || '',
           quartier: p.quartier || '',
           phoneNumber: p.phoneNumber || '',
@@ -197,6 +247,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
         console.error('Error loading point details:', err);
         this.toast.danger('Impossible de charger les détails du point d\'embarquement');
         this.isLoading.set(false);
+        this.isLoadingCities.set(false);
       },
     });
   }
@@ -236,8 +287,8 @@ export class AjoutPointEmbarquementPage implements OnInit {
       next: () => {
         this.isSubmitting.set(false);
         this.toast.success(
-          this.selectedPointId 
-            ? 'Point d\'embarquement mis à jour avec succès.' 
+          this.selectedPointId
+            ? 'Point d\'embarquement mis à jour avec succès.'
             : 'Point d\'embarquement ajouté avec succès.'
         );
         this.router.navigate(['/gestion-point-embarquement']);
@@ -246,8 +297,8 @@ export class AjoutPointEmbarquementPage implements OnInit {
         this.isSubmitting.set(false);
         console.error('Error saving point:', err);
         this.toast.danger(
-          this.selectedPointId 
-            ? 'Impossible de mettre à jour le point d\'embarquement.' 
+          this.selectedPointId
+            ? 'Impossible de mettre à jour le point d\'embarquement.'
             : 'Impossible d\'ajouter le point d\'embarquement.'
         );
       },

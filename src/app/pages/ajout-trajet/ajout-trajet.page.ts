@@ -1,6 +1,8 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { IconComponent } from '../../shared/icon.component';
 import { PageHeaderComponent } from '../../components/page-header/page-header.component';
 import { ToastService } from '../../components/toast/toast.component';
@@ -30,16 +32,33 @@ import { Trajet, Bus, BusPoint, SelectOption } from '../../models';
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
               <div>
                 <label class="label" for="departureCity">Ville de départ</label>
-                <input id="departureCity" type="text" class="input" placeholder="Abidjan" formControlName="departureCity" required />
+                <select id="departureCity" class="input cursor-pointer" formControlName="departureCity" required [disabled]="isLoadingCities()">
+                  <option value="" disabled>
+                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
+                  </option>
+                  @for (c of cityOptions(); track c.value) {
+                    <option [value]="c.value">{{ c.label }}</option>
+                  }
+                </select>
                 @if (tripForm.get('departureCity')?.invalid && tripForm.get('departureCity')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Ville de départ est requis</p>
                 }
               </div>
               <div>
                 <label class="label" for="arrivalCity">Ville d'arrivée</label>
-                <input id="arrivalCity" type="text" class="input" placeholder="Bouaké" formControlName="arrivalCity" required />
+                <select id="arrivalCity" class="input cursor-pointer" formControlName="arrivalCity" required [disabled]="isLoadingCities()">
+                  <option value="" disabled>
+                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
+                  </option>
+                  @for (c of cityOptions(); track c.value) {
+                    <option [value]="c.value">{{ c.label }}</option>
+                  }
+                </select>
                 @if (tripForm.get('arrivalCity')?.invalid && tripForm.get('arrivalCity')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Ville d'arrivée est requis</p>
+                }
+                @if (tripForm.hasError('sameCity') && tripForm.get('arrivalCity')?.touched) {
+                  <p class="text-red-500 text-xs mt-1">La ville d'arrivée doit être différente de la ville de départ</p>
                 }
               </div>
               <div>
@@ -72,7 +91,7 @@ import { Trajet, Bus, BusPoint, SelectOption } from '../../models';
                 <select id="busId" class="input cursor-pointer" formControlName="busId" required>
                   <option value="">Sélectionner un bus</option>
                   @for (b of buses(); track b.id) {
-                    <option [value]="b.id">{{ b.immatriculation }} — {{ b.modele }}</option>
+                    <option [value]="b.id">{{ b.registrationNumber }} — {{ b.brand }} — {{ b.model }}</option>
                   }
                 </select>
                 @if (tripForm.get('busId')?.invalid && tripForm.get('busId')?.touched) {
@@ -146,7 +165,34 @@ export class AjoutTrajetPage implements OnInit {
   readonly isSubmitting = signal<boolean>(false);
   readonly buses = this.api.bus;
   readonly busPoints = this.api.pointsEmbarquement;
-  readonly statusOptions = signal<SelectOption[]>([]);
+  readonly statusOptions = signal<SelectOption[]>(
+    [
+      {
+        label:'Planifier',
+        value:'planifie'
+      },
+      {
+        label:'Embarquement',
+        value:'embarquement'
+      },
+      {
+        label:'En route',
+        value:'en_route'
+      },
+      {
+        label:'Terminer',
+        value:'termine'
+      },
+      {
+        label:'Annuler',
+        value:'annule'
+      },
+    ]
+  ); 
+
+  // Villes actives disponibles pour les selects départ / arrivée
+  readonly cityOptions = signal<SelectOption[]>([]);
+  readonly isLoadingCities = signal<boolean>(true);
 
   // Form
   tripForm: FormGroup;
@@ -157,25 +203,26 @@ export class AjoutTrajetPage implements OnInit {
   readonly submitLabel = signal<string>('Publier le trajet');
 
   constructor() {
-    this.tripForm = this.fb.group({
-      departureCity: ['', [Validators.required, Validators.maxLength(100)]],
-      arrivalCity: ['', [Validators.required, Validators.maxLength(100)]],
-      tripDate: ['', [Validators.required]],
-      departureTimeOfDay: ['', [Validators.required]],
-      arrivalTimeOfDay: ['', []],
-      busId: ['', [Validators.required]],
-      price: [0, [Validators.required, Validators.min(0)]],
-      driverName: ['', [Validators.maxLength(100)]],
-      seatsReserved: [0, [Validators.min(0)]],
-      status: ['planifie', [Validators.required]],
-      boardingPointIds: [[], []],
-      deboardingPointIds: [[], []],
-    });
+    this.tripForm = this.fb.group(
+      {
+        departureCity: ['', [Validators.required, Validators.maxLength(100)]],
+        arrivalCity: ['', [Validators.required, Validators.maxLength(100)]],
+        tripDate: ['', [Validators.required]],
+        departureTimeOfDay: ['', [Validators.required]],
+        arrivalTimeOfDay: ['', []],
+        busId: ['', [Validators.required]],
+        price: [0, [Validators.required, Validators.min(0)]],
+        driverName: ['', [Validators.maxLength(100)]],
+        seatsReserved: [0, [Validators.min(0)]],
+        status: ['planifie', [Validators.required]],
+        boardingPointIds: [[], []],
+        deboardingPointIds: [[], []],
+      },
+      { validators: [this.differentCitiesValidator] },
+    );
   }
 
   ngOnInit(): void {
-    this.loadReferenceData();
-
     // Check for edit mode
     this.route.paramMap.subscribe((params) => {
       const idParam = params.get('id');
@@ -183,48 +230,69 @@ export class AjoutTrajetPage implements OnInit {
         this.selectedTripId = idParam;
         this.pageTitle.set('Modifier le trajet');
         this.submitLabel.set('Mettre à jour');
-        this.loadTripDetails(idParam);
+        this.loadCitiesAndTripDetails(idParam);
       } else {
         this.isLoading.set(false);
+        this.loadCities();
       }
+      this.loadReferenceData();
     });
   }
 
-  loadReferenceData(): void {
-    // Load status options
-    this.api.getTripStatusOptions().subscribe({
+  /** Refuse un trajet dont la ville de départ et d'arrivée seraient identiques. */
+  private differentCitiesValidator(group: FormGroup) {
+    const departure = group.get('departureCity')?.value;
+    const arrival = group.get('arrivalCity')?.value;
+    return departure && arrival && departure === arrival ? { sameCity: true } : null;
+  }
+
+  /** Charge la liste des villes actives (mode création). */
+  private loadCities(): void {
+    this.isLoadingCities.set(true);
+    this.api.getCityOptions().subscribe({
       next: (options) => {
-        this.statusOptions.set(options);
-        // Set default status if not in edit mode
-        if (!this.selectedTripId && options.length > 0) {
-          const defaultStatus = options.find(o => o.value === 'planifie') || options[0];
-          this.tripForm.patchValue({ status: defaultStatus?.value || 'planifie' });
-        }
+        this.cityOptions.set(options);
+        this.isLoadingCities.set(false);
       },
       error: (err) => {
-        console.error('Error loading status options:', err);
-        this.toast.danger('Impossible de charger les statuts de trajet');
+        console.error('Error loading cities:', err);
+        this.toast.danger('Impossible de charger la liste des villes');
+        this.isLoadingCities.set(false);
       },
     });
-
-    // Buses and points are already loaded via signals in the service
-    // but we need to ensure they're loaded
-    if (this.api.bus().length === 0) {
-      this.api.getBuses().subscribe();
-    }
-    if (this.api.pointsEmbarquement().length === 0) {
-      this.api.getBusPoints().subscribe();
-    }
   }
 
-  loadTripDetails(tripId: string): void {
+  /**
+   * Charge en parallèle les villes actives et le détail du trajet (mode édition),
+   * puis pré-remplit le formulaire. Si la ville de départ/arrivée du trajet n'est
+   * plus active, elle est réinjectée dans la liste (marquée "inactive") pour rester
+   * sélectionnable.
+   */
+  private loadCitiesAndTripDetails(tripId: string): void {
     this.isLoading.set(true);
-    this.api.getTripDetails(tripId).subscribe({
-      next: (trip) => {
+    this.isLoadingCities.set(true);
+
+    forkJoin({
+      cities: this.api.getCityOptions().pipe(catchError(() => of([] as SelectOption[]))),
+      trip: this.api.getTripDetails(tripId),
+    }).subscribe({
+      next: ({ cities, trip }) => {
         const t = trip as any;
+        const departureCity = t.departureCity || t.origine || '';
+        const arrivalCity = t.arrivalCity || t.destination || '';
+
+        let options = cities;
+        for (const cityName of [departureCity, arrivalCity]) {
+          if (cityName && !options.some((c) => c.value === cityName)) {
+            options = [...options, { value: cityName, label: `${cityName} (inactive)` }];
+          }
+        }
+        this.cityOptions.set(options);
+        this.isLoadingCities.set(false);
+
         this.tripForm.patchValue({
-          departureCity: t.departureCity || t.origine || '',
-          arrivalCity: t.arrivalCity || t.destination || '',
+          departureCity,
+          arrivalCity,
           tripDate: t.tripDate || t.dateDepart || '',
           departureTimeOfDay: t.departureTimeOfDay || (t.departureTime ? t.departureTime.split('T')[1]?.slice(0, 5) : '') || '',
           arrivalTimeOfDay: t.arrivalTimeOfDay || (t.estimatedArrivalTime ? t.estimatedArrivalTime.split('T')[1]?.slice(0, 5) : '') || '',
@@ -242,14 +310,30 @@ export class AjoutTrajetPage implements OnInit {
         console.error('Error loading trip details:', err);
         this.toast.danger('Impossible de charger les détails du trajet');
         this.isLoading.set(false);
+        this.isLoadingCities.set(false);
       },
     });
+  }
+
+  loadReferenceData(): void {
+    // Buses and points are already loaded via signals in the service
+    // but we need to ensure they're loaded
+    if (this.api.bus().length === 0) {
+      this.api.getBuses().subscribe();
+    }
+    if (this.api.pointsEmbarquement().length === 0) {
+      this.api.getBusPoints().subscribe();
+    }
   }
 
   save(): void {
     if (this.tripForm.invalid || this.isSubmitting()) {
       this.tripForm.markAllAsTouched();
-      this.toast.danger('Veuillez remplir les informations obligatoires.');
+      if (this.tripForm.hasError('sameCity')) {
+        this.toast.danger("La ville d'arrivée doit être différente de la ville de départ.");
+      } else {
+        this.toast.danger('Veuillez remplir les informations obligatoires.');
+      }
       return;
     }
 
@@ -297,4 +381,3 @@ export class AjoutTrajetPage implements OnInit {
     });
   }
 }
-

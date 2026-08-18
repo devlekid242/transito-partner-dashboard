@@ -376,7 +376,7 @@ export class DashboardPage implements OnInit {
   }
 
   chartData = computed<ChartConfiguration["data"]>(() => {
-    const d = this.api.revenusChart(this.period());
+    const d = this.api.revenueChart()
     return {
       labels: d.labels,
       datasets: [

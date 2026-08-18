@@ -4,15 +4,17 @@
 
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:8000/api',
-  baseApiUrl: 'http://localhost:8000',
+  // apiUrl: 'http://localhost:8000/api',
+  // baseApiUrl: 'http://localhost:8000',
+
+  apiUrl: 'http://192.168.100.5:8000/api',
+  baseApiUrl: 'http://192.168.100.5:8000',
   apiTimeout: 30000,
   pusherKey: '9fd9732315c0fe4be887',
   pusherCluster: 'mt1',
   pusherUseTLS: true,
-  pusherAuthEndpoint: 'http://localhost:8000/api/pusher/auth',
+  pusherAuthEndpoint: 'http://192.168.100.5:8000/api/pusher/auth',
 };
-
 
 /*
  * For easier debugging in development mode, you can import the following file

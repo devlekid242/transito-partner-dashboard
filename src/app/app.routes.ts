@@ -124,6 +124,12 @@ export const routes: Routes = [
           import('./pages/trip-schedule/trip-schedule.page').then((m) => m.TripSchedulePage),
       },
       {
+        path: 'reservations',
+        canActivate: [permissionGuard('trajet')],
+        loadComponent: () =>
+          import('./pages/reservations/reservations.page').then((m) => m.ReservationsPage),
+      },
+      {
         path: 'demande-de-retrait',
         // canActivate: [permissionGuard('demande-de-retrait')],
         loadComponent: () =>
