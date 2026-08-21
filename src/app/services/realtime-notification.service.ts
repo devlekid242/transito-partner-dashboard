@@ -9,6 +9,8 @@ import { PartnerApiService } from './partner-api.service';
 import { BrowserNotificationService } from './browser-notification.service';
 import { Notification } from '../models/partner.model';
 
+const GLOBAL_CHANNEL_NAME = 'private-global';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -16,6 +18,7 @@ export class RealtimeNotificationService {
   private pusher?: any;
   private channel: any | null = null;
   private agencyChannel: any | null = null;
+  private globalChannel: any | null = null;
   private connectedChannelNames = new Set<string>();
 
   private readonly latestNotification = signal<Notification | null>(null);
@@ -36,13 +39,14 @@ export class RealtimeNotificationService {
       if (user) {
         this.connectPusher();
         this.browserNotifications.requestPermission();
+        // Le compteur n'est rafraîchi que lorsqu'un utilisateur est
+        // authentifié : évite une requête 401 inutile au démarrage de l'app.
+        this.refreshUnreadCount();
       } else {
         this.disconnectPusher();
         this.unreadCount.set(0);
       }
     });
-
-    this.refreshUnreadCount();
   }
 
   private getCurrentChannelName(): string | null {
@@ -67,6 +71,7 @@ export class RealtimeNotificationService {
 
     if (this.pusher && this.connectedChannelNames.has(channelName)) {
       this.subscribeToAgencyChannelIfNeeded();
+      this.subscribeToGlobalChannelIfNeeded();
       return;
     }
 
@@ -91,11 +96,21 @@ export class RealtimeNotificationService {
       }),
     });
 
+    // Visibilité sur les coupures / échecs de connexion websocket, qui
+    // étaient auparavant totalement silencieux.
+    this.pusher.connection.bind('error', (err: any) => {
+      console.error('[RealtimeNotificationService] Pusher connection error:', err);
+    });
+    this.pusher.connection.bind('unavailable', () => {
+      console.warn('[RealtimeNotificationService] Pusher connection unavailable, retrying...');
+    });
+
     this.channel = this.pusher.subscribe(channelName);
     this.connectedChannelNames.add(channelName);
     this.bindNotificationEvents(this.channel);
 
     this.subscribeToAgencyChannelIfNeeded();
+    this.subscribeToGlobalChannelIfNeeded();
   }
 
   private subscribeToAgencyChannelIfNeeded(): void {
@@ -107,6 +122,19 @@ export class RealtimeNotificationService {
     this.agencyChannel = this.pusher.subscribe(agencyChannelName);
     this.connectedChannelNames.add(agencyChannelName);
     this.bindNotificationEvents(this.agencyChannel);
+  }
+
+  private subscribeToGlobalChannelIfNeeded(): void {
+    if (!this.pusher || this.connectedChannelNames.has(GLOBAL_CHANNEL_NAME)) {
+      return;
+    }
+
+    // Canal autorisé côté backend (PusherAuthController::isChannelAllowed)
+    // mais qui n'était jamais écouté côté front : annonces générales
+    // ("private-global") ignorées jusqu'ici.
+    this.globalChannel = this.pusher.subscribe(GLOBAL_CHANNEL_NAME);
+    this.connectedChannelNames.add(GLOBAL_CHANNEL_NAME);
+    this.bindNotificationEvents(this.globalChannel);
   }
 
   private bindNotificationEvents(channel: any): void {
@@ -157,6 +185,7 @@ export class RealtimeNotificationService {
     }
     this.channel = null;
     this.agencyChannel = null;
+    this.globalChannel = null;
     this.connectedChannelNames.clear();
   }
 

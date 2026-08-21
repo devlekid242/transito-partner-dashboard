@@ -23,91 +23,7 @@ import { SelectOption, ColumnDef, ActionDef, Transaction } from "../../models";
     DatatableComponent,
     PageHeaderComponent,
   ],
-  template: ` <div class="space-y-6">
-    <app-page-header
-      title="Gestion financière"
-      subtitle="Suivez vos revenus et transactions"
-      icon="wallet"
-      ><a routerLink="/demande-de-retrait" class="btn btn-primary"
-        ><app-icon name="banknote" [size]="16" /> Demander un retrait</a
-      ></app-page-header
-    >
-    @if (isLoading()) {
-      <div class="flex items-center justify-center p-8">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-        <span class="ml-3">Chargement des données financières...</span>
-      </div>
-    } @else {
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <app-stat-card
-          label="Solde disponible"
-          [value]="availableBalance()"
-          icon="banknote"
-          iconBg="bg-brand-50 text-brand-600"
-        /><app-stat-card
-          label="Revenus du mois"
-          [value]="monthlyRevenue()"
-          icon="trending-up"
-          iconBg="bg-primary-50 text-primary-600"
-        /><app-stat-card
-          label="Commissions"
-          [value]="commissions()"
-          icon="wallet"
-          iconBg="bg-amber-50 text-amber-600"
-        />
-      </div>
-      
-      <div class="card p-4">
-        <div class="flex flex-wrap items-center gap-4">
-          <label class="text-sm font-medium text-ink-600">Filtrer par type:</label>
-          <select
-            class="input input-sm cursor-pointer w-48"
-            [ngModel]="selectedTransactionType()"
-            (ngModelChange)="setTransactionType($event)"
-          >
-            @for (type of transactionTypes(); track type.value) {
-              <option [value]="type.value">{{ type.label }}</option>
-            }
-          </select>
-        </div>
-      </div>
-    <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
-      <div class="card p-5 lg:col-span-3">
-        <h3 class="font-bold text-ink-900">Flux financiers</h3>
-        <p class="text-sm text-ink-500">
-          Crédits et débits des 30 derniers jours
-        </p>
-        <div class="mt-4 h-64">
-          <app-chart type="bar" [data]="chartData()" [options]="chartOptions" />
-        </div>
-      </div>
-      <div class="card p-5 lg:col-span-2">
-        <h3 class="font-bold text-ink-900">Répartition</h3>
-        <div class="mt-4 space-y-4">
-          @for (item of financeBreakdown(); track item.label) {
-          <div>
-            <div class="flex justify-between text-sm">
-              <span class="text-ink-600">{{ item.label }}</span>
-              <b class="text-ink-900">{{ item.percentage }}%</b>
-            </div>
-            <div class="mt-2 h-2 rounded-full bg-ink-100">
-              <div class="h-2 rounded-full" [style.width.%]="item.percentage" [style.background-color]="item.color"></div>
-            </div>
-          </div>
-          }
-        </div>
-      </div>
-    </div>
-
-    <app-datatable
-      [columns]="cols"
-      [data]="filteredTransactions()"
-      [exportable]="true"
-      [selectable]="true"
-      [rowActions]="actions"
-    />
-    }
-  </div>`,
+  templateUrl:'./gestion-finance.page.html',
 })
 export class GestionFinancePage implements OnInit {
   private api = inject(PartnerApiService);
@@ -267,10 +183,10 @@ export class GestionFinancePage implements OnInit {
 
     // Load transaction types
     this.api.getTransactionTypeOptions().subscribe({
-      next: (types) => {
+      next: (types: any[]) => {
         this.transactionTypes.set([
           { value: 'all', label: 'Tous les types' },
-          ...types,
+          ...types.map((m) => ({ value: m.id, label: m.name })),
         ]);
       },
       error: (err) => {

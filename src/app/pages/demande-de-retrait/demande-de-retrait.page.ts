@@ -21,134 +21,7 @@ import { SelectOption, Retrait, ColumnDef, ActionDef } from '../../models';
     PageHeaderComponent,
     ModalComponent,
   ],
-  template: `
-    <div class="space-y-6">
-      <app-page-header title="Demandes de retrait" subtitle="Suivez vos demandes de versement" icon="wallet">
-        <button class="btn btn-primary" (click)="openWithdrawalModal()">
-          <app-icon name="plus" [size]="16" /> Demander un retrait
-        </button>
-      </app-page-header>
-
-      @if (isLoading()) {
-        <div class="flex items-center justify-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-          <span class="ml-3">Chargement des données...</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <app-stat-card label="Solde disponible" [value]="availableBalance()" icon="banknote" iconBg="bg-brand-50 text-brand-600" />
-          <app-stat-card label="En attente" [value]="pendingAmount()" icon="clock" iconBg="bg-amber-50 text-amber-600" />
-          <app-stat-card label="Total versé" [value]="totalPaid()" icon="check-circle" iconBg="bg-primary-50 text-primary-600" />
-        </div>
-
-        <app-datatable
-          [columns]="cols"
-          [data]="api.retraits()"
-          [exportable]="true"
-          [selectable]="true"
-          [rowActions]="actions"
-        />
-      }
-    </div>
-
-    @if (isWithdrawalModalOpen()) {
-      <app-modal
-        title="Demander un retrait"
-        [isOpen]="isWithdrawalModalOpen()"
-        (close)="closeWithdrawalModal()"
-        size="medium"
-      >
-        <div class="p-1">
-          @if (isSubmitting()) {
-            <div class="flex items-center justify-center p-8">
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-              <span class="ml-3">Traitement de la demande...</span>
-            </div>
-          } @else {
-            <form [formGroup]="withdrawalForm" (ngSubmit)="submitWithdrawal()" class="space-y-5">
-              <div class="space-y-4">
-                <div>
-                  <label class="label" for="amount">Montant à retirer (FCFA)</label>
-                  <input
-                    id="amount"
-                    type="number"
-                    class="input"
-                    placeholder="Ex: 500000"
-                    formControlName="amount"
-                    min="1"
-                    step="100"
-                    required
-                  />
-                  @if (withdrawalForm.get('amount')?.invalid && withdrawalForm.get('amount')?.touched) {
-                    <p class="text-red-500 text-xs mt-1">Montant est requis et doit être positif</p>
-                  }
-                </div>
-                <div>
-                  <label class="label" for="paymentMethod">Méthode de paiement</label>
-                  <select id="paymentMethod" class="input cursor-pointer" formControlName="paymentMethod" required>
-                    <option value="">Sélectionnez une méthode</option>
-                    @for (method of paymentMethods(); track method.value) {
-                      <option [value]="method.value">{{ method.label }}</option>
-                    }
-                  </select>
-                  @if (withdrawalForm.get('paymentMethod')?.invalid && withdrawalForm.get('paymentMethod')?.touched) {
-                    <p class="text-red-500 text-xs mt-1">Méthode de paiement est requise</p>
-                  }
-                </div>
-                <div>
-                  <label class="label" for="notes">Notes (optionnel)</label>
-                  <textarea
-                    id="notes"
-                    class="input"
-                    placeholder="Informations sur le compte / instructions"
-                    formControlName="notes"
-                    rows="3"
-                  ></textarea>
-                </div>
-              </div>
-              <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
-                <button type="button" class="btn btn-secondary" (click)="closeWithdrawalModal()" [disabled]="isSubmitting()">
-                  Annuler
-                </button>
-                <button type="submit" class="btn btn-primary" [disabled]="withdrawalForm.invalid || isSubmitting()">
-                  @if (isSubmitting()) {
-                    <span class="animate-pulse">Envoi...</span>
-                  } @else {
-                    Soumettre la demande
-                  }
-                </button>
-              </div>
-            </form>
-          }
-        </div>
-      </app-modal>
-    }
-
-    @if (isCancelConfirmModalOpen()) {
-      <app-modal
-        title="Confirmer l'annulation"
-        [isOpen]="isCancelConfirmModalOpen()"
-        (close)="closeCancelConfirmModal()"
-        size="small"
-      >
-        <div class="p-1">
-          <p>Êtes-vous sûr de vouloir annuler cette demande de retrait ? Cette action est irréversible.</p>
-          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
-            <button type="button" class="btn btn-secondary" (click)="closeCancelConfirmModal()">
-              Non, garder la demande
-            </button>
-            <button type="button" class="btn btn-danger" (click)="confirmCancelWithdrawal()" [disabled]="isProcessing()">
-              @if (isProcessing()) {
-                <span class="animate-pulse">Traitement...</span>
-              } @else {
-                Oui, annuler
-              }
-            </button>
-          </div>
-        </div>
-      </app-modal>
-    }
-  `,
+  templateUrl:'./demande-de-retrait.page.html',
 })
 export class DemandeDeRetraitPage implements OnInit {
   api = inject(PartnerApiService);
@@ -226,8 +99,9 @@ export class DemandeDeRetraitPage implements OnInit {
 
     // Load payment methods
     this.api.getPaymentMethods().subscribe({
-      next: (methods) => {
-        this.paymentMethods.set(methods);
+      next: (methods: any[]) => {
+
+        this.paymentMethods.set(methods.map((m) => ({ value: m.id, label: m.name })));
       },
       error: (err) => {
         console.error('Error loading payment methods:', err);

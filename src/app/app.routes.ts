@@ -184,6 +184,11 @@ export const routes: Routes = [
           import('./pages/notifications/notifications.page').then((m) => m.NotificationsPage),
       },
       {
+        path: 'support-client',
+        loadComponent: () =>
+          import('./pages/partner-support/partner-support.page').then((m) => m.PartnerSupportPage),
+      },
+      {
         path: 'rapport-analyse',
         canActivate: [permissionGuard('rapport-analyse')],
         loadComponent: () =>

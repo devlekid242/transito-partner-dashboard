@@ -1,21 +1,23 @@
 <div class="flex h-screen overflow-hidden bg-ink-100">
-      <!-- Sidebar -->
-      <div class="fixed inset-y-0 left-0 z-50 lg:static lg:z-auto">
-        <app-sidebar [open]="sidebarOpen()" />
-      </div>
+  <!-- Sidebar -->
+  <div
+    class="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full transform transition-transform duration-300 lg:static lg:z-auto lg:translate-x-0"
+    [class.translate-x-0]="sidebarOpen()"
+  >
+    <app-sidebar [open]="sidebarOpen()" />
+  </div>
 
-      <!-- Overlay for mobile -->
-      @if (sidebarOpen()) {
-        <div class="fixed inset-0 z-40 bg-black/40 lg:hidden" (click)="sidebarOpen.set(false)"></div>
-      }
+  <!-- Overlay for mobile -->
+  @if (sidebarOpen()) {
+    <div class="fixed inset-0 z-40 bg-black/40 lg:hidden" (click)="sidebarOpen.set(false)"></div>
+  }
 
-      <!-- Main -->
-      <div class="flex flex-1 flex-col overflow-hidden">
-        <app-header (toggleSidebar)="sidebarOpen.set(!sidebarOpen())" />
-        <main class="flex-1 overflow-y-auto p-4 lg:p-6">
-          <router-outlet />
-        </main>
-      </div>
-    </div>
-    <app-toast />
-  
+  <!-- Main -->
+  <div class="flex flex-1 flex-col overflow-hidden">
+    <app-header (toggleSidebar)="sidebarOpen.set(!sidebarOpen())" />
+    <main class="flex-1 overflow-y-auto p-4 lg:p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+<app-toast />

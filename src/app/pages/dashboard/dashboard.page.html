@@ -1,243 +1,208 @@
-<div
-  *ngIf="isLoading()"
-  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
->
-  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-    <div
-      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
-    ></div>
-    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
+<div class="space-y-6">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <app-page-header
+      title="Tableau de bord"
+      subtitle="Vue d'ensemble de votre activité"
+      icon="dashboard"
+    />
+    <button
+      (click)="openScanModal.set(true)"
+      class="btn btn-primary flex items-center gap-2 self-start sm:self-auto"
+    >
+      <app-icon name="ticket" [size]="18" />
+      <span>Valider un Billet</span>
+    </button>
   </div>
-</div>
 
-<!-- Main Canvas -->
-<main *ngIf="!isLoading()" class="flex-1 p-standard-padding lg:p-container-margin overflow-y-auto">
-  <!-- Page Header -->
-  <div class="mb-widget-gap flex justify-between items-end">
+  <!-- Loading state -->
+  @if (isLoading()) {
+    <div class="flex items-center justify-center p-8">
+      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+      <span class="ml-3">Chargement du tableau de bord...</span>
+    </div>
+  } @else {
+    <!-- KPI cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <app-stat-card
+        label="Revenus Aujourd'hui"
+        [value]="kpiSignal()?.revenusAujourdhui | currency: 'XOF' : 'symbol' : '1.0-0'"
+        icon="banknote"
+        iconBg="bg-brand-50 text-brand-600"
+        [trend]="kpiTrend().revenue"
+        [trendUp]="true"
+      />
+      <app-stat-card
+        label="Trajets Actifs"
+        [value]="String(kpiSignal()?.trajetsActifs)"
+        icon="route"
+        iconBg="bg-primary-50 text-primary-600"
+        [trend]="kpiTrend().trips"
+        [trendUp]="true"
+      />
+      <app-stat-card
+        label="Passagers Totaux"
+        [value]="kpiSignal()?.passagersTotaux | number"
+        icon="users"
+        iconBg="bg-amber-50 text-amber-600"
+        [trend]="kpiTrend().passengers"
+        [trendUp]="true"
+      />
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <!-- Revenue chart -->
+      <div class="card p-5 lg:col-span-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-ink-900">Tendance des Revenus</h3>
+            <p class="text-sm text-ink-500">Évolution des revenus</p>
+          </div>
+          <div class="flex rounded-lg bg-ink-100 p-0.5">
+            @for (p of periods; track p.key) {
+              <button
+                class="rounded-md px-3 py-1.5 text-xs font-semibold transition-colors"
+                [class]="period() === p.key ? 'bg-white text-brand-700 shadow-sm' : 'text-ink-500'"
+                (click)="period.set(p.key)"
+              >
+                {{ p.label }}
+              </button>
+            }
+          </div>
+        </div>
+        <div class="mt-4 h-72">
+          <app-chart type="line" [data]="chartData()" [options]="chartOptions" />
+        </div>
+      </div>
+
+      <!-- Occupation donut -->
+      <div class="card p-5">
+        <h3 class="font-bold text-ink-900">Taux d'Occupation</h3>
+        <p class="text-sm text-ink-500">Moyenne des bus</p>
+        <div class="mt-4 flex h-72 items-center justify-center">
+          <app-chart type="doughnut" [data]="donutData()" [options]="donutOptions" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Activity + Upcoming -->
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div class="card p-5">
+        <h3 class="font-bold text-ink-900">Activité Récente</h3>
+        <div class="mt-4 space-y-4">
+          @for (a of activity(); track a.id) {
+            <div class="flex gap-3">
+              <div
+                class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                [class]="a.bg"
+              >
+                <app-icon [name]="a.icon" [size]="16" />
+              </div>
+              <div class="flex-1 border-b border-ink-100 pb-4">
+                <p class="text-sm font-semibold text-ink-800">
+                  {{ a.title }}
+                </p>
+                <p class="text-sm text-ink-500">{{ a.message }}</p>
+                <p class="mt-1 text-xs text-ink-400">{{ a.time }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-ink-900">Départs à Venir</h3>
+          <a
+            routerLink="/trip-schedule"
+            class="text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >Voir tout</a
+          >
+        </div>
+        <div class="mt-4 space-y-2">
+          @for (t of upcoming(); track t.id) {
+            <div
+              class="flex items-center justify-between rounded-lg border border-ink-100 p-3 hover:bg-ink-50 transition-colors"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-50 text-brand-600"
+                >
+                  <app-icon name="bus" [size]="18" />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-ink-800">
+                    {{ t.departureCity || t.origine || t.departure || '—' }}
+                    →
+                    {{ t.arrivalCity || t.destination || t.arrival || '—' }}
+                  </p>
+                  <p class="text-xs text-ink-500">
+                    {{ t.departureTime || t.heureDepart || t.departureTimeOfDay || '—' }}
+                    ·
+                    {{ t.tripDate || t.dateDepart || t.departureDate || "Aujourd'hui" }}
+                  </p>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-bold text-ink-900">
+                  {{ t.availableSeats || t.placesDisponibles || 0 }}
+                </p>
+                <p class="text-xs text-ink-500">places</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Reservations datatable -->
     <div>
-      <h2 class="font-headline-lg text-headline-lg text-on-surface">Aperçu</h2>
-      <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-        Aperçu en temps réel des opérations de votre flotte.
-      </p>
+      <h3 class="mb-3 text-lg font-bold text-ink-900">Réservations récentes</h3>
+      <app-datatable
+        [columns]="resCols"
+        [data]="recentReservations()"
+        [exportable]="true"
+        [selectable]="true"
+        [rowActions]="resActions"
+      />
     </div>
-    <div class="flex gap-2">
-      <button
-        class="px-3 py-1.5 border border-border-subtle rounded-lg font-label-sm text-label-sm text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1"
-      >
-        <span class="material-symbols-outlined" style="font-size: 16px">calendar_today</span>
-        Aujourd'hui
-      </button>
-      <button
-        class="px-3 py-1.5 bg-surface-container rounded-lg font-label-sm text-label-sm text-on-surface hover:bg-surface-container-high transition-colors flex items-center gap-1"
-      >
-        <span class="material-symbols-outlined" style="font-size: 16px">filter_list</span>
-        Filtres
-      </button>
-    </div>
-  </div>
-  <!-- Stats Row -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-widget-gap mb-widget-gap">
-    <!-- Revenue Card -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 flex flex-col justify-between"
-    >
-      <div class="flex justify-between items-start mb-2">
-        <span
-          class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant flex items-center gap-2"
-        >
-          <span class="material-symbols-outlined text-primary" style="font-size: 18px"
-            >payments</span
-          >
-          Revenus Aujourd'hui
-        </span>
-        <span
-          class="px-2 py-0.5 rounded-full bg-success-green/10 text-success-green font-label-sm text-label-sm flex items-center gap-0.5"
-        >
-          <span class="material-symbols-outlined" style="font-size: 14px">trending_up</span>
-          {{ metrics().revenue.change }}
-        </span>
-      </div>
-      <div>
-        <div class="font-stats-metric text-stats-metric text-on-surface">
-          {{ metrics().revenue.value }}
-        </div>
-        <div class="font-mono-data text-mono-data text-on-surface-variant mt-1">
-          {{ metrics().revenue.currency }}
-        </div>
-      </div>
-    </div>
-    <!-- Active Trips Card -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 flex flex-col justify-between"
-    >
-      <div class="flex justify-between items-start mb-2">
-        <span
-          class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant flex items-center gap-2"
-        >
-          <span class="material-symbols-outlined text-secondary" style="font-size: 18px"
-            >directions_bus</span
-          >
-          Trajets Actifs
-        </span>
-      </div>
-      <div class="flex items-end justify-between">
-        <div class="font-stats-metric text-stats-metric text-on-surface">
-          {{ metrics().activeTrips.value }}
-        </div>
-        <div class="font-body-md text-body-md text-on-surface-variant">
-          {{ metrics().activeTrips.routes }}
-        </div>
-      </div>
-    </div>
-    <!-- Total Passengers Card -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 flex flex-col justify-between"
-    >
-      <div class="flex justify-between items-start mb-2">
-        <span
-          class="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant flex items-center gap-2"
-        >
-          <span class="material-symbols-outlined text-tertiary" style="font-size: 18px"
-            >groups</span
-          >
-          Passagers Totaux
-        </span>
-      </div>
-      <div class="flex items-end justify-between">
-        <div class="font-stats-metric text-stats-metric text-on-surface">
-          {{ metrics().totalPassengers.value }}
-        </div>
-        <div class="font-body-md text-body-md text-on-surface-variant">
-          {{ metrics().totalPassengers.description }}
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Central Chart Section -->
-  <div
-    class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 mb-widget-gap"
-  >
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-headline-md text-headline-md text-on-surface">Tendance des Revenus</h3>
-      <select
-        class="bg-surface-bg border-subtle text-body-md font-body-md rounded-lg py-1 px-3 outline-none focus:border-primary"
-        #revenueSelect
-        (change)="selectRevenueRange(revenueSelect.value)"
-      >
-        <option
-          *ngFor="let option of revenueRangeOptions()"
-          [value]="option.value"
-          [selected]="selectedRevenueRange() === option.value"
-        >
-          {{ option.label }}
-        </option>
-      </select>
-    </div>
-    <app-revenue-chart
-      [chartType]="revenueChartType()"
-      [chartTitle]="'Revenus'"
-      [labels]="revenueChartLabels()"
-      [dataPoints]="revenueChartData()"
-      [chartOptions]="revenueChartOptions"
-    ></app-revenue-chart>
-  </div>
-
-  <!-- Bottom Row: Activity & Upcoming -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-widget-gap">
-    <!-- Recent Activity Timeline (Left, 1 column) -->
-    <div
-      class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 lg:col-span-1 flex flex-col"
-    >
-      <h3 class="font-headline-md text-headline-md text-on-surface mb-4">Activité Récente</h3>
-      <div class="relative flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-4">
-        <div
-          class="absolute left-[15px] top-2 bottom-2 w-[2px] bg-surface-container-high z-0"
-        ></div>
-        <ng-container *ngIf="recentActivity().length > 0; else noActivity">
-          <div *ngFor="let item of recentActivity()" class="relative z-10 flex gap-4">
-            <div
-              class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 border-card-bg"
-              [ngClass]="item.colorClass"
-            >
-              <span class="material-symbols-outlined" style="font-size: 16px">{{ item.icon }}</span>
-            </div>
-            <div class="pt-1">
-              <p class="font-body-md text-body-md text-on-surface">
-                {{ item.title }}
-              </p>
-              <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
-                {{ item.time }}
-              </p>
-            </div>
+    <!-- Ticket validation modal -->
+    @if (openScanModal()) {
+      <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="w-full max-w-md card p-6 bg-white rounded-xl shadow-xl">
+          <div class="flex items-center justify-between border-b border-ink-100 pb-3">
+            <h3 class="font-bold text-lg text-ink-900 flex items-center gap-2">
+              <app-icon name="ticket" [size]="20" /> Validation de Billet
+            </h3>
+            <button (click)="closeScanModal()" class="text-ink-400 hover:text-ink-600">
+              <app-icon name="x" [size]="20" />
+            </button>
           </div>
-        </ng-container>
-
-        <ng-template #noActivity>
-          <div class="relative z-10 flex gap-4">
-            <div
-              class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0 border-2 border-card-bg"
+          <div class="mt-4 space-y-4">
+            <div>
+              <label class="label">Code du Billet ou QR Code</label>
+              <input
+                type="text"
+                class="input"
+                placeholder="Ex: TKT-8841"
+                [(ngModel)]="ticketCode"
+              />
+            </div>
+            <button
+              (click)="validateTicketCode()"
+              [disabled]="validating()"
+              class="btn btn-primary w-full"
             >
-              <span class="material-symbols-outlined" style="font-size: 16px">info</span>
-            </div>
-            <div class="pt-1">
-              <p class="font-body-md text-body-md text-on-surface">
-                Aucune activité récente disponible.
-              </p>
-              <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">
-                Vérifiez vos données ou rafraîchissez la page.
-              </p>
-            </div>
+              @if (validating()) {
+                Validation en cours...
+              } @else {
+                Valider le Billet
+              }
+            </button>
           </div>
-        </ng-template>
+        </div>
       </div>
-    </div>
-
-    <!-- Upcoming Departures List (Right, 2 columns) -->
-    <div
-      class="bg-card-bg rounded-xl p-0 shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 lg:col-span-2 flex flex-col overflow-hidden"
-    >
-      <div
-        class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright"
-      >
-        <h3 class="font-headline-md text-headline-md text-on-surface">Départs à Venir</h3>
-        <button (click)="goTo('/trip-schedule')" class="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">
-          Tout Voir
-        </button>
-      </div>
-
-      <!-- Utilisation du composant TableComponent -->
-      <app-table
-        [data]="upcomingTrips()"
-        [columns]="tripColumns"
-        [actions]="tripActions"
-        [pageSize]="4"
-      >
-      </app-table>
-    </div>
-  </div>
-
-  <div
-    class="bg-card-bg rounded-xl p-standard-padding shadow-[0px_2px_4px_rgba(0,0,0,0.05)] border border-border-subtle/50 mb-widget-gap"
-  >
-    <div
-      class="p-standard-padding border-b border-border-subtle flex justify-between items-center bg-surface-bright mb-4"
-    >
-      <h3 class="font-headline-md text-headline-md text-on-surface">Réservations récentes</h3>
-      <button class="text-primary font-label-sm text-label-sm hover:underline cursor-pointer">
-        Tout Voir
-      </button>
-    </div>
-    <app-table [data]="recentBookings()" [columns]="bookingColumns" [pageSize]="5"> </app-table>
-  </div>
-</main>
-
-<!-- Notification Component -->
-<app-notification
-  [show]="showNotification()"
-  [type]="notificationType()"
-  [message]="notificationMessage()"
-  [duration]="5000"
-  (close)="onNotificationClosed()"
->
-</app-notification>
+    }
+  }
+</div>

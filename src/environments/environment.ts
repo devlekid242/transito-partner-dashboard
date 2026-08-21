@@ -10,7 +10,12 @@ export const environment = {
   apiUrl: 'http://192.168.100.5:8000/api',
   baseApiUrl: 'http://192.168.100.5:8000',
   apiTimeout: 30000,
-  pusherKey: '9fd9732315c0fe4be887',
+  // ⚠️ TODO : cette clé est identique à celle d'environment.prod.ts.
+  // Un dev connecté en local reçoit/peut interférer avec les événements
+  // Pusher de production sur le même compte. Créez une app Pusher dédiée
+  // au dev (ou utilisez un cluster/app "staging") et remplacez la valeur
+  // ci-dessous, par ex. via une variable d'environnement locale.
+  pusherKey: '9fd9732315c0fe4be887', // <-- à remplacer par une clé DEV distincte
   pusherCluster: 'mt1',
   pusherUseTLS: true,
   pusherAuthEndpoint: 'http://192.168.100.5:8000/api/pusher/auth',
