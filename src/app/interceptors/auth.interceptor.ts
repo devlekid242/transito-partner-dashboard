@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { from, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 
 let refreshPromise: Promise<string | null> | null = null;
 
@@ -19,7 +19,8 @@ function isPublicAuthRoute(url: string): boolean {
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
-  const isApiRequest = req.url.startsWith(environment.apiUrl) || req.url.startsWith(environment.baseApiUrl);
+  const isApiRequest =
+    req.url.startsWith(environment.apiUrl) || req.url.startsWith(environment.baseApiUrl);
   const shouldAttachToken = isApiRequest && !isPublicAuthRoute(req.url);
 
   const token = authService.getToken();

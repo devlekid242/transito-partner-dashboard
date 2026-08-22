@@ -9,7 +9,7 @@ import { StatusBadgeComponent } from '../../components/status-badge/status-badge
 import { ToastService } from '../../components/toast/toast.component';
 import { PartnerApiService } from '../../services/partner-api.service';
 import { Agence, AgencyDocument, SelectOption } from '../../models';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../environments/environment.prod';
 import { ModalComponent } from '../../components/modal/modal.component';
 
 @Component({
@@ -23,7 +23,7 @@ import { ModalComponent } from '../../components/modal/modal.component';
     StatusBadgeComponent,
     ModalComponent,
   ],
-  templateUrl:'./profil-agence.page.html',
+  templateUrl: './profil-agence.page.html',
 })
 export class ProfilAgencePage implements OnInit {
   private api = inject(PartnerApiService);
@@ -61,7 +61,7 @@ export class ProfilAgencePage implements OnInit {
   readonly showDocumentModal = signal(false);
   readonly selectedDocumentFile = signal<File | null>(null);
   readonly documentTypeOptions: SelectOption[] = [
-    { value: 'registration_certificate', label: "Registre de commerce" },
+    { value: 'registration_certificate', label: 'Registre de commerce' },
     { value: 'tax_certificate', label: 'Attestation fiscale' },
     { value: 'id_document', label: "Pièce d'identité du représentant" },
     { value: 'operating_license', label: "Licence d'exploitation" },

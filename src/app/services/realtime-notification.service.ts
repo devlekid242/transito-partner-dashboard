@@ -3,7 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import Pusher from 'pusher-js';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 import { AuthService } from './auth.service';
 import { PartnerApiService } from './partner-api.service';
 import { BrowserNotificationService } from './browser-notification.service';

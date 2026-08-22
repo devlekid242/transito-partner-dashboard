@@ -22,7 +22,8 @@
               {
                 "glob": "**/*",
                 "input": "public"
-              }
+              },
+              "src/.htaccess"
             ],
             "styles": [
               "src/global_styles.css"

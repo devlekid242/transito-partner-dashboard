@@ -2,7 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 import { unwrapCollection } from '../shared/rxjs-operators';
 import {
   AgencyDocument,
@@ -24,7 +24,7 @@ import {
   Agence,
   RevenueChartResponse,
   KpiData,
-  AgencyReservation
+  AgencyReservation,
 } from '../models';
 
 @Injectable({
@@ -52,9 +52,8 @@ export class PartnerApiService {
     data: [],
   });
 
-
   readonly agencyReservations = signal<AgencyReservation[]>([]);
-	readonly loadingAgencyReservations = signal<boolean>(false);
+  readonly loadingAgencyReservations = signal<boolean>(false);
 
   // Loading states pour chaque type de donnée
   readonly isLoadingBus = signal<boolean>(false);
@@ -1039,55 +1038,55 @@ export class PartnerApiService {
   }
 
   /**
-	 * Liste complète des réservations sur les voyages de l'agence (contrairement
-	 * à getRecentBookings() qui n'en charge qu'un échantillon pour le dashboard).
-	 */
-	getAgencyReservations(): Observable<AgencyReservation[]> {
-		this.loadingAgencyReservations.set(true);
+   * Liste complète des réservations sur les voyages de l'agence (contrairement
+   * à getRecentBookings() qui n'en charge qu'un échantillon pour le dashboard).
+   */
+  getAgencyReservations(): Observable<AgencyReservation[]> {
+    this.loadingAgencyReservations.set(true);
 
-		return this.http.get<any>(`${this.apiUrl}/agency/reservations`).pipe(
-			unwrapCollection<any>(),
-			map((rows) => (rows ?? []).map((r: any) => this.normalizeAgencyReservation(r))),
-			tap((reservations) => this.agencyReservations.set(reservations)),
-			catchError((err) => {
-				console.error('Error loading agency reservations:', err);
-				throw err;
-			}),
-			tap({
-				next: () => this.loadingAgencyReservations.set(false),
-				error: () => this.loadingAgencyReservations.set(false),
-			}),
-		);
-	}
+    return this.http.get<any>(`${this.apiUrl}/agency/reservations`).pipe(
+      unwrapCollection<any>(),
+      map((rows) => (rows ?? []).map((r: any) => this.normalizeAgencyReservation(r))),
+      tap((reservations) => this.agencyReservations.set(reservations)),
+      catchError((err) => {
+        console.error('Error loading agency reservations:', err);
+        throw err;
+      }),
+      tap({
+        next: () => this.loadingAgencyReservations.set(false),
+        error: () => this.loadingAgencyReservations.set(false),
+      }),
+    );
+  }
 
-	private normalizeAgencyReservation(r: any): AgencyReservation {
-		const trip = r.trip || {};
-		return {
-			id: r.id,
-			reference: r.reference || `RES-${r.id}`,
-			passager: r.passengerName || '—',
-			passengerPhone: r.passengerPhone || '',
-			passengerEmail: r.passengerEmail || '',
-			trajet: `${trip.departureCity || '—'} → ${trip.arrivalCity || '—'}`,
-			departureCity: trip.departureCity || '',
-			arrivalCity: trip.arrivalCity || '',
-			date: trip.departureDate || r.createdAt || '',
-			departureTime: trip.departureTime || null,
-			boardingPoint: r.boardingPoint || '',
-			deboardingPoint: r.deboardingPoint || '',
-			seatNumber: r.seatNumber || '',
-			montant: Number(r.totalPrice ?? 0),
-			statut: r.status || 'En attente',
-			tickets: (r.tickets || []).map((t: any) => ({
-				id: t.id,
-				seatNumber: t.seatNumber,
-				passengerName: t.passengerName,
-				passengerPhone: t.passengerPhone,
-				status: t.status,
-			})),
-			createdAt: r.createdAt || '',
-		};
-	}
+  private normalizeAgencyReservation(r: any): AgencyReservation {
+    const trip = r.trip || {};
+    return {
+      id: r.id,
+      reference: r.reference || `RES-${r.id}`,
+      passager: r.passengerName || '—',
+      passengerPhone: r.passengerPhone || '',
+      passengerEmail: r.passengerEmail || '',
+      trajet: `${trip.departureCity || '—'} → ${trip.arrivalCity || '—'}`,
+      departureCity: trip.departureCity || '',
+      arrivalCity: trip.arrivalCity || '',
+      date: trip.departureDate || r.createdAt || '',
+      departureTime: trip.departureTime || null,
+      boardingPoint: r.boardingPoint || '',
+      deboardingPoint: r.deboardingPoint || '',
+      seatNumber: r.seatNumber || '',
+      montant: Number(r.totalPrice ?? 0),
+      statut: r.status || 'En attente',
+      tickets: (r.tickets || []).map((t: any) => ({
+        id: t.id,
+        seatNumber: t.seatNumber,
+        passengerName: t.passengerName,
+        passengerPhone: t.passengerPhone,
+        status: t.status,
+      })),
+      createdAt: r.createdAt || '',
+    };
+  }
 
   // ============= HELPER & SELECT METHODS =============
 
@@ -1376,7 +1375,18 @@ export class PartnerApiService {
     return this.http.put<any>(`${this.apiUrl}/users/staff/${userId}`, payload).pipe(
       tap((updatedUser) => {
         this.staff.update((list) =>
-          list.map((u) => (String(u.id) === String(userId) ? { ...u, ...updatedUser } : u)),
+          list.map((u) =>
+            String(u.id) === String(userId)
+              ? {
+                  ...u,
+                  nom: updatedUser.fullName ?? u.nom,
+                  email: updatedUser.email ?? u.email,
+                  telephone: updatedUser.phoneNumber ?? u.telephone,
+                  role: (updatedUser.agentRole ?? u.role) as any,
+                  statut: updatedUser.status ?? u.statut,
+                }
+              : u,
+          ),
         );
       }),
       catchError((err) => {

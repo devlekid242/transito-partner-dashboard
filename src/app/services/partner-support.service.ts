@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 
 /**
  * Permet au partenaire (compte admin_agence) de contacter l'ADMINISTRATION
@@ -70,7 +70,7 @@ export class PartnerSupportService {
     return this.http.post<{ id: number }>(this.apiUrl, payload).pipe(
       tap(() => this.getMyTickets().subscribe()),
       catchError((err) => {
-        console.error('Erreur création ticket vers l\'administration:', err);
+        console.error("Erreur création ticket vers l'administration:", err);
         this.error.set("Impossible d'envoyer votre demande.");
         return of(null);
       }),
