@@ -38,6 +38,7 @@ export class DemandeDeRetraitPage implements OnInit {
   // Data
   readonly partnerStats = signal<any>(null);
   readonly paymentMethods = signal<SelectOption[]>([]);
+  readonly recentTransactions = signal<any[]>([]);
   
   // Form
   withdrawalForm: FormGroup;
@@ -52,6 +53,13 @@ export class DemandeDeRetraitPage implements OnInit {
     { key: 'demandeur', label: 'Demandeur', sortable: true },
     { key: 'dateDemande', label: 'Date', type: 'date', sortable: true },
     { key: 'statut', label: 'Statut', type: 'status', sortable: true },
+  ];
+
+  transactionCols: ColumnDef[] = [
+    { key: 'description', label: 'Description', sortable: true },
+    { key: 'amount', label: 'Montant (+ crédit / - débit)', type: 'currency', signed: true, sortable: true },
+    { key: 'status', label: 'Statut', type: 'status', sortable: true },
+    { key: 'createdAt', label: 'Date', type: 'date', sortable: true },
   ];
 
   actions: ActionDef[] = [
@@ -88,6 +96,9 @@ export class DemandeDeRetraitPage implements OnInit {
     this.api.getPartnerStats().subscribe({
       next: (stats) => {
         this.partnerStats.set(stats);
+        this.recentTransactions.set(
+          Array.isArray(stats?.recentTransactions) ? stats.recentTransactions : [],
+        );
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -126,6 +137,17 @@ export class DemandeDeRetraitPage implements OnInit {
     const total = pending.reduce((a, r) => a + (r.montant || 0), 0);
     return `${total.toLocaleString('fr-FR')} FCFA`;
   });
+
+  blockedBalance = computed(() => this.formatAmount(this.partnerStats()?.balance?.blocked));
+
+  pendingBalance = computed(() => this.formatAmount(this.partnerStats()?.balance?.pending));
+
+  totalEarned = computed(() => this.formatAmount(this.partnerStats()?.balance?.totalEarned));
+
+  private formatAmount(value: unknown): string {
+    const amount = Number(value ?? 0);
+    return `${amount.toLocaleString('fr-FR')} FCFA`;
+  }
 
   totalPaid = computed(() => {
     const withdrawals = this.api.retraits();

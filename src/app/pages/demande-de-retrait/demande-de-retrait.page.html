@@ -15,7 +15,7 @@
       <span class="ml-3">Chargement des données...</span>
     </div>
   } @else {
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <app-stat-card
         label="Solde disponible"
         [value]="availableBalance()"
@@ -36,13 +36,59 @@
       />
     </div>
 
-    <app-datatable
-      [columns]="cols"
-      [data]="api.retraits()"
-      [exportable]="true"
-      [selectable]="true"
-      [rowActions]="actions"
-    />
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <app-stat-card
+        label="Solde bloqué"
+        [value]="blockedBalance()"
+        icon="lock"
+        iconBg="bg-amber-50 text-amber-600"
+      />
+      <app-stat-card
+        label="Solde en attente"
+        [value]="pendingBalance()"
+        icon="clock"
+        iconBg="bg-ink-100 text-ink-600"
+      />
+      <app-stat-card
+        label="Revenus nets cumulés"
+        [value]="totalEarned()"
+        icon="trending-up"
+        iconBg="bg-brand-50 text-brand-600"
+      />
+    </div>
+
+    <section class="card overflow-hidden">
+      <div class="flex items-center justify-between border-b border-ink-100 px-5 py-4">
+        <div>
+          <h2 class="font-semibold text-ink-900">Transactions récentes</h2>
+          <p class="mt-1 text-sm text-ink-500">Mouvements financiers liés à votre activité</p>
+        </div>
+        <span class="text-sm text-ink-500">{{ recentTransactions().length }} opération(s)</span>
+      </div>
+      @if (recentTransactions().length) {
+        <app-datatable
+          [columns]="transactionCols"
+          [data]="recentTransactions()"
+          [exportable]="true"
+        />
+      } @else {
+        <p class="px-5 py-8 text-center text-sm text-ink-500">Aucune transaction récente.</p>
+      }
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-100 px-5 py-4">
+        <h2 class="font-semibold text-ink-900">Demandes de retrait</h2>
+        <p class="mt-1 text-sm text-ink-500">Suivi des demandes de versement envoyées</p>
+      </div>
+      <app-datatable
+        [columns]="cols"
+        [data]="api.retraits()"
+        [exportable]="true"
+        [selectable]="true"
+        [rowActions]="actions"
+      />
+    </section>
   }
 </div>
 

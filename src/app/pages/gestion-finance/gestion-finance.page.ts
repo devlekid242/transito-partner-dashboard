@@ -6,17 +6,15 @@ import { ChartComponent } from "../../components/chart/chart.component";
 import { DatatableComponent } from "../../components/datatable/datatable.component";
 import { PageHeaderComponent } from "../../components/page-header/page-header.component";
 import { RouterLink } from "@angular/router";
-import { FormsModule } from "@angular/forms";
 import { ToastService } from "../../components/toast/toast.component";
 import { PartnerApiService } from "../../services/partner-api.service";
-import { SelectOption, ColumnDef, ActionDef, Transaction } from "../../models";
+import { ColumnDef, ActionDef, Transaction } from "../../models";
 
 @Component({
   selector: "app-gestion-finance",
   standalone: true,
   imports: [
     RouterLink,
-    FormsModule,
     IconComponent,
     StatCardComponent,
     ChartComponent,
@@ -32,8 +30,6 @@ export class GestionFinancePage implements OnInit {
   // State
   readonly isLoading = signal<boolean>(true);
   readonly partnerStats = signal<any>(null);
-  readonly transactionTypes = signal<SelectOption[]>([]);
-  readonly selectedTransactionType = signal<string>('all');
   readonly revenueData = signal<any>(null);
 
   // Computed
@@ -44,47 +40,36 @@ export class GestionFinancePage implements OnInit {
     return `${balance.toLocaleString('fr-FR')} FCFA`;
   });
 
-  monthlyRevenue = computed(() => {
+  grossRevenue = computed(() => {
     const stats = this.partnerStats();
-    const revenue = Number(stats?.netRevenue ?? stats?.revenue ?? 0);
+    const revenue = Number(stats?.revenue ?? 0);
     return `${revenue.toLocaleString('fr-FR')} FCFA`;
   });
 
-  commissions = computed(() => {
+  netRevenue = computed(() => {
     const stats = this.partnerStats();
-    const commissions = Number(stats?.platformFees ?? stats?.commissions ?? 0);
-    return `${commissions.toLocaleString('fr-FR')} FCFA`;
+    const revenue = Number(stats?.netRevenue ?? 0);
+    return `${revenue.toLocaleString('fr-FR')} FCFA`;
   });
 
-  financeBreakdown = computed(() => {
+  totalWithdrawn = computed(() => {
     const stats = this.partnerStats();
-    if (!stats?.balance) {
-      return [
-        { label: 'Réservations', percentage: 0, color: '#10b981' },
-        { label: 'Retraits', percentage: 0, color: '#3880ff' },
-        { label: 'Commissions', percentage: 0, color: '#f59e0b' },
-      ];
-    }
+    return `${Number(stats?.balance?.totalWithdrawn ?? 0).toLocaleString('fr-FR')} FCFA`;
+  });
 
-    const available = Number(stats.balance?.available ?? 0);
-    const pending = Number(stats.balance?.pending ?? 0);
-    const fees = Number(stats.platformFees ?? 0);
-    const total = available + pending + fees;
-
-    if (total === 0) {
-      return [
-        { label: 'Réservations', percentage: 0, color: '#10b981' },
-        { label: 'Retraits', percentage: 0, color: '#3880ff' },
-        { label: 'Commissions', percentage: 0, color: '#f59e0b' },
-      ];
-    }
-
+  reservationStatuses = computed(() => {
+    const statuses = this.partnerStats()?.reservationsByStatus ?? {};
     return [
-      { label: 'Réservations', percentage: Math.round((available / total) * 100), color: '#10b981' },
-      { label: 'Retraits', percentage: Math.round((pending / total) * 100), color: '#3880ff' },
-      { label: 'Commissions', percentage: Math.round((fees / total) * 100), color: '#f59e0b' },
+      { label: 'En attente de paiement', value: statuses.enAttentePaiement ?? 0 },
+      { label: 'Confirmées', value: statuses.confirmees ?? 0 },
+      { label: 'Échouées', value: statuses.echouees ?? 0 },
+      { label: 'Annulées / remboursement en attente', value: statuses.annuleesRemboursementEnAttente ?? 0 },
+      { label: 'Annulées / remboursées', value: statuses.annuleesRembourseesConfirmees ?? 0 },
+      { label: 'Annulées sans paiement', value: statuses.annuleesSansPaiementPrealable ?? 0 },
     ];
   });
+
+  withdrawals = computed(() => this.partnerStats()?.withdrawals ?? []);
 
   chartData = computed(() => {
     const data = this.revenueData();
@@ -98,23 +83,16 @@ export class GestionFinancePage implements OnInit {
       };
     }
 
-    const creditsData = data.credits || data.data?.[0]?.data || [];
-    const debitsData = data.debits || data.data?.[1]?.data || [];
     const labels = data.labels || [];
+    const values = (data.data || []).map((value: string | number) => Number(value));
 
     return {
       labels: labels,
       datasets: [
         {
-          label: "Crédits",
-          data: creditsData,
+          label: "Revenus",
+          data: values,
           backgroundColor: "#10b981",
-          borderRadius: 5,
-        },
-        {
-          label: "Débits",
-          data: debitsData,
-          backgroundColor: "#3880ff",
           borderRadius: 5,
         },
       ],
@@ -129,26 +107,23 @@ export class GestionFinancePage implements OnInit {
     },
   };
 
-  filteredTransactions = computed(() => {
-    const type = this.selectedTransactionType();
-    const allTransactions = this.api.transactions();
+  recentTransactions = computed(() => this.partnerStats()?.recentTransactions ?? []);
 
-    if (type === 'all') {
-      return allTransactions;
-    }
-
-    return allTransactions.filter((t: any) => {
-      const transactionType = String(t.type || t.description || '').toLowerCase();
-      return transactionType.includes(type.toLowerCase());
-    });
-  });
+  filteredTransactions = computed(() => this.recentTransactions());
 
   cols: ColumnDef[] = [
-    { key: "reference", label: "Référence", sortable: true },
-    { key: "type", label: "Type", sortable: true },
-    { key: "montant", label: "Montant", type: "currency", sortable: true },
     { key: "description", label: "Description", sortable: true },
-    { key: "date", label: "Date", type: "date", sortable: true },
+    { key: "amount", label: "Montant", type: "currency", signed: true, sortable: true },
+    { key: "status", label: "Statut", type: "status", sortable: true },
+    { key: "createdAt", label: "Date", type: "date", sortable: true },
+  ];
+
+  withdrawalCols: ColumnDef[] = [
+    { key: 'id', label: 'ID', sortable: true },
+    { key: 'amount', label: 'Montant', type: 'currency', sortable: true },
+    { key: 'status', label: 'Statut', type: 'status', sortable: true },
+    { key: 'type', label: 'Type', sortable: true },
+    { key: 'createdAt', label: 'Date', type: 'date', sortable: true },
   ];
 
   actions: ActionDef[] = [
@@ -159,10 +134,6 @@ export class GestionFinancePage implements OnInit {
 
   ngOnInit(): void {
     this.loadData();
-  }
-
-  setTransactionType(type: string): void {
-    this.selectedTransactionType.set(type);
   }
 
   loadData(): void {
@@ -178,20 +149,6 @@ export class GestionFinancePage implements OnInit {
         console.error('Error loading partner stats:', err);
         this.toast.danger('Impossible de charger les statistiques financières');
         this.isLoading.set(false);
-      },
-    });
-
-    // Load transaction types
-    this.api.getTransactionTypeOptions().subscribe({
-      next: (types: any[]) => {
-        this.transactionTypes.set([
-          { value: 'all', label: 'Tous les types' },
-          ...types.map((m) => ({ value: m.id, label: m.name })),
-        ]);
-      },
-      error: (err) => {
-        console.error('Error loading transaction types:', err);
-        this.toast.danger('Impossible de charger les types de transactions');
       },
     });
 
@@ -215,12 +172,12 @@ export class GestionFinancePage implements OnInit {
 
   viewTransaction(transaction: Transaction): void {
     const details = [
-      `Référence: ${transaction.reference || 'N/A'}`,
-      `Type: ${transaction.type || 'N/A'}`,
+      `Transaction: ${transaction.id || 'N/A'}`,
       `Montant: ${(transaction.montant || transaction.amount || 0).toLocaleString('fr-FR')} FCFA`,
       `Description: ${transaction.description || 'Aucune'}`,
       `Date: ${transaction.date || transaction.createdAt || 'N/A'}`,
       `Statut: ${transaction.statut || transaction.status || 'N/A'}`,
+      `Type: ${transaction.type || 'N/A'}`,
     ].join('\n');
     
     this.toast.info(details);

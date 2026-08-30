@@ -4,7 +4,7 @@
     subtitle="Suivez vos revenus et transactions"
     icon="wallet"
     ><a routerLink="/demande-de-retrait" class="btn btn-primary"
-      ><app-icon name="banknote" [size]="16" /> Demander un retrait</a
+      ><app-icon name="banknote" [size]="16" /> Portefeuille - Demander un retrait</a
     ></app-page-header
   >
   @if (isLoading()) {
@@ -13,39 +13,25 @@
       <span class="ml-3">Chargement des données financières...</span>
     </div>
   } @else {
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <app-stat-card
         label="Solde disponible"
         [value]="availableBalance()"
         icon="banknote"
         iconBg="bg-brand-50 text-brand-600"
       /><app-stat-card
-        label="Revenus du mois"
-        [value]="monthlyRevenue()"
-        icon="trending-up"
-        iconBg="bg-primary-50 text-primary-600"
+        label="Revenus nets"
+        [value]="netRevenue()"
+        icon="banknote"
+        iconBg="bg-brand-50 text-brand-600"
       /><app-stat-card
-        label="Commissions"
-        [value]="commissions()"
-        icon="wallet"
+        label="Total retiré"
+        [value]="totalWithdrawn()"
+        icon="arrow-up-right"
         iconBg="bg-amber-50 text-amber-600"
       />
     </div>
 
-    <div class="card p-4">
-      <div class="flex flex-wrap items-center gap-4">
-        <label class="text-sm font-medium text-ink-600">Filtrer par type:</label>
-        <select
-          class="input input-sm cursor-pointer w-48"
-          [ngModel]="selectedTransactionType()"
-          (ngModelChange)="setTransactionType($event)"
-        >
-          @for (type of transactionTypes(); track type.value) {
-            <option [value]="type.value">{{ type.label }}</option>
-          }
-        </select>
-      </div>
-    </div>
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-5">
       <div class="card p-5 lg:col-span-3">
         <h3 class="font-bold text-ink-900">Flux financiers</h3>
@@ -55,20 +41,13 @@
         </div>
       </div>
       <div class="card p-5 lg:col-span-2">
-        <h3 class="font-bold text-ink-900">Répartition</h3>
+        <h3 class="font-bold text-ink-900">Statut des réservations</h3>
         <div class="mt-4 space-y-4">
-          @for (item of financeBreakdown(); track item.label) {
+          @for (item of reservationStatuses(); track item.label) {
             <div>
               <div class="flex justify-between text-sm">
                 <span class="text-ink-600">{{ item.label }}</span>
-                <b class="text-ink-900">{{ item.percentage }}%</b>
-              </div>
-              <div class="mt-2 h-2 rounded-full bg-ink-100">
-                <div
-                  class="h-2 rounded-full"
-                  [style.width.%]="item.percentage"
-                  [style.background-color]="item.color"
-                ></div>
+                <b class="text-ink-900">{{ item.value }}</b>
               </div>
             </div>
           }
@@ -80,8 +59,18 @@
       [columns]="cols"
       [data]="filteredTransactions()"
       [exportable]="true"
-      [selectable]="true"
       [rowActions]="actions"
     />
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-100 px-5 py-4">
+        <h3 class="font-bold text-ink-900">Demandes de retrait</h3>
+      </div>
+      @if (withdrawals().length) {
+        <app-datatable [columns]="withdrawalCols" [data]="withdrawals()" [exportable]="true" />
+      } @else {
+        <p class="px-5 py-8 text-center text-sm text-ink-500">Aucune demande de retrait.</p>
+      }
+    </section>
   }
 </div>

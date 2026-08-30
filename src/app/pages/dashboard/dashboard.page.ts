@@ -155,7 +155,7 @@ export class DashboardPage implements OnInit {
 
   donutData = computed<ChartConfiguration["data"]>(() => {
     const kpiData = this.kpiSignal();
-    const occupationRate = kpiData?.tauxOccupation || 0;
+    const occupationRate = kpiData?.boardingRate || 0;
     return {
       labels: ["Occupé", "Disponible"],
       datasets: [
@@ -276,5 +276,9 @@ export class DashboardPage implements OnInit {
 
   String(value: any): string {
     return value !== null && value !== undefined ? String(value) : "";
+  }
+
+  goToAddTrip(): void {
+    this.router.navigate(['/ajout-trajet']);
   }
 }

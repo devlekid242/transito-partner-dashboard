@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { RealtimeNotificationService } from './services/realtime-notification.service';
+import { PushNotificationService } from './services/push-notification.service';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +9,9 @@ import { RouterOutlet } from '@angular/router';
   imports: [RouterOutlet],
   template: `<router-outlet />`,
 })
-export class AppComponent {}
+export class AppComponent {
+  constructor(
+    private realtimeNotificationService: RealtimeNotificationService,
+    private pushNotificationService: PushNotificationService,
+  ) {}
+}

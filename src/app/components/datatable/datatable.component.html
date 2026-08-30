@@ -97,7 +97,9 @@
                   <td class="px-4 py-3 text-ink-700 whitespace-nowrap">
                     @switch (col.type) {
                       @case ('currency') {
-                        <span class="font-semibold">{{ formatCurrency(row[col.key]) }}</span>
+                        <span class="font-semibold">
+                          {{ col.signed && row[col.key] > 0 ? '+' : '' }}{{ formatCurrency(row[col.key]) }}
+                        </span>
                       }
                       @case ('date') {
                         {{ formatDate(row[col.key]) }}

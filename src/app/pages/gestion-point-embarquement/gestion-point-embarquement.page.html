@@ -1,154 +1,123 @@
-<div
-  *ngIf="isLoading()"
-  class="p-container-margin space-y-widget-gap max-w-desktop-max-width mx-auto"
->
-  <div class="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-    <div
-      class="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
-    ></div>
-    <p class="text-on-surface-variant font-body-lg">Chargement de vos données...</p>
-  </div>
-</div>
+ `
+    <div class="space-y-6">
+      <app-page-header title="Points d'embarquement" subtitle="Gérez vos arrêts et points de départ" icon="map-pin">
+        <a routerLink="/ajout-point-embarquement" class="btn btn-primary">
+          <app-icon name="plus" [size]="16" /> Ajouter un point
+        </a>
+      </app-page-header>
 
-<main *ngIf="!isLoading()" class="p-4 h-full overflow-y-auto bg-surface-bg p-container-margin">
-  <div class="max-w-desktop-max-width mx-auto">
-    <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-      <div>
-        <h2 class="font-headline-md text-headline-md text-on-surface">Points de Vente</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant mt-1">
-          Gérez vos agences physiques et points de billetterie.
-        </p>
-      </div>
-      <button
-        class="bg-primary cursor-pointer hover:bg-primary-container text-on-primary font-label-sm text-label-sm py-2 px-4 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors shrink-0"
-        (click)="addNewSalesPoint()"
-      >
-        <span class="material-symbols-outlined text-[18px]" data-icon="add_business"
-          >add_business</span
-        >Ajouter un point de vente
-      </button>
+      @if (isLoading()) {
+        <div class="flex items-center justify-center p-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
+          <span class="ml-3">Chargement des points d'embarquement...</span>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <app-stat-card label="Total points" [value]="totalPoints()" icon="map-pin" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Actifs" [value]="actifs()" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
+          <app-stat-card label="Inactifs" [value]="inactifs()" icon="x-circle" iconBg="bg-red-50 text-red-600" />
+        </div>
+
+        <app-datatable [columns]="cols" [data]="api.pointsEmbarquement()" [exportable]="true" [selectable]="true" [rowActions]="actions" />
+      }
     </div>
 
-    <!-- Utilisation du composant TableComponent avec cellules personnalisées -->
-    <app-table
-      [data]="salesPoints()"
-      [columns]="salesPointColumns()"
-      [actions]="salesPointActions()"
-      [pageSize]="10"
-    >
-      <ng-template #customCell let-item let-column="column">
-        <!-- Cellule personnalisée pour le nom avec badge de statut -->
-        <div *ngIf="column.key === 'name'" class="p-3">
-          <div class="flex flex-col justify-between items-start">
+    @if (selectedPoint() && isDetailModalOpen()) {
+      <app-modal
+        [isOpen]="isDetailModalOpen()"
+        (close)="closePointDetails()"
+        [title]="selectedPoint()?.name || selectedPoint()?.nom || 'Point d\'embarquement'"
+        [subtitle]="'Détails du point'"
+        size="lg"
+      >
+        <div class="space-y-5">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <h3 class="font-headline-md text-headline-md text-on-surface text-[18px]">
-                {{ item.name }}
-              </h3>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Nom</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.name || selectedPoint()?.nom || '—' }}</p>
             </div>
-            <span
-              [ngClass]="getStatusBadgeClass(item.status)"
-              class="font-label-sm text-label-sm px-3 py-1 rounded-full border flex items-center gap-1"
-            >
-              <span class="w-2 h-2 rounded-full inline-block"></span>
-              {{ item.statusLabel || (item.status === 'active' ? 'Actif' : 'Inactif') }}
-            </span>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Type</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ getPointTypeLabel(selectedPoint()?.pointType) }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Adresse</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.address || selectedPoint()?.adresse || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Quartier</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.quartier || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Ville</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.city || selectedPoint()?.ville || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Téléphone</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.phoneNumber || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Statut</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ getStatusLabel(selectedPoint()?.status || selectedPoint()?.statut) }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Créé le</p>
+              <p class="mt-1 text-base font-semibold text-ink-800">{{ selectedPoint()?.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-ink-200 bg-ink-50 p-4">
+            <p class="mb-3 text-sm font-semibold text-ink-700">Services disponibles</p>
+            <div class="grid grid-cols-2 gap-3 text-sm text-ink-700 md:grid-cols-4">
+              <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                <span>Climatisation</span>
+                <span class="font-semibold">{{ getBooleanLabel(selectedPoint()?.hasAc) }}</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                <span>Parking</span>
+                <span class="font-semibold">{{ getBooleanLabel(selectedPoint()?.hasParking) }}</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                <span>Wi‑Fi</span>
+                <span class="font-semibold">{{ getBooleanLabel(selectedPoint()?.hasWifi) }}</span>
+              </div>
+              <div class="flex items-center justify-between rounded-lg bg-white px-3 py-2">
+                <span>VIP Lounge</span>
+                <span class="font-semibold">{{ getBooleanLabel(selectedPoint()?.hasVipLounge) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-3 border-t border-ink-100 pt-4">
+            <button type="button" class="btn btn-secondary" (click)="closePointDetails()">Fermer</button>
+            <button type="button" class="btn btn-primary" (click)="editPoint(selectedPoint()!)">Modifier</button>
           </div>
         </div>
+      </app-modal>
+    }
 
-        <!-- Cellule personnalisée pour l'adresse -->
-        <div *ngIf="column.key === 'address'" class="p-3">
-          <div class="flex flex-col items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="location_on"
-              >location_on</span
-            >
-            <span class="font-body-md text-body-md text-[13px]">{{ item.address }}</span>
-          </div>
-        </div>
-
-        <!-- Cellule personnalisée pour le téléphone -->
-        <div *ngIf="column.key === 'phoneNumber'" class="p-3">
-          <div class="flex flex-col items-center gap-2 text-on-surface-variant">
-            <span class="material-symbols-outlined text-[18px]" data-icon="phone">phone</span>
-            <span class="font-body-md text-body-md text-[13px]">{{ item.phoneNumber || 'N/A' }}</span>
-          </div>
-        </div>
-        <!-- Cellule par défaut pour les autres colonnes -->
-        <div
-          *ngIf="column.key !== 'name' && column.key !== 'address' && column.key !== 'phoneNumber'"
-          class="p-3 font-body-md text-body-md"
-        >
-          {{ item[column.key] }}
-        </div>
-      </ng-template>
-    </app-table>
-  </div>
-</main>
-
-<!-- Modal pour les détails du point de vente -->
-<app-modal
-  [isOpen]="isModalOpen()"
-  [title]="'Détails du Point de Vente'"
-  [size]="'md'"
-  (close)="closeModal()"
->
-  <div *ngIf="selectedSalesPoint()" class="space-y-4">
-    <div class="grid grid-cols-2 gap-4">
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Nom</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.name }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Ville</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.city }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Adresse</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.address }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Téléphone</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.phoneNumber || 'N/A' }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Statut</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.isActive ? 'Actif' : 'Inactif' }}
-        </p>
-      </div>
-      <div>
-        <p class="text-label-sm text-label-sm text-outline">Statut</p>
-        <p class="text-body-md text-body-md text-on-surface font-semibold">
-          {{ selectedSalesPoint()?.status }}
-        </p>
-      </div>
-    </div>
-
-    <div class="flex justify-end gap-3 pt-4 border-t border-border-subtle">
-      <button
-        class="px-4 py-2 border border-outline text-on-surface rounded-lg hover:bg-surface-container transition-colors"
-        (click)="closeModal()"
+    @if (isDeleteConfirmOpen()) {
+      <app-modal
+        title="Confirmer la suppression"
+        [isOpen]="isDeleteConfirmOpen()"
+        (close)="closeDeleteConfirm()"
+        size="small"
       >
-        Fermer
-      </button>
-    </div>
-  </div>
-</app-modal>
-
-<!-- Notification Component -->
-<app-notification
-  [show]="showNotification()"
-  [type]="notificationType()"
-  [message]="notificationMessage()"
-  [duration]="5000"
->
-</app-notification>
-
+        <div class="p-1">
+          <p>Êtes-vous sûr de vouloir supprimer le point <strong>{{ selectedPointName() }}</strong> ? Cette action est irréversible.</p>
+          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
+            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isDeleting()">
+              Annuler
+            </button>
+            <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+              @if (isDeleting()) {
+                <span class="animate-pulse">Suppression...</span>
+              } @else {
+                Oui, supprimer
+              }
+            </button>
+          </div>
+        </div>
+      </app-modal>
+    }
+  `

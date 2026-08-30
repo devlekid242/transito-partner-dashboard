@@ -37,7 +37,7 @@ import { ColumnDef, ActionDef, ManifestData, Passenger } from '../../models';
               </div>
               <div>
                 <p class="font-bold text-ink-900">{{ tripInfo()?.departureCity || '—' }} → {{ tripInfo()?.arrivalCity || '—' }}</p>
-                <p class="text-sm text-ink-500">{{ tripInfo()?.departureTime || '—' }} · {{ tripInfo()?.busRegistrationNumber || '—' }}</p>
+                <p class="text-sm text-ink-500">{{ formatDateTime(tripInfo()?.departureTime) }} · {{ tripInfo()?.busInfo?.licensePlate || tripInfo()?.busRegistrationNumber || '—' }}</p>
               </div>
             </div>
             <div class="flex gap-6">
@@ -48,6 +48,39 @@ import { ColumnDef, ActionDef, ManifestData, Passenger } from '../../models';
               <div>
                 <p class="text-xl font-bold text-brand-600">{{ tripInfo()?.totalRevenue | number }} FCFA</p>
                 <p class="text-xs text-ink-500">Revenus</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="card p-5">
+              <h3 class="mb-3 flex items-center gap-2 font-semibold text-ink-900">
+                <app-icon name="map-pin" [size]="18" /> Points d'embarquement
+              </h3>
+              <div class="space-y-3">
+                @for (point of tripInfo()?.boardingPoints || []; track point.id || point.name) {
+                  <div class="border-b border-ink-100 pb-2 last:border-0 last:pb-0">
+                    <p class="font-medium text-ink-800">{{ point.name }}</p>
+                    <p class="text-sm text-ink-500">{{ point.address || 'Adresse non renseignée' }} · {{ point.city || tripInfo()?.departureCity }}</p>
+                  </div>
+                } @empty {
+                  <p class="text-sm text-ink-500">Aucun point d'embarquement renseigné.</p>
+                }
+              </div>
+            </div>
+            <div class="card p-5">
+              <h3 class="mb-3 flex items-center gap-2 font-semibold text-ink-900">
+                <app-icon name="map-pin" [size]="18" /> Points de débarquement
+              </h3>
+              <div class="space-y-3">
+                @for (point of tripInfo()?.deboardingPoints || []; track point.id || point.name) {
+                  <div class="border-b border-ink-100 pb-2 last:border-0 last:pb-0">
+                    <p class="font-medium text-ink-800">{{ point.name }}</p>
+                    <p class="text-sm text-ink-500">{{ point.address || 'Adresse non renseignée' }} · {{ point.city || tripInfo()?.arrivalCity }}</p>
+                  </div>
+                } @empty {
+                  <p class="text-sm text-ink-500">Aucun point de débarquement renseigné.</p>
+                }
               </div>
             </div>
           </div>
@@ -66,7 +99,7 @@ import { ColumnDef, ActionDef, ManifestData, Passenger } from '../../models';
         @if (selectedPassenger() && isModalOpen()) {
         <app-modal 
           [isOpen]="isModalOpen()" 
-          (onClose)="closeModal()"
+          (close)="closeModal()"
           title="Détails du passager"
         >
           <div class="space-y-4">
@@ -108,12 +141,13 @@ export class TrajetManifestePage implements OnInit {
   readonly selectedPassenger = signal<Passenger | null>(null);
 
   cols: ColumnDef[] = [
-    { key: 'reference', label: 'Référence', sortable: true },
-    { key: 'passenger', label: 'Passager', sortable: true },
-    { key: 'trajet', label: 'Trajet', sortable: true },
-    { key: 'date', label: 'Date', type: 'date', sortable: true },
-    { key: 'montant', label: 'Montant', type: 'currency', sortable: true },
-    { key: 'statut', label: 'Statut', type: 'status', sortable: true },
+    { key: 'ticketNumber', label: 'Billet', sortable: true },
+    { key: 'name', label: 'Passager', sortable: true },
+    { key: 'seatNumber', label: 'Siège', sortable: true },
+    { key: 'boardingPoint', label: 'Embarquement', sortable: true },
+    { key: 'deboardingPoint', label: 'Débarquement', sortable: true },
+    { key: 'price', label: 'Prix', type: 'currency', sortable: true },
+    { key: 'boardingStatus', label: 'Statut', type: 'status', sortable: true },
   ];
 
   actions: ActionDef[] = [
@@ -188,5 +222,13 @@ export class TrajetManifestePage implements OnInit {
       CANCELLED: 'Annulé',
     };
     return statusMap[status] || status;
+  }
+
+  formatDateTime(value?: string | null): string {
+    if (!value) return '—';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+      ? value
+      : date.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
   }
 }

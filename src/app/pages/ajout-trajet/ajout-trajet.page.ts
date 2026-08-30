@@ -13,145 +13,7 @@ import { Trajet, Bus, BusPoint, SelectOption } from '../../models';
   selector: 'app-ajout-trajet',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink, IconComponent, PageHeaderComponent],
-  template: `
-    <div class="space-y-6">
-      <app-page-header [title]="pageTitle()" subtitle="Planifiez un nouveau départ" icon="route">
-        <a routerLink="/trip-schedule" class="btn btn-secondary"><app-icon name="arrow-left" [size]="16" /> Retour</a>
-      </app-page-header>
-      <div class="card max-w-3xl p-6">
-        <div class="mb-6 flex items-center gap-2 border-b border-ink-100 pb-4 text-sm font-semibold text-brand-700">
-          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-white">1</span> Informations du trajet
-        </div>
-        @if (isLoading()) {
-          <div class="flex items-center justify-center p-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-            <span class="ml-3">Chargement...</span>
-          </div>
-        } @else {
-          <form [formGroup]="tripForm" (ngSubmit)="save()" class="space-y-5">
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <label class="label" for="departureCity">Ville de départ</label>
-                <select id="departureCity" class="input cursor-pointer" formControlName="departureCity" required [disabled]="isLoadingCities()">
-                  <option value="" disabled>
-                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
-                  </option>
-                  @for (c of cityOptions(); track c.value) {
-                    <option [value]="c.value">{{ c.label }}</option>
-                  }
-                </select>
-                @if (tripForm.get('departureCity')?.invalid && tripForm.get('departureCity')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Ville de départ est requis</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="arrivalCity">Ville d'arrivée</label>
-                <select id="arrivalCity" class="input cursor-pointer" formControlName="arrivalCity" required [disabled]="isLoadingCities()">
-                  <option value="" disabled>
-                    {{ isLoadingCities() ? 'Chargement des villes...' : 'Sélectionner une ville' }}
-                  </option>
-                  @for (c of cityOptions(); track c.value) {
-                    <option [value]="c.value">{{ c.label }}</option>
-                  }
-                </select>
-                @if (tripForm.get('arrivalCity')?.invalid && tripForm.get('arrivalCity')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Ville d'arrivée est requis</p>
-                }
-                @if (tripForm.hasError('sameCity') && tripForm.get('arrivalCity')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">La ville d'arrivée doit être différente de la ville de départ</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="tripDate">Date de départ</label>
-                <input id="tripDate" type="date" class="input" formControlName="tripDate" required />
-                @if (tripForm.get('tripDate')?.invalid && tripForm.get('tripDate')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Date de départ est requis</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="departureTimeOfDay">Heure de départ</label>
-                <input id="departureTimeOfDay" type="time" class="input" formControlName="departureTimeOfDay" required />
-                @if (tripForm.get('departureTimeOfDay')?.invalid && tripForm.get('departureTimeOfDay')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Heure de départ est requis</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="arrivalTimeOfDay">Heure d'arrivée estimée</label>
-                <input id="arrivalTimeOfDay" type="time" class="input" formControlName="arrivalTimeOfDay" />
-              </div>
-              <div>
-                <label class="label" for="price">Prix du billet (FCFA)</label>
-                <input id="price" type="number" class="input" placeholder="8000" formControlName="price" required min="0" />
-                @if (tripForm.get('price')?.invalid && tripForm.get('price')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Prix doit être positif</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="busId">Bus assigné</label>
-                <select id="busId" class="input cursor-pointer" formControlName="busId" required>
-                  <option value="">Sélectionner un bus</option>
-                  @for (b of buses(); track b.id) {
-                    <option [value]="b.id">{{ b.registrationNumber }} — {{ b.brand }} — {{ b.model }}</option>
-                  }
-                </select>
-                @if (tripForm.get('busId')?.invalid && tripForm.get('busId')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Bus est requis</p>
-                }
-              </div>
-              <div>
-                <label class="label" for="driverName">Nom du chauffeur</label>
-                <input id="driverName" type="text" class="input" placeholder="Jean Michel" formControlName="driverName" />
-              </div>
-              <div>
-                <label class="label" for="seatsReserved">Places réservées</label>
-                <input id="seatsReserved" type="number" class="input" placeholder="0" formControlName="seatsReserved" min="0" />
-              </div>
-              <div>
-                <label class="label" for="status">Statut du trajet</label>
-                <select id="status" class="input cursor-pointer" formControlName="status" required>
-                  <option value="">Sélectionner un statut</option>
-                  @for (s of statusOptions(); track s.value) {
-                    <option [value]="s.value">{{ s.label }}</option>
-                  }
-                </select>
-                @if (tripForm.get('status')?.invalid && tripForm.get('status')?.touched) {
-                  <p class="text-red-500 text-xs mt-1">Statut est requis</p>
-                }
-              </div>
-              <div class="sm:col-span-2">
-                <label class="label" for="boardingPointIds">Points d'embarquement</label>
-                <select id="boardingPointIds" class="input cursor-pointer" formControlName="boardingPointIds" multiple>
-                  @for (p of busPoints(); track p.id) {
-                    <option [value]="p.id">{{ p.name || p.address || p.city }}</option>
-                  }
-                </select>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="label" for="deboardingPointIds">Points de débarquement</label>
-                <select id="deboardingPointIds" class="input cursor-pointer" formControlName="deboardingPointIds" multiple>
-                  @for (p of busPoints(); track p.id) {
-                    <option [value]="p.id">{{ p.name || p.address || p.city }}</option>
-                  }
-                </select>
-              </div>
-            </div>
-            <div class="flex justify-end gap-3 border-t border-ink-100 pt-5">
-              <a routerLink="/trip-schedule" class="btn btn-secondary">Annuler</a>
-              @if (isSubmitting()) {
-                <button type="button" class="btn btn-primary" disabled>
-                  <span class="animate-pulse">Enregistrement...</span>
-                </button>
-              } @else {
-                <button type="submit" class="btn btn-primary" [disabled]="tripForm.invalid">
-                  <app-icon name="save" [size]="16" /> {{ submitLabel() }}
-                </button>
-              }
-            </div>
-          </form>
-        }
-      </div>
-    </div>
-  `,
+  templateUrl: './ajout-trajet.page.html',
 })
 export class AjoutTrajetPage implements OnInit {
   private fb = inject(FormBuilder);
@@ -223,6 +85,9 @@ export class AjoutTrajetPage implements OnInit {
   }
 
   ngOnInit(): void {
+    this.tripForm.get('departureCity')?.valueChanges.subscribe(() => this.syncSelectedPointsByCity());
+    this.tripForm.get('arrivalCity')?.valueChanges.subscribe(() => this.syncSelectedPointsByCity());
+
     // Check for edit mode
     this.route.paramMap.subscribe((params) => {
       const idParam = params.get('id');
@@ -324,6 +189,75 @@ export class AjoutTrajetPage implements OnInit {
     if (this.api.pointsEmbarquement().length === 0) {
       this.api.getBusPoints().subscribe();
     }
+  }
+
+  getFilteredBoardingPoints(): BusPoint[] {
+    const departureCity = this.normalizeCityName(this.tripForm.get('departureCity')?.value);
+    if (!departureCity) {
+      return this.busPoints();
+    }
+
+    return this.busPoints().filter((point) => {
+      const pointCity = this.normalizeCityName(point.city || point.ville);
+      return pointCity === departureCity;
+    });
+  }
+
+  getFilteredDeboardingPoints(): BusPoint[] {
+    const arrivalCity = this.normalizeCityName(this.tripForm.get('arrivalCity')?.value);
+    if (!arrivalCity) {
+      return this.busPoints();
+    }
+
+    return this.busPoints().filter((point) => {
+      const pointCity = this.normalizeCityName(point.city || point.ville);
+      return pointCity === arrivalCity;
+    });
+  }
+
+  getPointSelectSize(points: BusPoint[]): number {
+    return Math.min(8, Math.max(4, points.length || 4));
+  }
+
+  private normalizeCityName(value: unknown): string {
+    return String(value ?? '')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  }
+
+  private syncSelectedPointsByCity(): void {
+    const departureCity = this.tripForm.get('departureCity')?.value;
+    const arrivalCity = this.tripForm.get('arrivalCity')?.value;
+
+    const validBoarding = new Set(
+      this.getFilteredBoardingPoints().map((point) => String(point.id)),
+    );
+    const validDeboarding = new Set(
+      this.getFilteredDeboardingPoints().map((point) => String(point.id)),
+    );
+
+    const boardingSelected = Array.isArray(this.tripForm.get('boardingPointIds')?.value)
+      ? this.tripForm.get('boardingPointIds')?.value.filter((id: string | number) => validBoarding.has(String(id)))
+      : [];
+
+    const deboardingSelected = Array.isArray(this.tripForm.get('deboardingPointIds')?.value)
+      ? this.tripForm.get('deboardingPointIds')?.value.filter((id: string | number) => validDeboarding.has(String(id)))
+      : [];
+
+    if (
+      !departureCity && !arrivalCity &&
+      boardingSelected.length === (this.tripForm.get('boardingPointIds')?.value ?? []).length &&
+      deboardingSelected.length === (this.tripForm.get('deboardingPointIds')?.value ?? []).length
+    ) {
+      return;
+    }
+
+    this.tripForm.patchValue({
+      boardingPointIds: boardingSelected,
+      deboardingPointIds: deboardingSelected,
+    }, { emitEvent: false });
   }
 
   save(): void {

@@ -149,7 +149,7 @@ export interface KpiData {
   trajetsActifs: number | null;
   passagersTotaux: number;
   revenusMois: number | null;
-  tauxOccupation: number;
+  boardingRate: number;
   revenueChange?: number;
   tripsChange?: number;
   passengersChange?: number;
@@ -160,6 +160,7 @@ export interface ColumnDef {
   label: string;
   sortable?: boolean;
   type?: 'text' | 'date' | 'currency' | 'status' | 'badge';
+  signed?: boolean;
   width?: string;
 }
 

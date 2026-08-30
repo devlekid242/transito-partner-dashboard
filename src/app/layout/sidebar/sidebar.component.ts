@@ -1,5 +1,5 @@
 import { Component, computed, inject, input } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { IconComponent, IconName } from '../../shared/icon.component';
 import { AuthService } from '../../services/auth.service';
 import { PermissionService } from '../../services/permission.service';
@@ -38,6 +38,8 @@ export class SidebarComponent {
   auth = inject(AuthService);
   perms = inject(PermissionService);
   open = input(false);
+
+  readonly router = inject(Router);
 
   readonly alertService = inject(AlertService);
 
@@ -78,6 +80,10 @@ export class SidebarComponent {
       ],
     },
   ];
+
+  gotoProfile() {
+    this.router.navigate(['/compte-utilisateur']);
+  }
 
   logout() {
     this.alertService.confirm(

@@ -136,12 +136,15 @@ export interface Passenger {
   id: number;
   seatNumber: string | number;
   name: string;
-  phone: string;
+  phone?: string;
+  phoneNumber?: string;
   ticketCode: string;
   ticketNumber?: string;
   boardingStatus?: string;
   boardingPoint?: string;
-  status: 'Embarqué' | 'Payé' | 'Annulé';
+  deboardingPoint?: string;
+  price?: number;
+  status?: 'Embarqué' | 'Payé' | 'Annulé';
 }
 
 export interface Trip {
@@ -184,6 +187,7 @@ export interface Trip {
   arrival?: string;
   departureDate?: string;
   availableSeats?: number;
+  maxSeats?: number;
   status?: string;
   statut?: string;
   createdAt?: string;
@@ -246,8 +250,8 @@ export interface ManifestData {
     deboardingPoint?: string;
     price?: number;
   }>;
-  boardingPoints?: Array<{ name: string; time: string; address?: string }>;
-  deboardingPoints?: Array<{ name: string; time: string; address?: string }>;
+  boardingPoints?: Array<{ id?: number; name: string; time?: string; address?: string; city?: string }>;
+  deboardingPoints?: Array<{ id?: number; name: string; time?: string; address?: string; city?: string }>;
   stops?: Array<{
     location: string;
     time: string;

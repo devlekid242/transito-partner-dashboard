@@ -7,8 +7,8 @@ export const environment = {
   // apiUrl: 'http://localhost:8000/api',
   // baseApiUrl: 'http://localhost:8000',
 
-  apiUrl: 'http://192.168.100.5:8000/api',
-  baseApiUrl: 'http://192.168.100.5:8000',
+  apiUrl: 'http://192.168.1.67:8000/api',
+  baseApiUrl: 'http://192.168.1.67:8000',
   apiTimeout: 30000,
   // ⚠️ TODO : cette clé est identique à celle d'environment.prod.ts.
   // Un dev connecté en local reçoit/peut interférer avec les événements
@@ -18,7 +18,18 @@ export const environment = {
   pusherKey: '9fd9732315c0fe4be887', // <-- à remplacer par une clé DEV distincte
   pusherCluster: 'mt1',
   pusherUseTLS: true,
-  pusherAuthEndpoint: 'http://192.168.100.5:8000/api/pusher/auth',
+  pusherAuthEndpoint: 'http://192.168.1.67:8000/api/pusher/auth',
+
+  firebaseConfig: {
+    apiKey: 'AIzaSyCcSogGDcqoP1W30cHhYFSKzTtPEY-gL_8',
+    authDomain: 'transito-6808c.firebaseapp.com',
+    projectId: 'transito-6808c',
+    storageBucket: 'transito-6808c.firebasestorage.app',
+    messagingSenderId: '464724672027',
+    appId: '1:464724672027:web:0b054ebb98ae89f91402be',
+  },
+  fcmVapidKey:
+    'BBYvzPl1NgBLL2LSUGacZGwwwJrznGAR2aEdcRBQL08qHgmXahnFkJQKkyAvE7d-dr-H-mhZ4A5BRYhW27gWdOY',
 };
 
 /*

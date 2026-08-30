@@ -6,11 +6,11 @@
       icon="dashboard"
     />
     <button
-      (click)="openScanModal.set(true)"
+      (click)="goToAddTrip()"
       class="btn btn-primary flex items-center gap-2 self-start sm:self-auto"
     >
       <app-icon name="ticket" [size]="18" />
-      <span>Valider un Billet</span>
+      <span>Ajouter un Trajet</span>
     </button>
   </div>
 
@@ -24,7 +24,7 @@
     <!-- KPI cards -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       <app-stat-card
-        label="Revenus Aujourd'hui"
+        label="Revenus Generaux"
         [value]="kpiSignal()?.revenusAujourdhui | currency: 'XOF' : 'symbol' : '1.0-0'"
         icon="banknote"
         iconBg="bg-brand-50 text-brand-600"

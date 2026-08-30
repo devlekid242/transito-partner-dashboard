@@ -17,167 +17,7 @@ import { ColumnDef, ActionDef, AgencyReservation } from '../../models';
     CommonModule, IconComponent, StatCardComponent, StatusBadgeComponent, DatatableComponent,
     PageHeaderComponent, ModalComponent,
   ],
-  template: `
-    <div class="space-y-6">
-      <app-page-header
-        title="Réservations"
-        subtitle="Toutes les réservations effectuées sur vos voyages"
-        icon="ticket"
-      >
-        <button class="btn btn-secondary" (click)="refresh()">
-          <app-icon name="refresh-cw" [size]="16" /> Actualiser
-        </button>
-      </app-page-header>
-
-      @if (isLoading()) {
-        <div class="flex items-center justify-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-          <span class="ml-3">Chargement des réservations...</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <app-stat-card
-            label="Total réservations"
-            [value]="totalReservations()"
-            icon="ticket"
-            iconBg="bg-brand-50 text-brand-600"
-          />
-          <app-stat-card
-            label="Confirmées"
-            [value]="confirmees()"
-            icon="check-circle"
-            iconBg="bg-emerald-50 text-emerald-600"
-          />
-          <app-stat-card
-            label="En attente"
-            [value]="enAttente()"
-            icon="clock"
-            iconBg="bg-amber-50 text-amber-600"
-          />
-          <app-stat-card
-            label="Annulées / remboursées"
-            [value]="annuleesOuRembourses()"
-            icon="x-circle"
-            iconBg="bg-red-50 text-red-600"
-          />
-        </div>
-
-        <div class="card p-4 flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-ink-500">Revenu confirmé</p>
-            <p class="text-2xl font-bold text-ink-900 mt-1">{{ formatCurrency(revenuConfirme()) }}</p>
-          </div>
-          <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
-            <app-icon name="wallet" [size]="20" />
-          </div>
-        </div>
-
-        <app-datatable
-          [columns]="cols"
-          [data]="reservations()"
-          [exportable]="true"
-          [filterKey]="'statut'"
-          [rowActions]="actions"
-        />
-      }
-    </div>
-
-    @if (selectedReservation(); as r) {
-      <app-modal
-        title="Détail de la réservation"
-        [subtitle]="r.reference"
-        [isOpen]="isDetailModalOpen()"
-        (close)="closeDetailModal()"
-        size="md"
-      >
-        <div class="space-y-5">
-          <!-- Statut -->
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-medium text-ink-500">Statut</span>
-            <app-status-badge [statut]="r.statut" />
-          </div>
-
-          <!-- Passager -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-ink-400 mb-2">Passager</h4>
-            <div class="grid grid-cols-2 gap-3 rounded-lg border border-ink-100 p-3">
-              <div>
-                <p class="text-xs text-ink-500">Nom</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.passager || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-ink-500">Téléphone</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.passengerPhone || 'N/A' }}</p>
-              </div>
-              @if (r.passengerEmail) {
-                <div class="col-span-2">
-                  <p class="text-xs text-ink-500">Email</p>
-                  <p class="text-sm font-semibold text-ink-900">{{ r.passengerEmail }}</p>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Voyage -->
-          <div>
-            <h4 class="text-xs font-bold uppercase tracking-wider text-ink-400 mb-2">Voyage</h4>
-            <div class="grid grid-cols-2 gap-3 rounded-lg border border-ink-100 p-3">
-              <div class="col-span-2">
-                <p class="text-xs text-ink-500">Trajet</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.trajet }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-ink-500">Date de départ</p>
-                <p class="text-sm font-semibold text-ink-900">{{ formatDate(r.date) }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-ink-500">Place(s)</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.seatNumber || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-ink-500">Point d'embarquement</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.boardingPoint || 'N/A' }}</p>
-              </div>
-              <div>
-                <p class="text-xs text-ink-500">Point de débarquement</p>
-                <p class="text-sm font-semibold text-ink-900">{{ r.deboardingPoint || 'N/A' }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Billets -->
-          @if (r.tickets?.length) {
-            <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-ink-400 mb-2">
-                Billets ({{ r.tickets.length }})
-              </h4>
-              <div class="divide-y divide-ink-100 rounded-lg border border-ink-100">
-                @for (t of r.tickets; track t.id) {
-                  <div class="flex items-center justify-between p-3">
-                    <div>
-                      <p class="text-sm font-semibold text-ink-900">{{ t.passengerName || 'N/A' }}</p>
-                      <p class="text-xs text-ink-500">Place {{ t.seatNumber }} · {{ t.passengerPhone || 'N/A' }}</p>
-                    </div>
-                    <app-status-badge [statut]="t.status" />
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Montant -->
-          <div class="flex items-center justify-between border-t border-ink-100 pt-4">
-            <span class="text-sm font-medium text-ink-500">Montant total</span>
-            <span class="text-lg font-bold text-brand-700">{{ formatCurrency(r.montant) }}</span>
-          </div>
-
-          <div class="flex justify-end pt-2">
-            <button type="button" class="btn btn-secondary" (click)="closeDetailModal()">Fermer</button>
-          </div>
-        </div>
-      </app-modal>
-    }
-  `,
+  templateUrl: './reservations.page.html',
 })
 export class ReservationsPage implements OnInit {
   private api = inject(PartnerApiService);
@@ -260,5 +100,11 @@ export class ReservationsPage implements OnInit {
     if (!v) return 'N/A';
     const d = new Date(v);
     return Number.isNaN(d.getTime()) ? v : d.toLocaleDateString('fr-FR');
+  }
+
+  formatTime(v: string): string {
+    if (!v) return 'N/A';
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? v : d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 }

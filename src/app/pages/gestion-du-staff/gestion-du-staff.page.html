@@ -18,6 +18,52 @@
       }
     </div>
 
+    @if (isUserDetailOpen() && selectedUser()) {
+      <app-modal
+        title="Détails de l'utilisateur"
+        [isOpen]="isUserDetailOpen()"
+        (close)="closeUserDetails()"
+        size="medium"
+      >
+        <div class="space-y-5">
+          <div class="flex items-center gap-4 border-b border-ink-100 pb-4">
+            <div class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-lg font-bold text-brand-700">
+              {{ (selectedUser()?.nom || selectedUser()?.fullName || '?').slice(0, 1).toUpperCase() }}
+            </div>
+            <div>
+              <h3 class="font-semibold text-ink-900">{{ selectedUser()?.nom || selectedUser()?.fullName || '—' }}</h3>
+              <p class="text-sm text-ink-500">{{ getRoleLabel(selectedUser()?.role || selectedUser()?.agentRole || '') }}</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Email</p>
+              <p class="mt-1 font-medium text-ink-800">{{ selectedUser()?.email || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Téléphone</p>
+              <p class="mt-1 font-medium text-ink-800">{{ selectedUser()?.telephone || selectedUser()?.phoneNumber || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Rôle</p>
+              <p class="mt-1 font-medium text-ink-800">{{ getRoleLabel(selectedUser()?.role || selectedUser()?.agentRole || '') }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Statut</p>
+              <p class="mt-1 font-medium text-ink-800">{{ selectedUser()?.statut || selectedUser()?.status || '—' }}</p>
+            </div>
+            <div>
+              <p class="text-xs font-medium uppercase tracking-wide text-ink-500">Date de création</p>
+              <p class="mt-1 font-medium text-ink-800">{{ selectedUser()?.dateCreation || '—' }}</p>
+            </div>
+          </div>
+          <div class="flex justify-end border-t border-ink-100 pt-4">
+            <button type="button" class="btn btn-secondary" (click)="closeUserDetails()">Fermer</button>
+          </div>
+        </div>
+      </app-modal>
+    }
+
     @if (isDeleteConfirmOpen()) {
       <app-modal
         title="Confirmer la suppression"

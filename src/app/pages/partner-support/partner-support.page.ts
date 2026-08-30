@@ -148,15 +148,73 @@ export class PartnerSupportPage implements OnInit {
 	getStatusColor(status: SupportTicketStatus): string {
 		switch (status) {
 			case "open":
-				return "bg-green-50 text-green-700";
+				return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100";
 			case "answered":
-				return "bg-blue-50 text-blue-700";
+				return "bg-blue-50 text-blue-700 ring-1 ring-blue-100";
 			case "closed":
-				return "bg-gray-100 text-gray-500";
+				return "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
 			case "pending":
-				return "bg-amber-50 text-amber-700";
+				return "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
 			default:
-				return "bg-gray-100 text-gray-500";
+				return "bg-slate-100 text-slate-600 ring-1 ring-slate-200";
+		}
+	}
+
+	getPriorityLabel(priority?: SupportTicketPriority): string {
+		switch (priority) {
+			case "low":
+				return "Faible";
+			case "medium":
+				return "Moyenne";
+			case "high":
+				return "Élevée";
+			case "critical":
+				return "Critique";
+			default:
+				return "Standard";
+		}
+	}
+
+	getPriorityColor(priority?: SupportTicketPriority): string {
+		switch (priority) {
+			case "low":
+				return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+			case "medium":
+				return "bg-amber-50 text-amber-700 ring-1 ring-amber-100";
+			case "high":
+				return "bg-orange-50 text-orange-700 ring-1 ring-orange-100";
+			case "critical":
+				return "bg-rose-50 text-rose-700 ring-1 ring-rose-100";
+			default:
+				return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
+		}
+	}
+
+	getCategoryLabel(category?: string): string {
+		switch (category) {
+			case "facturation":
+				return "Facturation";
+			case "technique":
+				return "Technique";
+			case "compte":
+				return "Compte";
+			case "autre":
+				return "Autre";
+			default:
+				return category || "Autre";
+		}
+	}
+
+	getCategoryColor(category?: string): string {
+		switch (category) {
+			case "facturation":
+				return "bg-violet-50 text-violet-700 ring-1 ring-violet-100";
+			case "technique":
+				return "bg-cyan-50 text-cyan-700 ring-1 ring-cyan-100";
+			case "compte":
+				return "bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100";
+			default:
+				return "bg-slate-100 text-slate-700 ring-1 ring-slate-200";
 		}
 	}
 }

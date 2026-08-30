@@ -1,4 +1,5 @@
 import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { IconComponent } from '../../shared/icon.component';
 import { StatCardComponent } from '../../components/stat-card/stat-card.component';
@@ -13,58 +14,11 @@ import { ColumnDef, ActionDef, PointEmbarquement } from '../../models';
   selector: 'app-gestion-point-embarquement',
   standalone: true,
   imports: [
+    CommonModule,
     RouterLink, IconComponent, StatCardComponent, DatatableComponent,
     PageHeaderComponent, ModalComponent,
   ],
-  template: `
-    <div class="space-y-6">
-      <app-page-header title="Points d'embarquement" subtitle="Gérez vos arrêts et points de départ" icon="map-pin">
-        <a routerLink="/ajout-point-embarquement" class="btn btn-primary">
-          <app-icon name="plus" [size]="16" /> Ajouter un point
-        </a>
-      </app-page-header>
-
-      @if (isLoading()) {
-        <div class="flex items-center justify-center p-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-          <span class="ml-3">Chargement des points d'embarquement...</span>
-        </div>
-      } @else {
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <app-stat-card label="Total points" [value]="totalPoints()" icon="map-pin" iconBg="bg-brand-50 text-brand-600" />
-          <app-stat-card label="Actifs" [value]="actifs()" icon="check-circle" iconBg="bg-brand-50 text-brand-600" />
-          <app-stat-card label="Inactifs" [value]="inactifs()" icon="x-circle" iconBg="bg-red-50 text-red-600" />
-        </div>
-
-        <app-datatable [columns]="cols" [data]="api.pointsEmbarquement()" [exportable]="true" [selectable]="true" [rowActions]="actions" />
-      }
-    </div>
-
-    @if (isDeleteConfirmOpen()) {
-      <app-modal
-        title="Confirmer la suppression"
-        [isOpen]="isDeleteConfirmOpen()"
-        (close)="closeDeleteConfirm()"
-        size="small"
-      >
-        <div class="p-1">
-          <p>Êtes-vous sûr de vouloir supprimer le point <strong>{{ selectedPointName() }}</strong> ? Cette action est irréversible.</p>
-          <div class="flex justify-end gap-3 border-t border-ink-100 pt-5 mt-6">
-            <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()" [disabled]="isDeleting()">
-              Annuler
-            </button>
-            <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
-              @if (isDeleting()) {
-                <span class="animate-pulse">Suppression...</span>
-              } @else {
-                Oui, supprimer
-              }
-            </button>
-          </div>
-        </div>
-      </app-modal>
-    }
-  `,
+  templateUrl: './gestion-point-embarquement.page.html',
 })
 export class GestionPointEmbarquementPage implements OnInit {
   api = inject(PartnerApiService);
@@ -75,6 +29,8 @@ export class GestionPointEmbarquementPage implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly isDeleting = signal<boolean>(false);
   readonly isDeleteConfirmOpen = signal<boolean>(false);
+  readonly isDetailModalOpen = signal<boolean>(false);
+  readonly selectedPoint = signal<PointEmbarquement | null>(null);
   
   selectedPointId: string | null = null;
   selectedPointName = signal<string>('');
@@ -113,14 +69,38 @@ export class GestionPointEmbarquementPage implements OnInit {
   }
 
   viewPoint(point: PointEmbarquement): void {
-    const details = [
-      `Nom: ${point.nom || point.name || 'N/A'}`,
-      `Adresse: ${point.adresse || point.address || 'N/A'}`,
-      `Ville: ${point.ville || point.city || 'N/A'}`,
-      `Heure: ${point.heure || point.time || 'N/A'}`,
-      `Statut: ${point.statut || point.status || 'N/A'}`,
-    ].join('\n');
-    this.toast.info(details);
+    this.selectedPoint.set(point);
+    this.isDetailModalOpen.set(true);
+  }
+
+  closePointDetails(): void {
+    this.isDetailModalOpen.set(false);
+    this.selectedPoint.set(null);
+  }
+
+  getStatusLabel(status?: string | null): string {
+    if (!status) return 'Inconnu';
+    const normalized = status.toLowerCase();
+    const map: Record<string, string> = {
+      actif: 'Actif',
+      active: 'Actif',
+      inactif: 'Inactif',
+      inactive: 'Inactif',
+      principal: 'Principal',
+      premium: 'Premium',
+      express: 'Express',
+      crossborder: 'Crossborder',
+    };
+    return map[normalized] || status;
+  }
+
+  getBooleanLabel(value?: number | boolean | null): string {
+    return value === 1 || value === true ? 'Oui' : 'Non';
+  }
+
+  getPointTypeLabel(type?: string | null): string {
+    if (!type) return 'Non défini';
+    return this.getStatusLabel(type);
   }
 
   editPoint(point: PointEmbarquement): void {

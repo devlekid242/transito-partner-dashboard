@@ -24,7 +24,7 @@ import {
   Agence,
   RevenueChartResponse,
   KpiData,
-  AgencyReservation
+  AgencyReservation,
 } from '../models';
 
 @Injectable({
@@ -52,9 +52,8 @@ export class PartnerApiService {
     data: [],
   });
 
-
   readonly agencyReservations = signal<AgencyReservation[]>([]);
-	readonly loadingAgencyReservations = signal<boolean>(false);
+  readonly loadingAgencyReservations = signal<boolean>(false);
 
   // Loading states pour chaque type de donnée
   readonly isLoadingBus = signal<boolean>(false);
@@ -175,14 +174,14 @@ export class PartnerApiService {
     const activeTrips = Number(source.activeTrips ?? source.trajetsActifs ?? 0);
     const passengers = Number(source.totalPassengers ?? source.passagersTotaux ?? 0);
     const monthlyRevenue = source.monthlyRevenue ?? source.revenusMois;
-    const occupancy = Number(source.occupancyRate ?? source.tauxOccupation ?? source.fillRate ?? 0);
+    const occupancy = Number(source.boardingRate ?? source.occupancyRate ?? source.fillRate ?? 0);
 
     this.kpi.set({
       revenusAujourdhui: revenue,
       trajetsActifs: Number.isFinite(activeTrips) ? activeTrips : 0,
       passagersTotaux: Number.isFinite(passengers) ? passengers : 0,
       revenusMois: monthlyRevenue == null ? null : Number(monthlyRevenue),
-      tauxOccupation: Number.isFinite(occupancy) ? occupancy : 0,
+      boardingRate: Number.isFinite(occupancy) ? occupancy : 0,
       revenueChange: Number(source.revenueChange ?? source.revenusChange ?? 0),
       tripsChange: Number(source.tripsChange ?? source.trajetsChange ?? 0),
       passengersChange: Number(source.passengersChange ?? source.passagersChange ?? 0),
@@ -343,6 +342,8 @@ export class PartnerApiService {
         ),
     }).pipe(
       map(({ trip, tickets }) => {
+        const departureCity = trip.departureCity || trip.departurePoint?.city || '';
+        const arrivalCity = trip.arrivalCity || trip.arrivalPoint?.city || '';
         const processedPassengers = (tickets || []).map((t: any) => {
           const statusCode = String(t.statusCode || t.status || '').toLowerCase();
           let boardingStatus: 'BOARDED' | 'PENDING' | 'NO_SHOW' | 'CANCELLED' = 'PENDING';
@@ -371,14 +372,18 @@ export class PartnerApiService {
             ticketNumber: t.ticketNumber || `TKT-${t.id}`,
             boardingStatus,
             phoneNumber: t.passengerPhone || t.phoneNumber || '',
-            boardingPoint: t.boardingPoint || t.boardingLocation || trip.departureCity,
-            deboardingPoint: t.deboardingPoint || t.destinationCity || trip.arrivalCity,
+            boardingPoint: t.boardingPoint || t.boardingLocation || departureCity,
+            deboardingPoint: t.deboardingPoint || t.destinationCity || arrivalCity,
             price: Number(t.price) || undefined,
           };
         });
 
         // Utiliser les passagers tels quels depuis l'API
         const finalPassengers = processedPassengers;
+        const totalRevenue = finalPassengers.reduce(
+          (sum, passenger) => sum + Number(passenger.price ?? 0),
+          0,
+        );
 
         const total = finalPassengers.length;
         const boarded = finalPassengers.filter((p) => p.boardingStatus === 'BOARDED').length;
@@ -388,13 +393,15 @@ export class PartnerApiService {
 
         return {
           tripId: numId,
-          departure: trip.departureCity ?? '',
-          arrival: trip.arrivalCity ?? '',
+          departure: departureCity,
+          departureCity,
+          arrival: arrivalCity,
+          arrivalCity,
           departureTime: trip.departureTime ?? '07:00',
           arrivalTime: trip.estimatedArrivalTime ?? '11:30',
           route: {
-            departure: trip.departureCity ?? '',
-            arrival: trip.arrivalCity ?? '',
+            departure: departureCity,
+            arrival: arrivalCity,
             departurePoint: trip.departurePoint?.name ?? '',
             arrivalPoint: trip.arrivalPoint?.name ?? '',
             departureDateTime: trip.departureTime ?? '07:00',
@@ -402,6 +409,9 @@ export class PartnerApiService {
           },
           status: (trip.status as any) ?? 'en_cours',
           notes: trip.notes ?? '',
+          totalRevenue,
+          seatsReserved: trip.seatsReserved ?? total,
+          busCapacity: trip.maxSeats ?? trip.bus?.capacity ?? trip.bus?.capacite ?? 0,
           busInfo: {
             id: trip.bus?.id ?? 1,
             licensePlate: trip.bus?.registrationNumber || trip.bus?.immatriculation || '',
@@ -423,13 +433,24 @@ export class PartnerApiService {
             photo: trip.hostessPhotoUrl ?? '',
           },
           passengers: finalPassengers,
-          stops: (trip.boardingPoints || []).map((point: any, index: number) => ({
-            location: point.name || `Étape ${index + 1}`,
-            time: point.time ?? '',
-            status: 'Programmé',
-            completed: false,
-            current: index === 0,
-          })),
+          boardingPoints: trip.boardingPoints || [],
+          deboardingPoints: trip.deboardingPoints || [],
+          stops: [
+            ...(trip.boardingPoints || []).map((point: any, index: number) => ({
+              location: point.name || `Embarquement ${index + 1}`,
+              time: point.time ?? '',
+              status: 'Embarquement',
+              completed: false,
+              current: index === 0,
+            })),
+            ...(trip.deboardingPoints || []).map((point: any, index: number) => ({
+              location: point.name || `Débarquement ${index + 1}`,
+              time: point.time ?? '',
+              status: 'Débarquement',
+              completed: false,
+              current: false,
+            })),
+          ],
           stats: {
             total,
             boarded,
@@ -904,6 +925,26 @@ export class PartnerApiService {
       );
   }
 
+  // ============= PUSH / DEVICE TOKENS (FCM) =============
+
+  registerDeviceToken(token: string, platform: 'ios' | 'android' | 'web'): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/devices/register`, { token, platform }).pipe(
+      catchError((err) => {
+        console.error('Error registering device token:', err);
+        throw err;
+      }),
+    );
+  }
+
+  unregisterDeviceToken(token: string): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/devices/unregister`, { token }).pipe(
+      catchError((err) => {
+        console.error('Error unregistering device token:', err);
+        throw err;
+      }),
+    );
+  }
+
   // ============= STATISTICS & REPORTS =============
 
   getPartnerStats(): Observable<any> {
@@ -1039,55 +1080,55 @@ export class PartnerApiService {
   }
 
   /**
-	 * Liste complète des réservations sur les voyages de l'agence (contrairement
-	 * à getRecentBookings() qui n'en charge qu'un échantillon pour le dashboard).
-	 */
-	getAgencyReservations(): Observable<AgencyReservation[]> {
-		this.loadingAgencyReservations.set(true);
+   * Liste complète des réservations sur les voyages de l'agence (contrairement
+   * à getRecentBookings() qui n'en charge qu'un échantillon pour le dashboard).
+   */
+  getAgencyReservations(): Observable<AgencyReservation[]> {
+    this.loadingAgencyReservations.set(true);
 
-		return this.http.get<any>(`${this.apiUrl}/agency/reservations`).pipe(
-			unwrapCollection<any>(),
-			map((rows) => (rows ?? []).map((r: any) => this.normalizeAgencyReservation(r))),
-			tap((reservations) => this.agencyReservations.set(reservations)),
-			catchError((err) => {
-				console.error('Error loading agency reservations:', err);
-				throw err;
-			}),
-			tap({
-				next: () => this.loadingAgencyReservations.set(false),
-				error: () => this.loadingAgencyReservations.set(false),
-			}),
-		);
-	}
+    return this.http.get<any>(`${this.apiUrl}/agency/reservations`).pipe(
+      unwrapCollection<any>(),
+      map((rows) => (rows ?? []).map((r: any) => this.normalizeAgencyReservation(r))),
+      tap((reservations) => this.agencyReservations.set(reservations)),
+      catchError((err) => {
+        console.error('Error loading agency reservations:', err);
+        throw err;
+      }),
+      tap({
+        next: () => this.loadingAgencyReservations.set(false),
+        error: () => this.loadingAgencyReservations.set(false),
+      }),
+    );
+  }
 
-	private normalizeAgencyReservation(r: any): AgencyReservation {
-		const trip = r.trip || {};
-		return {
-			id: r.id,
-			reference: r.reference || `RES-${r.id}`,
-			passager: r.passengerName || '—',
-			passengerPhone: r.passengerPhone || '',
-			passengerEmail: r.passengerEmail || '',
-			trajet: `${trip.departureCity || '—'} → ${trip.arrivalCity || '—'}`,
-			departureCity: trip.departureCity || '',
-			arrivalCity: trip.arrivalCity || '',
-			date: trip.departureDate || r.createdAt || '',
-			departureTime: trip.departureTime || null,
-			boardingPoint: r.boardingPoint || '',
-			deboardingPoint: r.deboardingPoint || '',
-			seatNumber: r.seatNumber || '',
-			montant: Number(r.totalPrice ?? 0),
-			statut: r.status || 'En attente',
-			tickets: (r.tickets || []).map((t: any) => ({
-				id: t.id,
-				seatNumber: t.seatNumber,
-				passengerName: t.passengerName,
-				passengerPhone: t.passengerPhone,
-				status: t.status,
-			})),
-			createdAt: r.createdAt || '',
-		};
-	}
+  private normalizeAgencyReservation(r: any): AgencyReservation {
+    const trip = r.trip || {};
+    return {
+      id: r.id,
+      reference: r.reference || `RES-${r.id}`,
+      passager: r.passengerName || '—',
+      passengerPhone: r.passengerPhone || '',
+      passengerEmail: r.passengerEmail || '',
+      trajet: `${trip.departureCity || '—'} → ${trip.arrivalCity || '—'}`,
+      departureCity: trip.departureCity || '',
+      arrivalCity: trip.arrivalCity || '',
+      date: trip.departureDate || r.createdAt || '',
+      departureTime: trip.departureTime || null,
+      boardingPoint: r.boardingPoint || '',
+      deboardingPoint: r.deboardingPoint || '',
+      seatNumber: r.seatNumber || '',
+      montant: Number(r.totalPrice ?? 0),
+      statut: r.status || 'En attente',
+      tickets: (r.tickets || []).map((t: any) => ({
+        id: t.id,
+        seatNumber: t.seatNumber,
+        passengerName: t.passengerName,
+        passengerPhone: t.passengerPhone,
+        status: t.status,
+      })),
+      createdAt: r.createdAt || '',
+    };
+  }
 
   // ============= HELPER & SELECT METHODS =============
 

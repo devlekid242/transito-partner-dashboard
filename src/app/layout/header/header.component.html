@@ -46,7 +46,12 @@
       </div>
       <div class="hidden sm:block">
         <p class="text-sm font-semibold text-ink-900 leading-none">{{ userName() }}</p>
-        <p class="text-xs text-ink-500 mt-0.5 capitalize">{{ userRole() }}</p>
+        @if (userRole() === 'admin_agence') {
+          <p class="text-xs text-ink-500 mt-0.5 capitalize">Administrateur d'agence</p>
+        } @else {
+          <p class="text-xs text-ink-500 mt-0.5 capitalize">{{ userRole() }}</p>
+        }
+        <!-- <p class="text-xs text-ink-500 mt-0.5 capitalize">{{ userRole() }}</p> -->
       </div>
     </a>
   </div>

@@ -32,7 +32,9 @@ export class GestionDuStaffPage implements OnInit {
   readonly isLoading = signal<boolean>(true);
   readonly isDeleting = signal<boolean>(false);
   readonly isDeleteConfirmOpen = signal<boolean>(false);
+  readonly isUserDetailOpen = signal<boolean>(false);
   readonly roleOptions = signal<SelectOption[]>([]);
+  readonly selectedUser = signal<Utilisateur | null>(null);
   
   // Selected user for deletion
   selectedUserId: string | null = null;
@@ -66,9 +68,22 @@ export class GestionDuStaffPage implements OnInit {
   }
 
   getRoleLabel(roleKey: string): string {
-    const options = this.roleOptions();
-    const found = options.find((o) => o.value === roleKey);
-    return found?.label || roleKey;
+    const normalizedRole = String(roleKey || '').trim().toLowerCase();
+    const roleLabels: Record<string, string> = {
+      admin: 'Administrateur',
+      admin_agence: 'Administrateur',
+      manager: 'Administrateur',
+      agent: 'Agent de quai',
+      agent_quai: 'Agent de quai',
+      agentdequai: 'Agent de quai',
+      quai: 'Agent de quai',
+    };
+    if (roleLabels[normalizedRole]) return roleLabels[normalizedRole];
+
+    const found = this.roleOptions().find(
+      (option) => String(option.value).toLowerCase() === normalizedRole,
+    );
+    return found?.label || roleKey || 'Rôle non défini';
   }
 
   totalStaff = computed(() => this.api.staff().length);
@@ -86,7 +101,7 @@ export class GestionDuStaffPage implements OnInit {
     { key: 'fullName', label: 'Nom', sortable: true },
     { key: 'email', label: 'Email', sortable: true },
     { key: 'phoneNumber', label: 'Téléphone', sortable: true },
-    { key: 'agentRole', label: 'Rôle', sortable: true },
+    { key: 'roleLabel', label: 'Rôle', sortable: true },
     { key: 'created_at', label: 'Date création', type: 'date', sortable: true },
     { key: 'status', label: 'Statut', type: 'status', sortable: true },
   ];
@@ -113,15 +128,13 @@ export class GestionDuStaffPage implements OnInit {
   ];
 
   viewUser(user: Utilisateur): void {
-    const details = [
-      `Nom: ${user.nom || user.fullName}`,
-      `Email: ${user.email}`,
-      `Téléphone: ${user.telephone || user.phoneNumber}`,
-      `Rôle: ${this.getRoleLabel(user.role || user.agentRole || '')}`,
-      `Statut: ${user.statut || user.status}`,
-      `Date création: ${user.dateCreation}`,
-    ].join('\n');
-    this.toast.info(details);
+    this.selectedUser.set(user);
+    this.isUserDetailOpen.set(true);
+  }
+
+  closeUserDetails(): void {
+    this.isUserDetailOpen.set(false);
+    this.selectedUser.set(null);
   }
 
   editUser(user: Utilisateur): void {

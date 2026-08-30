@@ -56,7 +56,7 @@ export class BrowserNotificationService {
 
     const notifOptions: NotificationOptions = {
       body: options.body,
-      icon: '/assets/images/logo-notification.png',
+      icon: '/assets/images/logo-symbole-trans.png',
       tag: options.tag,
       data: options.data,
     };
