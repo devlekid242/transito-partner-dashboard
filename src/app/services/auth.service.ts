@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { PartnerPermissionService } from './partner-permission.service';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 import { AlertService } from './alert.service';
 
 export interface AuthResponse {

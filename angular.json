@@ -25,7 +25,6 @@
               },
               "src/.htaccess",
               "src/firebase-messaging-sw.js"
-              
             ],
             "styles": [
               "src/global_styles.css"

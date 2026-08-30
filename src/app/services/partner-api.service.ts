@@ -2,7 +2,7 @@ import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 import { unwrapCollection } from '../shared/rxjs-operators';
 import {
   AgencyDocument,
@@ -1417,7 +1417,18 @@ export class PartnerApiService {
     return this.http.put<any>(`${this.apiUrl}/users/staff/${userId}`, payload).pipe(
       tap((updatedUser) => {
         this.staff.update((list) =>
-          list.map((u) => (String(u.id) === String(userId) ? { ...u, ...updatedUser } : u)),
+          list.map((u) =>
+            String(u.id) === String(userId)
+              ? {
+                  ...u,
+                  nom: updatedUser.fullName ?? u.nom,
+                  email: updatedUser.email ?? u.email,
+                  telephone: updatedUser.phoneNumber ?? u.telephone,
+                  role: (updatedUser.agentRole ?? u.role) as any,
+                  statut: updatedUser.status ?? u.statut,
+                }
+              : u,
+          ),
         );
       }),
       catchError((err) => {

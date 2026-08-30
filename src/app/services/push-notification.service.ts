@@ -1,7 +1,7 @@
 import { Injectable, effect } from '@angular/core';
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getMessaging, getToken, Messaging } from 'firebase/messaging';
-import { environment } from '../../environments/environment';
+import { environment } from '../../environments/environment.prod';
 import { AuthService } from './auth.service';
 import { PartnerApiService } from './partner-api.service';
 
