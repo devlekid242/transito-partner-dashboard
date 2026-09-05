@@ -129,11 +129,11 @@ export class CompteUtilisateurPage implements OnInit {
       next: (profile) => {
         const current = this.auth.getUser();
         this.auth.setUser({ ...current, ...(profile as any), fullName: this.profileForm.value.fullName, email: this.profileForm.value.email, phoneNumber: this.profileForm.value.phoneNumber } as any);
-        this.toast.success('Profil mis à jour avec succès.');
+        this.toast.success(profile, 'Profil mis à jour avec succès.');
         this.isSubmitting.set(false);
       },
-      error: () => {
-        this.toast.danger('Impossible de mettre à jour le profil.');
+      error: (err) => {
+        this.toast.danger(err, 'Impossible de mettre à jour le profil.');
         this.isSubmitting.set(false);
       },
     });
@@ -147,13 +147,13 @@ export class CompteUtilisateurPage implements OnInit {
     this.isSubmitting.set(true);
     const { currentPassword, newPassword } = this.securityForm.getRawValue();
     this.api.updatePartnerPassword(currentPassword || '', newPassword || '').subscribe({
-      next: () => {
-        this.toast.success('Mot de passe mis à jour avec succès.');
+      next: (res: any) => {
+        this.toast.success(res, 'Mot de passe mis à jour avec succès.');
         this.securityForm.reset();
         this.isSubmitting.set(false);
       },
       error: (err) => {
-        this.toast.danger(err?.error?.message || 'Erreur lors du changement de mot de passe.');
+        this.toast.danger(err, 'Erreur lors du changement de mot de passe.');
         this.isSubmitting.set(false);
       },
     });
@@ -178,11 +178,11 @@ export class CompteUtilisateurPage implements OnInit {
     this.api.updatePartnerProfile(payload).subscribe({
       next: (profile) => {
         this.auth.setUser({ ...(this.auth.getUser() || {}), ...(profile as any), ...payload } as any);
-        this.toast.success('Préférences mises à jour avec succès.');
+        this.toast.success(profile, 'Préférences mises à jour avec succès.');
         this.isSubmitting.set(false);
       },
-      error: () => {
-        this.toast.danger('Impossible d’enregistrer les préférences.');
+      error: (err) => {
+        this.toast.danger(err, 'Impossible d’enregistrer les préférences.');
         this.isSubmitting.set(false);
       },
     });
@@ -199,9 +199,9 @@ export class CompteUtilisateurPage implements OnInit {
       next: (response) => {
         const current = this.auth.getUser();
         this.auth.setUser({ ...(current as any), profilePhotoUrl: response.photoUrl } as any);
-        this.toast.success('Photo de profil mise à jour.');
+        this.toast.success(response, 'Photo de profil mise à jour.');
       },
-      error: () => this.toast.danger('Impossible de mettre à jour la photo.'),
+      error: (err) => this.toast.danger(err, 'Impossible de mettre à jour la photo.'),
     });
   }
 }

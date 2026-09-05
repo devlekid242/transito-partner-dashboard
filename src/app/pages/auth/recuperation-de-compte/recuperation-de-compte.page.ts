@@ -78,18 +78,14 @@ export class RecuperationDeComptePage {
     this.loading.set(true);
     
     this.auth.requestPasswordReset(this.email()).then(
-      (success: boolean) => {
+      (res: any) => {
         this.loading.set(false);
-        if (success) {
-          this.sent.set(true);
-          this.toast.success('Lien de réinitialisation envoyé.');
-        } else {
-          this.toast.danger('Impossible d\'envoyer le lien de réinitialisation. Vérifiez votre email.');
-        }
+        this.sent.set(true);
+        this.toast.success(res, 'Lien de réinitialisation envoyé.');
       }
-    ).catch(() => {
+    ).catch((err) => {
       this.loading.set(false);
-      this.toast.danger('Une erreur est survenue. Veuillez réessayer.');
+      this.toast.danger(err, 'Impossible d\'envoyer le lien de réinitialisation. Vérifiez votre email.');
     });
   }
 }

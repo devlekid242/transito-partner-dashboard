@@ -194,7 +194,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading cities:', err);
-        this.toast.danger('Impossible de charger la liste des villes');
+        this.toast.danger(err, 'Impossible de charger la liste des villes');
         this.isLoadingCities.set(false);
       },
     });
@@ -245,7 +245,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading point details:', err);
-        this.toast.danger('Impossible de charger les détails du point d\'embarquement');
+        this.toast.danger(err, 'Impossible de charger les détails du point d\'embarquement');
         this.isLoading.set(false);
         this.isLoadingCities.set(false);
       },
@@ -284,9 +284,10 @@ export class AjoutPointEmbarquementPage implements OnInit {
       : this.api.addBusPoint(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isSubmitting.set(false);
         this.toast.success(
+          res,
           this.selectedPointId
             ? 'Point d\'embarquement mis à jour avec succès.'
             : 'Point d\'embarquement ajouté avec succès.'
@@ -297,6 +298,7 @@ export class AjoutPointEmbarquementPage implements OnInit {
         this.isSubmitting.set(false);
         console.error('Error saving point:', err);
         this.toast.danger(
+          err,
           this.selectedPointId
             ? 'Impossible de mettre à jour le point d\'embarquement.'
             : 'Impossible d\'ajouter le point d\'embarquement.'

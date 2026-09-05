@@ -174,7 +174,7 @@ export class TrajetManifestePage implements OnInit {
       },
       error: (error) => {
         console.error('Error loading manifest:', error);
-        this.toast.danger('Impossible de charger le manifeste du trajet');
+        this.toast.danger(error, 'Impossible de charger le manifeste du trajet');
         this.isLoading.set(false);
       },
     });
@@ -201,14 +201,14 @@ export class TrajetManifestePage implements OnInit {
               p.ticketNumber === passenger.ticketNumber ? { ...p, boardingStatus: 'BOARDED' } : p
             )
           );
-          this.toast.success(`Passager ${passenger.name} validé avec succès`);
+          this.toast.success(response, `Passager ${passenger.name} validé avec succès`);
         } else {
-          this.toast.danger(response.message || 'Validation échouée');
+          this.toast.danger(response, 'Validation échouée');
         }
       },
       error: (error) => {
         console.error('Error validating ticket:', error);
-        this.toast.danger('Erreur de validation du billet');
+        this.toast.danger(error, 'Erreur de validation du billet');
       },
     });
   }

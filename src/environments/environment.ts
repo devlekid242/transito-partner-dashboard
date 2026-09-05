@@ -7,8 +7,8 @@ export const environment = {
   // apiUrl: 'http://localhost:8000/api',
   // baseApiUrl: 'http://localhost:8000',
 
-  apiUrl: 'http://192.168.1.67:8000/api',
-  baseApiUrl: 'http://192.168.1.67:8000',
+  apiUrl: 'http://192.168.100.5:8000/api',
+  baseApiUrl: 'http://192.168.100.5:8000',
   apiTimeout: 30000,
   // ⚠️ TODO : cette clé est identique à celle d'environment.prod.ts.
   // Un dev connecté en local reçoit/peut interférer avec les événements
@@ -18,7 +18,7 @@ export const environment = {
   pusherKey: '9fd9732315c0fe4be887', // <-- à remplacer par une clé DEV distincte
   pusherCluster: 'mt1',
   pusherUseTLS: true,
-  pusherAuthEndpoint: 'http://192.168.1.67:8000/api/pusher/auth',
+  pusherAuthEndpoint: 'http://192.168.100.5:8000/api/pusher/auth',
 
   firebaseConfig: {
     apiKey: 'AIzaSyCcSogGDcqoP1W30cHhYFSKzTtPEY-gL_8',

@@ -121,7 +121,7 @@ export class AjoutTrajetPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading cities:', err);
-        this.toast.danger('Impossible de charger la liste des villes');
+        this.toast.danger(err, 'Impossible de charger la liste des villes');
         this.isLoadingCities.set(false);
       },
     });
@@ -173,7 +173,7 @@ export class AjoutTrajetPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading trip details:', err);
-        this.toast.danger('Impossible de charger les détails du trajet');
+        this.toast.danger(err, 'Impossible de charger les détails du trajet');
         this.isLoading.set(false);
         this.isLoadingCities.set(false);
       },
@@ -298,9 +298,10 @@ export class AjoutTrajetPage implements OnInit {
       : this.api.createTrip(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isSubmitting.set(false);
         this.toast.success(
+          res,
           this.selectedTripId ? 'Trajet mis à jour avec succès.' : 'Trajet publié avec succès.'
         );
         this.router.navigate(['/trip-schedule']);
@@ -309,6 +310,7 @@ export class AjoutTrajetPage implements OnInit {
         this.isSubmitting.set(false);
         console.error('Error saving trip:', err);
         this.toast.danger(
+          err,
           this.selectedTripId ? 'Impossible de mettre à jour le trajet.' : 'Impossible de publier le trajet.'
         );
       },

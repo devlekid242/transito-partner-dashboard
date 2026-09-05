@@ -126,9 +126,9 @@ export class ConnexionPage {
       } else {
         this.toast.danger('Email ou mot de passe incorrect.');
       }
-    } catch {
+    } catch (err) {
       this.loading.set(false);
-      this.toast.danger('Une erreur est survenue lors de la connexion.');
+      this.toast.danger(err, 'Une erreur est survenue lors de la connexion.');
     }
   }
 }

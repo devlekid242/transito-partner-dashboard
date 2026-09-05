@@ -76,7 +76,7 @@ export class GestionFlottePage implements OnInit {
       },
       error: (err) => {
         console.error('Erreur de chargement des bus:', err);
-        this.toast.danger('Erreur de chargement des bus');
+        this.toast.danger(err, 'Erreur de chargement des bus');
         this.isLoading.set(false);
         this.buses.set([]);
       },
@@ -124,17 +124,17 @@ export class GestionFlottePage implements OnInit {
 
     this.isDeleting.set(true);
     this.api.deleteBus(busId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isDeleting.set(false);
         this.isDeleteModalOpen.set(false);
         this.deletingBusId.set(null);
         this.loadBuses(); // Recharger la liste
-        this.toast.success('Bus supprimé avec succès');
+        this.toast.success(res, 'Bus supprimé avec succès');
       },
       error: (err) => {
         this.isDeleting.set(false);
         console.error('Erreur de suppression:', err);
-        this.toast.danger('Erreur lors de la suppression du bus');
+        this.toast.danger(err, 'Erreur lors de la suppression du bus');
       },
     });
   }

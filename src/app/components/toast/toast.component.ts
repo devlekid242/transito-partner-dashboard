@@ -1,5 +1,6 @@
 import { Injectable, signal, Component, Input, OnDestroy, inject } from '@angular/core';
 import { IconComponent } from '../../shared/icon.component';
+import { extractApiErrorMessage, extractApiMessage } from '../../utils/error.utils';
 
 export interface Toast {
   id: number;
@@ -16,12 +17,45 @@ export class ToastService {
   show(message: string, type: Toast['type'] = 'info') {
     const id = ++this.nextId;
     this._toasts.update((t) => [...t, { id, message, type }]);
-    setTimeout(() => this.dismiss(id), 3500);
+    setTimeout(() => this.dismiss(id), 5000);
   }
-  success(m: string) { this.show(m, 'success'); }
-  info(m: string) { this.show(m, 'info'); }
-  warning(m: string) { this.show(m, 'warning'); }
-  danger(m: string) { this.show(m, 'danger'); }
+
+  success(responseOrMessage: unknown, fallbackMessage: string = 'Opération réussie') {
+    const msg = extractApiMessage(
+      responseOrMessage,
+      typeof responseOrMessage === 'string' ? responseOrMessage : fallbackMessage
+    );
+    this.show(msg, 'success');
+  }
+
+  info(responseOrMessage: unknown, fallbackMessage: string = 'Information') {
+    const msg = extractApiMessage(
+      responseOrMessage,
+      typeof responseOrMessage === 'string' ? responseOrMessage : fallbackMessage
+    );
+    this.show(msg, 'info');
+  }
+
+  warning(errorOrMessage: unknown, fallbackMessage: string = 'Attention') {
+    const msg = extractApiErrorMessage(
+      errorOrMessage,
+      typeof errorOrMessage === 'string' ? errorOrMessage : fallbackMessage
+    );
+    this.show(msg, 'warning');
+  }
+
+  danger(errorOrMessage: unknown, fallbackMessage: string = 'Une erreur est survenue') {
+    const msg = extractApiErrorMessage(
+      errorOrMessage,
+      typeof errorOrMessage === 'string' ? errorOrMessage : fallbackMessage
+    );
+    this.show(msg, 'danger');
+  }
+
+  error(errorOrMessage: unknown, fallbackMessage: string = 'Une erreur est survenue') {
+    this.danger(errorOrMessage, fallbackMessage);
+  }
+
   dismiss(id: number) {
     this._toasts.update((t) => t.filter((x) => x.id !== id));
   }
@@ -60,7 +94,7 @@ export class ToastComponent {
       t === 'danger' ? 'x-circle' : 'info';
   }
   cls(t: string) {
-    return t === 'success' ? 'border-brand-200' : t === 'warning' ? 'border-amber-200' :
-      t === 'danger' ? 'border-red-200' : 'border-primary-200';
+    return t === 'success' ? 'bg-green-200 text-green-800' : t === 'warning' ? 'bg-amber-200 text-amber-800' :
+      t === 'danger' ? 'bg-red-200 text-red-800' : 'bg-primary-200 text-primary-800';
   }
 }

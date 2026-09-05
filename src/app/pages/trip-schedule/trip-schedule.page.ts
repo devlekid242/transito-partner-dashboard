@@ -88,7 +88,7 @@ export class TripSchedulePage implements OnInit {
       },
       error: (err) => {
         console.error('Erreur de chargement des trajets:', err);
-        this.toast.danger('Erreur de chargement des trajets');
+        this.toast.danger(err, 'Erreur de chargement des trajets');
         this.trips.set([]);
         this.isLoading.set(false);
       },
@@ -119,17 +119,17 @@ export class TripSchedulePage implements OnInit {
 
     this.isDeleting.set(true);
     this.api.deleteTrip(tripId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isDeleting.set(false);
         this.isDeleteModalOpen.set(false);
         this.deletingTripId.set(null);
         this.loadTrips();
-        this.toast.success('Trajet supprimé avec succès');
+        this.toast.success(res, 'Trajet supprimé avec succès');
       },
       error: (err) => {
         this.isDeleting.set(false);
         console.error('Erreur de suppression:', err);
-        this.toast.danger('Erreur lors de la suppression du trajet');
+        this.toast.danger(err, 'Erreur lors de la suppression du trajet');
       },
     });
   }

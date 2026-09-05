@@ -800,11 +800,9 @@ export class PartnerApiService {
           list.map((x) => (String(x.id) === String(pointId) ? { ...x, ...updated } : x)),
         );
       }),
-      catchError(() => {
-        this.pointsEmbarquement.update((list) =>
-          list.map((x) => (String(x.id) === String(pointId) ? { ...x, ...updates } : x)),
-        );
-        return of({ id: pointId, ...updates } as BusPoint);
+      catchError((err) => {
+        console.error('Error updating bus point:', err);
+        throw err;
       }),
     );
   }
@@ -821,11 +819,9 @@ export class PartnerApiService {
             list.filter((x) => String(x.id) !== String(pointId)),
           );
         }),
-        catchError(() => {
-          this.pointsEmbarquement.update((list) =>
-            list.filter((x) => String(x.id) !== String(pointId)),
-          );
-          return of({ success: true, message: 'Point supprimé' });
+        catchError((err) => {
+          console.error('Error deleting bus point:', err);
+          throw err;
         }),
       );
   }

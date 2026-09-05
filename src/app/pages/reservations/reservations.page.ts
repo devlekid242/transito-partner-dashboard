@@ -72,7 +72,7 @@ export class ReservationsPage implements OnInit {
       next: () => this.isLoading.set(false),
       error: (err) => {
         console.error('Error loading reservations:', err);
-        this.toast.danger('Impossible de charger les réservations');
+        this.toast.danger(err, 'Impossible de charger les réservations');
         this.isLoading.set(false);
       },
     });

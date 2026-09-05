@@ -250,7 +250,7 @@ export class AjoutUserPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading cities:', err);
-        this.toast.danger('Impossible de charger la liste des villes');
+        this.toast.danger(err, 'Impossible de charger la liste des villes');
         this.isLoadingCities.set(false);
       },
     });
@@ -285,7 +285,7 @@ export class AjoutUserPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading user details:', err);
-        this.toast.danger("Impossible de charger les détails de l'utilisateur");
+        this.toast.danger(err, "Impossible de charger les détails de l'utilisateur");
         this.isLoading.set(false);
       },
     });
@@ -324,9 +324,10 @@ export class AjoutUserPage implements OnInit {
       : this.api.registerUser(payload);
 
     request$.subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isSubmitting.set(false);
         this.toast.success(
+          res,
           this.selectedUserId
             ? 'Utilisateur mis à jour avec succès.'
             : 'Utilisateur ajouté avec succès.',
@@ -337,6 +338,7 @@ export class AjoutUserPage implements OnInit {
         this.isSubmitting.set(false);
         console.error('Error saving user:', err);
         this.toast.danger(
+          err,
           this.selectedUserId
             ? "Impossible de mettre à jour l'utilisateur."
             : "Impossible d'ajouter l'utilisateur.",

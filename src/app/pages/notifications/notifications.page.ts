@@ -48,7 +48,7 @@ export class NotificationsPage implements OnInit {
       next: () => {},
       error: (err) => {
         console.error('Error marking notification as read:', err);
-        this.toast.danger('Impossible de marquer cette notification comme lue');
+        this.toast.danger(err, 'Impossible de marquer cette notification comme lue');
       },
     });
   }
@@ -64,7 +64,7 @@ export class NotificationsPage implements OnInit {
       error: (err) => {
         this.isMarkingAll.set(false);
         console.error('Error marking all notifications as read:', err);
-        this.toast.danger('Impossible de marquer toutes les notifications comme lues');
+        this.toast.danger(err, 'Impossible de marquer toutes les notifications comme lues');
       },
     });
   }
@@ -75,7 +75,7 @@ export class NotificationsPage implements OnInit {
         next: () => this.isLoading.set(false),
         error: (err) => {
           console.error('Error loading notifications:', err);
-          this.toast.danger('Impossible de charger les notifications');
+          this.toast.danger(err, 'Impossible de charger les notifications');
           this.isLoading.set(false);
         },
       });

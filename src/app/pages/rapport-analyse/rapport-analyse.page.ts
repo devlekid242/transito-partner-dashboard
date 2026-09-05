@@ -206,7 +206,7 @@ export class RapportAnalysePage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading analytics report:', err);
-        this.toast.danger('Impossible de charger les rapports d\'analyse');
+        this.toast.danger(err, 'Impossible de charger les rapports d\'analyse');
         this.isLoading.set(false);
       },
     });
@@ -221,7 +221,7 @@ export class RapportAnalysePage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading saved reports:', err);
-        this.toast.danger('Impossible de charger les rapports enregistrés.');
+        this.toast.danger(err, 'Impossible de charger les rapports enregistrés.');
         this.isLoadingReports.set(false);
       },
     });
@@ -240,7 +240,7 @@ export class RapportAnalysePage implements OnInit {
       },
       error: (err) => {
         console.error('Error downloading report:', err);
-        this.toast.danger('Impossible de télécharger le rapport.');
+        this.toast.danger(err, 'Impossible de télécharger le rapport.');
       },
     });
   }
@@ -369,7 +369,7 @@ export class RapportAnalysePage implements OnInit {
       },
       error: (err) => {
         console.error('Error exporting report:', err);
-        this.toast.danger('Impossible d’exporter le rapport.');
+        this.toast.danger(err, 'Impossible d\'exporter le rapport.');
         this.isExporting.set(false);
       },
     });

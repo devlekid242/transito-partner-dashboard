@@ -51,7 +51,7 @@ export class GestionDuStaffPage implements OnInit {
         next: () => this.isLoading.set(false),
         error: (err) => {
           console.error('Error loading staff:', err);
-          this.toast.danger('Impossible de charger le personnel');
+          this.toast.danger(err, 'Impossible de charger le personnel');
           this.isLoading.set(false);
         },
       });
@@ -158,15 +158,15 @@ export class GestionDuStaffPage implements OnInit {
 
     this.isDeleting.set(true);
     this.api.deleteUser(this.selectedUserId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isDeleting.set(false);
-        this.toast.success('Utilisateur supprimé avec succès');
+        this.toast.success(res, 'Utilisateur supprimé avec succès');
         this.closeDeleteConfirm();
       },
       error: (err) => {
         this.isDeleting.set(false);
         console.error('Error deleting user:', err);
-        this.toast.danger('Impossible de supprimer l\'utilisateur');
+        this.toast.danger(err, 'Impossible de supprimer l\'utilisateur');
         this.closeDeleteConfirm();
       },
     });

@@ -1,14 +1,20 @@
 import { Injectable } from '@angular/core';
 import Swal from 'sweetalert2';
 
+import { extractApiErrorMessage, extractApiMessage } from '../utils/error.utils';
+
 @Injectable({
   providedIn: 'root',
 })
 export class AlertService {
-  success(message: string, title: string = 'Succès !'): void {
+  success(responseOrMessage: unknown, title: string = 'Succès !', fallback: string = 'Opération réussie'): void {
+    const text = extractApiMessage(
+      responseOrMessage,
+      typeof responseOrMessage === 'string' ? responseOrMessage : fallback
+    );
     Swal.fire({
       title,
-      text: message,
+      text,
       icon: 'success',
       confirmButtonColor: '#3b82f6',
       timer: 2200,
@@ -17,28 +23,40 @@ export class AlertService {
     });
   }
 
-  error(message: string, title: string = 'Une erreur est survenue'): void {
+  error(errorOrMessage: unknown, title: string = 'Une erreur est survenue', fallback: string = 'Une erreur est survenue'): void {
+    const text = extractApiErrorMessage(
+      errorOrMessage,
+      typeof errorOrMessage === 'string' ? errorOrMessage : fallback
+    );
     Swal.fire({
       title,
-      text: message,
+      text,
       icon: 'error',
       confirmButtonColor: '#ef4444',
     });
   }
 
-  warning(message: string, title: string = 'Attention'): void {
+  warning(errorOrMessage: unknown, title: string = 'Attention', fallback: string = 'Attention'): void {
+    const text = extractApiErrorMessage(
+      errorOrMessage,
+      typeof errorOrMessage === 'string' ? errorOrMessage : fallback
+    );
     Swal.fire({
       title,
-      text: message,
+      text,
       icon: 'warning',
       confirmButtonColor: '#f59e0b',
     });
   }
 
-  info(message: string, title: string = 'Information'): void {
+  info(responseOrMessage: unknown, title: string = 'Information', fallback: string = 'Information'): void {
+    const text = extractApiMessage(
+      responseOrMessage,
+      typeof responseOrMessage === 'string' ? responseOrMessage : fallback
+    );
     Swal.fire({
       title,
-      text: message,
+      text,
       icon: 'info',
       confirmButtonColor: '#3b82f6',
       timer: 2200,

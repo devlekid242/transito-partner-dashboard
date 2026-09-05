@@ -147,7 +147,7 @@ export class GestionFinancePage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading partner stats:', err);
-        this.toast.danger('Impossible de charger les statistiques financières');
+        this.toast.danger(err, 'Impossible de charger les statistiques financières');
         this.isLoading.set(false);
       },
     });
@@ -165,7 +165,7 @@ export class GestionFinancePage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading revenue data:', err);
-        this.toast.danger('Impossible de charger les données du graphique');
+        this.toast.danger(err, 'Impossible de charger les données du graphique');
       },
     });
   }

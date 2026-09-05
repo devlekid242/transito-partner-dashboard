@@ -21,14 +21,13 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public/assets",
+                "output": "assets"
               },
               "src/.htaccess",
               "src/firebase-messaging-sw.js"
             ],
-            "styles": [
-              "src/global_styles.css"
-            ]
+            "styles": ["src/global_styles.css"]
           },
           "configurations": {
             "production": {

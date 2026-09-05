@@ -281,7 +281,7 @@ export class AuthService {
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      this.alertService.error('Une erreur est survenue lors de la connexion.');
+      this.alertService.error(error, 'Échec de la connexion', 'Une erreur est survenue lors de la connexion.');
       return false;
     }
   }
@@ -328,12 +328,10 @@ export class AuthService {
     }
   }
 
-  requestPasswordReset(email: string): Promise<boolean> {
-    if (!email) return Promise.resolve(false);
+  requestPasswordReset(email: string): Promise<any> {
+    if (!email) return Promise.reject(new Error('Email requis'));
     return this.http
       .post(`${this.apiBaseUrl}/auth/forgot-password`, { email })
-      .toPromise()
-      .then(() => true)
-      .catch(() => false);
+      .toPromise();
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
+import { extractApiErrorMessage } from '../utils/error.utils';
 
 /**
  * Permet au partenaire (compte admin_agence) de contacter l'ADMINISTRATION
@@ -71,7 +72,7 @@ export class PartnerSupportService {
       tap(() => this.getMyTickets().subscribe()),
       catchError((err) => {
         console.error("Erreur création ticket vers l'administration:", err);
-        this.error.set("Impossible d'envoyer votre demande.");
+        this.error.set(extractApiErrorMessage(err, "Impossible d'envoyer votre demande."));
         return of(null);
       }),
     );
@@ -83,7 +84,7 @@ export class PartnerSupportService {
       tap((data) => this.tickets.set(data)),
       catchError((err) => {
         console.error('Erreur chargement de vos tickets:', err);
-        this.error.set('Impossible de charger vos tickets.');
+        this.error.set(extractApiErrorMessage(err, 'Impossible de charger vos tickets.'));
         return of([]);
       }),
     );

@@ -103,7 +103,7 @@ export class DemandeDeRetraitPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading partner stats:', err);
-        this.toast.danger('Impossible de charger le solde');
+        this.toast.danger(err, 'Impossible de charger le solde');
         this.isLoading.set(false);
       },
     });
@@ -116,7 +116,7 @@ export class DemandeDeRetraitPage implements OnInit {
       },
       error: (err) => {
         console.error('Error loading payment methods:', err);
-        this.toast.danger('Impossible de charger les méthodes de paiement');
+        this.toast.danger(err, 'Impossible de charger les méthodes de paiement');
       },
     });
   }
@@ -188,16 +188,16 @@ export class DemandeDeRetraitPage implements OnInit {
     
     this.isProcessing.set(true);
     this.api.cancelWithdrawal(this.selectedWithdrawalId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isProcessing.set(false);
-        this.toast.success('Demande de retrait annulée avec succès');
+        this.toast.success(res, 'Demande de retrait annulée avec succès');
         this.closeCancelConfirmModal();
         this.selectedWithdrawalId = null;
       },
       error: (err) => {
         this.isProcessing.set(false);
         console.error('Error cancelling withdrawal:', err);
-        this.toast.danger('Impossible d\'annuler la demande de retrait');
+        this.toast.danger(err, 'Impossible d\'annuler la demande de retrait');
       },
     });
   }
@@ -225,9 +225,9 @@ export class DemandeDeRetraitPage implements OnInit {
       paymentMethod: formValue.paymentMethod,
       notes: formValue.notes || undefined,
     }).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.isSubmitting.set(false);
-        this.toast.success('Demande de retrait soumise avec succès!');
+        this.toast.success(res, 'Demande de retrait soumise avec succès!');
         this.closeWithdrawalModal();
         
         // Refresh balance if available in response
@@ -242,8 +242,7 @@ export class DemandeDeRetraitPage implements OnInit {
       error: (err) => {
         this.isSubmitting.set(false);
         console.error('Error creating withdrawal:', err);
-        const msg = err?.error?.message || 'Erreur lors de l\'envoi de la demande de retrait';
-        this.toast.danger(msg);
+        this.toast.danger(err, 'Erreur lors de l\'envoi de la demande de retrait');
       },
     });
   }

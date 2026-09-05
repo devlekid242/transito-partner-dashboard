@@ -104,7 +104,7 @@ export class AjoutBusPage implements OnInit {
       },
       error: (error) => {
         console.error('Erreur de chargement du bus:', error);
-        this.toast.danger('Erreur de chargement des données du bus');
+        this.toast.danger(error, 'Erreur de chargement des données du bus');
         this.isSubmitting.set(false);
       },
     });
@@ -126,29 +126,29 @@ export class AjoutBusPage implements OnInit {
     if (this.isEditMode() && busId) {
       // Édition
       this.api.updateBus(busId, formData).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.isSubmitting.set(false);
-          this.toast.success(`Bus ${formData.registrationNumber} modifié avec succès`);
+          this.toast.success(res, `Bus ${formData.registrationNumber} modifié avec succès`);
           this.router.navigate(['/gestion-flotte']);
         },
         error: (error) => {
           this.isSubmitting.set(false);
           console.error('Erreur de modification:', error);
-          this.toast.danger('Erreur lors de la modification du bus');
+          this.toast.danger(error, 'Erreur lors de la modification du bus');
         },
       });
     } else {
       // Création
       this.api.createBus(formData).subscribe({
-        next: () => {
+        next: (res: any) => {
           this.isSubmitting.set(false);
-          this.toast.success(`Bus ${formData.registrationNumber} ajouté avec succès`);
+          this.toast.success(res, `Bus ${formData.registrationNumber} ajouté avec succès`);
           this.router.navigate(['/gestion-flotte']);
         },
         error: (error) => {
           this.isSubmitting.set(false);
           console.error('Erreur de création:', error);
-          this.toast.danger("Erreur lors de l'ajout du bus");
+          this.toast.danger(error, "Erreur lors de l'ajout du bus");
         },
       });
     }

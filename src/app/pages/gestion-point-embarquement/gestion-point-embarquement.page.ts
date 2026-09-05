@@ -59,7 +59,7 @@ export class GestionPointEmbarquementPage implements OnInit {
         next: () => this.isLoading.set(false),
         error: (err) => {
           console.error('Error loading bus points:', err);
-          this.toast.danger('Impossible de charger les points d\'embarquement');
+          this.toast.danger(err, 'Impossible de charger les points d\'embarquement');
           this.isLoading.set(false);
         },
       });
@@ -124,15 +124,15 @@ export class GestionPointEmbarquementPage implements OnInit {
 
     this.isDeleting.set(true);
     this.api.deleteBusPoint(this.selectedPointId).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.isDeleting.set(false);
-        this.toast.success('Point d\'embarquement supprimé avec succès');
+        this.toast.success(res, 'Point d\'embarquement supprimé avec succès');
         this.closeDeleteConfirm();
       },
       error: (err) => {
         this.isDeleting.set(false);
         console.error('Error deleting bus point:', err);
-        this.toast.danger('Impossible de supprimer le point d\'embarquement');
+        this.toast.danger(err, 'Impossible de supprimer le point d\'embarquement');
         this.closeDeleteConfirm();
       },
     });

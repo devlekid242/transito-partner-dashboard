@@ -118,11 +118,11 @@ export class ProfilAgencePage implements OnInit {
         this.loadDocuments();
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.isLoadingCities.set(false);
         this.loadDocuments();
         this.isLoading.set(false);
-        this.toast.danger('Impossible de charger le profil de l’agence.');
+        this.toast.danger(err, 'Impossible de charger le profil de l’agence.');
       },
     });
   }
@@ -187,8 +187,8 @@ export class ProfilAgencePage implements OnInit {
         this.toast.success('Profil de l’agence mis à jour avec succès.');
         this.isSubmitting.set(false);
       },
-      error: () => {
-        this.toast.danger('Impossible de mettre à jour le profil de l’agence.');
+      error: (err) => {
+        this.toast.danger(err, 'Impossible de mettre à jour le profil de l’agence.');
         this.isSubmitting.set(false);
       },
     });
@@ -207,13 +207,13 @@ export class ProfilAgencePage implements OnInit {
         const url = response?.[key] || response?.url || response?.[type];
         if (url) this.api.setAgence({ ...this.agency(), [key]: url });
         input.value = '';
-        this.toast.success(`${type === 'logo' ? 'Logo' : 'Bannière'} mis à jour.`);
+        this.toast.success(response, `${type === 'logo' ? 'Logo' : 'Bannière'} mis à jour.`);
         this.isSubmittingFile.set(false);
       },
-      error: () => {
+      error: (err) => {
         input.value = '';
         this.isSubmittingFile.set(false);
-        this.toast.danger(`Impossible de mettre à jour le ${type}.`);
+        this.toast.danger(err, `Impossible de mettre à jour le ${type}.`);
       },
     });
   }
@@ -261,11 +261,11 @@ export class ProfilAgencePage implements OnInit {
         this.showDocumentModal.set(false);
         this.selectedDocumentFile.set(null);
         this.documentForm.reset({ name: '', type: '' });
-        this.toast.success('Document téléversé avec succès.');
+        this.toast.success(doc, 'Document téléversé avec succès.');
       },
-      error: () => {
+      error: (err) => {
         this.isSubmittingFile.set(false);
-        this.toast.danger('Impossible de téléverser le document.');
+        this.toast.danger(err, 'Impossible de téléverser le document.');
       },
     });
   }
@@ -274,14 +274,14 @@ export class ProfilAgencePage implements OnInit {
     this.isSubmittingFile.set(true);
     if (!doc?.id) return;
     this.api.deleteAgencyDocument(doc.id).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.documents.update((docs) => docs.filter((d) => d.id !== doc.id));
         this.isSubmittingFile.set(false);
-        this.toast.success('Document supprimé.');
+        this.toast.success(res, 'Document supprimé.');
       },
-      error: () => {
+      error: (err) => {
         this.isSubmittingFile.set(false);
-        this.toast.danger('Impossible de supprimer le document.');
+        this.toast.danger(err, 'Impossible de supprimer le document.');
       },
     });
   }
@@ -300,15 +300,14 @@ export class ProfilAgencePage implements OnInit {
 
     this.isSubmittingPayout.set(true);
     this.api.proposePayoutMsisdn(agencyId, this.payoutMsisdnControl.value).subscribe({
-      next: () => {
-        this.toast.success('Numéro proposé, en attente de validation par un administrateur.');
+      next: (res: any) => {
+        this.toast.success(res, 'Numéro proposé, en attente de validation par un administrateur.');
         this.payoutMsisdnControl.reset('');
         this.isSubmittingPayout.set(false);
       },
       error: (err) => {
         this.isSubmittingPayout.set(false);
-        const message = err?.error?.message || 'Impossible de proposer ce numéro.';
-        this.toast.danger(message);
+        this.toast.danger(err, 'Impossible de proposer ce numéro.');
       },
     });
   }

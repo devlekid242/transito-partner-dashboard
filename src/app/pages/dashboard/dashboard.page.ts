@@ -73,7 +73,7 @@ export class DashboardPage implements OnInit {
       next: () => this.isLoading.set(false),
       error: (err) => {
         console.error('Erreur de chargement du tableau de bord:', err);
-        this.toast.danger('Impossible de charger toutes les données du tableau de bord.');
+        this.toast.danger(err, 'Impossible de charger toutes les données du tableau de bord.');
         this.isLoading.set(false);
       },
     });
@@ -106,13 +106,13 @@ export class DashboardPage implements OnInit {
       next: (res) => {
         this.validating.set(false);
         this.closeScanModal();
-        this.toast.success(res.message || "Billet validé avec succès !");
+        this.toast.success(res, "Billet validé avec succès !");
         this.ticketCode = "";
       },
       error: (err) => {
         this.validating.set(false);
         console.error("Erreur de validation:", err);
-        this.toast.danger("Erreur lors de la validation du billet.");
+        this.toast.danger(err, "Erreur lors de la validation du billet.");
       },
     });
   }
@@ -269,7 +269,7 @@ export class DashboardPage implements OnInit {
       },
       error: (err) => {
         console.error('Erreur de téléchargement du reçu:', err);
-        this.toast.danger('Impossible de télécharger le reçu.');
+        this.toast.danger(err, 'Impossible de télécharger le reçu.');
       },
     });
   }
