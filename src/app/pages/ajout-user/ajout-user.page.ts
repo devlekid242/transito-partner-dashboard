@@ -138,8 +138,8 @@ import { Utilisateur, RoleUtilisateur, SelectOption, Agence } from '../../models
                 <label class="label" for="status">Statut</label>
                 <select id="status" class="input cursor-pointer" formControlName="status" required>
                   <option value="">Sélectionner un statut</option>
-                  <option value="actif">Actif</option>
-                  <option value="inactif">Inactif</option>
+                  <option value="active">Actif</option>
+                  <option value="inactive">Inactif</option>
                 </select>
                 @if (userForm.get('status')?.invalid && userForm.get('status')?.touched) {
                   <p class="text-red-500 text-xs mt-1">Statut est requis</p>
@@ -207,7 +207,7 @@ export class AjoutUserPage implements OnInit {
       quartier: ['', [Validators.required]],
       password: ['', []],
       agentRole: ['', [Validators.required]],
-      status: ['actif', [Validators.required]],
+      status: ['active', [Validators.required]],
       agencyId: ['', []],
     });
   }
@@ -278,7 +278,7 @@ export class AjoutUserPage implements OnInit {
           ville: u.ville || u.city || '',
           quartier: u.quartier || u.neighborhood || '',
           agentRole: u.agentRole || u.role || '',
-          status: u.status || u.statut || 'actif',
+          status: u.status || u.statut || 'active',
           agencyId: u.agencyId || u.agence?.id || '',
         });
         this.isLoading.set(false);
