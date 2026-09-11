@@ -844,6 +844,7 @@ export class PartnerApiService {
             recipientId: notification.recipientId ?? null,
             type: category,
             category,
+            section: notification.section ?? null,
             title: notification.title || notification.titre,
             titre: notification.title || notification.titre,
             message: notification.message,
@@ -1128,14 +1129,33 @@ export class PartnerApiService {
 
   // ============= HELPER & SELECT METHODS =============
 
+  /**
+   * 👈 CONSERVÉ tel quel (signature inchangée) pour ne rien casser des
+   * appelants existants du compteur global.
+   */
   getUnreadNotificationCount(): Observable<number> {
+    return this.getUnreadNotificationBadges().pipe(map((r) => r.count));
+  }
+
+  /**
+   * 👈 NOUVEAU : même endpoint que ci-dessus, mais renvoie en plus la
+   * répartition par section (`bySection`) pour alimenter les badges du
+   * sidebar. Un seul appel réseau sert les deux besoins.
+   */
+  getUnreadNotificationBadges(): Observable<{ count: number; bySection: Record<string, number> }> {
     return this.http
       .get<{
         count: number;
+        bySection?: Record<string, number>;
       }>(`${this.apiUrl}/user-notifications/unread/count`)
       .pipe(
-        map((r) => r.count ?? 0),
-        catchError(() => of(this.notifications().filter((n) => !n.lu).length)),
+        map((r) => ({ count: r.count ?? 0, bySection: r.bySection ?? {} })),
+        catchError(() =>
+          of({
+            count: this.notifications().filter((n) => !n.lu).length,
+            bySection: {},
+          }),
+        ),
       );
   }
 

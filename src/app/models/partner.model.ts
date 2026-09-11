@@ -278,6 +278,7 @@ export interface Notification {
   title?: string;
   titre?: string;
   message?: string;
+  section?: string;
   time?: string;
   date?: string;
   isRead?: boolean;

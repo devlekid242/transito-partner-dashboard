@@ -25,7 +25,16 @@
               class="nav-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors"
             >
               <app-icon [name]="item.icon" [size]="18" [strokeWidth]="2" />
-              <span>{{ item.label }}</span>
+              <span class="flex-1">{{ item.label }}</span>
+              @if (badgeFor(item.link); as count) {
+                @if (count > 0) {
+                  <span
+                    class="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-500 px-1.5 text-[11px] font-bold text-white"
+                  >
+                    {{ count > 99 ? '99+' : count }}
+                  </span>
+                }
+              }
             </a>
           }
         }

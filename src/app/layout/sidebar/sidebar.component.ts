@@ -4,6 +4,7 @@ import { IconComponent, IconName } from '../../shared/icon.component';
 import { AuthService } from '../../services/auth.service';
 import { PermissionService } from '../../services/permission.service';
 import { AlertService } from '../../services/alert.service';
+import { RealtimeNotificationService } from '../../services/realtime-notification.service';
 
 interface NavItem {
   label: string;
@@ -42,6 +43,19 @@ export class SidebarComponent {
   readonly router = inject(Router);
 
   readonly alertService = inject(AlertService);
+  readonly realtime = inject(RealtimeNotificationService);
+
+  // 👈 NOUVEAU : nombre à afficher sur le badge d'un NavItem donné.
+  // - lien 'notifications' (la cloche) : total global non lu.
+  // - tout autre lien : `section` renvoyée par le backend est stockée avec
+  //   la même valeur que `item.link` (ex: 'reservations', 'gestion-finance'),
+  //   donc pas de table de correspondance à maintenir ici.
+  badgeFor(link: string): number {
+    if (link === 'notifications') {
+      return this.realtime.unreadCountSignal();
+    }
+    return this.realtime.unreadBySectionSignal()[link] ?? 0;
+  }
 
   userName = computed(() => this.auth.user()?.nom ?? 'Utilisateur');
   userEmail = computed(() => this.auth.user()?.email ?? '');

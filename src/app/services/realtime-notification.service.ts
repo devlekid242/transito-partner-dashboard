@@ -28,6 +28,12 @@ export class RealtimeNotificationService {
   readonly unreadCountSignal = this.unreadCount.asReadonly();
   readonly unreadCount$ = toObservable(this.unreadCount);
 
+  // 👈 NOUVEAU : nombre de notifications non lues par section de sidebar
+  // (clé = NavItem.link, ex: 'reservations', 'gestion-finance').
+  // Alimenté par le même appel réseau que unreadCount (voir refreshUnreadCount).
+  private readonly unreadBySection = signal<Record<string, number>>({});
+  readonly unreadBySectionSignal = this.unreadBySection.asReadonly();
+
   constructor(
     private authService: AuthService,
     private partnerApiService: PartnerApiService,
@@ -45,6 +51,7 @@ export class RealtimeNotificationService {
       } else {
         this.disconnectPusher();
         this.unreadCount.set(0);
+        this.unreadBySection.set({});
       }
     });
   }
@@ -149,6 +156,7 @@ export class RealtimeNotificationService {
         recipientId: payload.recipientId,
         type: payload.type,
         category: payload.category,
+        section: payload.section ?? null,
         title: payload.title,
         titre: payload.title,
         message: payload.message,
@@ -190,10 +198,16 @@ export class RealtimeNotificationService {
   }
 
   refreshUnreadCount(): void {
-    this.partnerApiService.getUnreadNotificationCount().subscribe(
-      (count) => this.unreadCount.set(count),
-      () => this.unreadCount.set(0),
-    );
+    this.partnerApiService.getUnreadNotificationBadges().subscribe({
+      next: ({ count, bySection }) => {
+        this.unreadCount.set(count);
+        this.unreadBySection.set(bySection);
+      },
+      error: () => {
+        this.unreadCount.set(0);
+        this.unreadBySection.set({});
+      },
+    });
   }
 
   getUnreadCount(): Observable<number> {
